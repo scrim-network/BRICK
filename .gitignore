@@ -1,0 +1,10 @@
+lobj/
+*.so
+*.dll
+.Rhistory
+*.RData
+*.mod
+output/
+*.o
+*/obj
+*.zip
