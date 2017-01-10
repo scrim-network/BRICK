@@ -6,7 +6,7 @@
 ! Private parameters/variables globally used within module
 !
 !   tstep     time step
-!
+!   
 !   b0        Undisturbed bed height at the continent center [m]
 !   slope     Slope of ice sheet bed before loading [-]
 !   mu        Profile parameter for parabolic ice surface (related to ice stress) [m0.5]
@@ -31,29 +31,14 @@
 !   ro_i      Ice density [kg/m3]
 !   ro_m      Rock density [kg/m3]
 !   Aoc       Surface of the ocean [m2]
-!================================================================================
-! Copyright 2016 Tony Wong, Alexander Bakker
-! This file is part of BRICK (Building blocks for Relevant Ice and Climate
-! Knowledge). BRICK is free software: you can redistribute it and/or modify
-! it under the terms of the GNU General Public License as published by
-! the Free Software Foundation, either version 3 of the License, or
-! (at your option) any later version.
-!
-! BRICK is distributed in the hope that it will be useful,
-! but WITHOUT ANY WARRANTY; without even the implied warranty of
-! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-! GNU General Public License for more details.
-!
-! You should have received a copy of the GNU General Public License
-! along with BRICK.  If not, see <http://www.gnu.org/licenses/>.
-!================================================================================
+!==============================================================================
 
 module dais
 
     USE global
     implicit none
     private
-
+    
 ! parameters:
     real(DP) :: tstep
 
@@ -68,7 +53,7 @@ module dais
     real(DP) :: f0
     real(DP) :: gamma
     real(DP) :: alpha
-    real(DP) :: Tf
+    real(DP) :: Tf    
 
     real(DP) :: Toc_0
     real(DP) :: Rad0
@@ -83,7 +68,7 @@ module dais
 ! variables
     real(DP) :: R       ! Radius ice sheet
     real(DP) :: V       ! Volume ice sheet
-
+        
 ! public subroutines
     public :: dais_step, init_dais
 
@@ -102,9 +87,9 @@ subroutine init_dais(time_step, parameters, SL, Rad, Vol)
     real(DP), intent(IN)  :: SL
     real(DP), intent(OUT) :: Rad
     real(DP), intent(OUT) :: Vol
-
+    
     real(DP) :: rc, rho_w, rho_i, rho_m
-
+    
 
 ! Assign values to model parameters
     tstep  = time_step
@@ -144,7 +129,7 @@ subroutine init_dais(time_step, parameters, SL, Rad, Vol)
 
     Rad = R
     Vol = V
-
+    
 end subroutine init_dais
 !------------------------------------------------------------------------------
 
@@ -176,14 +161,14 @@ subroutine dais_step(Ta, SL, Toc, dSL, Rad, Vol)
 
     real(DP), intent(OUT) :: Rad
     real(DP), intent(OUT) :: Vol
-
+    
     real(DP) :: hr, rc, P, beta
     real(DP) :: rR, Btot
     real(DP) :: mit, F, ISO
     real(DP) :: Hw, Speed
     real(DP) :: fac
     real(DP) :: c_iso
-
+    
 ! Start model
     hr   = h0 + c * Ta        ! equation 5
     rc   = (b0 - SL)/slope    ! application of equation 1 (paragraph after eq3)
@@ -197,7 +182,7 @@ subroutine dais_step(Ta, SL, Toc, dSL, Rad, Vol)
       Btot = P * Pi * R**2 - &
         Pi * beta * (hr - b0 + slope*R) * (R*R - rR*rR) - &
         (4. * Pi * beta * mu**0.5 *   (R-rR)**2.5) / 5.  + &
-        (4. * Pi * beta * mu**0.5 * R*(R-rR)**1.5) / 3.
+        (4. * Pi * beta * mu**0.5 * R*(R-rR)**1.5) / 3. 
     else
       Btot = P * Pi*R**2
     end if
@@ -206,19 +191,19 @@ subroutine dais_step(Ta, SL, Toc, dSL, Rad, Vol)
     F   = 0.   ! no ice flux
     ISO = 0.   ! (third term equation 14) NAME?
     fac = Pi * (1.+eps1) * (4./3. * mu**0.5 * R**1.5 - slope*R**2) ! ratio dV/dR (eq 14)
-
+    
 ! In case there is a marine ice sheet / grounding line
     if(R > rc) then
       fac   = fac - ( 2.*pi*eps2 * (slope*R**2 - b0*R) ) ! correction fac (eq 14)
 
       Hw = slope*R - b0 + SL  ! equation 10
-
+      
   ! Ice speed at grounding line (equation 11)
       Speed = f0 * &
         ((1.-alpha) + alpha * ((Toc - Tf)/(Toc_0 - Tf))**2) * &
         (Hw**gamma) / ( (slope*Rad0 - b0)**(gamma-1.) )
       F     = 2.*Pi*R * del * Hw * Speed   ! equation 9
-
+      
       ! ISO term depends on dSL_tot (third term equation 14 !! NAME)
       c_iso = 2.*Pi*eps2* (slope*rc**2 - (b0/slope)*rc)
 

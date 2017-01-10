@@ -54,6 +54,21 @@
 #  ocheatflux.interior  heat uptake of the ocean interior [W/m2]
 #
 ##==============================================================================
+## Copyright 2016 Tony Wong, Alexander Bakker
+## This file is part of BRICK (Building blocks for Relevant Ice and Climate
+## Knowledge). BRICK is free software: you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation, either version 3 of the License, or
+## (at your option) any later version.
+##
+## BRICK is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with BRICK.  If not, see <http://www.gnu.org/licenses/>.
+##==============================================================================
 
 # convert annual ocean heat flux (W/m^2) to cumulative ocean heat content anomaly (10^22 J)
 flux.to.heat = function(heatflux.mixed, heatflux.interior)
@@ -73,7 +88,12 @@ flux.to.heat = function(heatflux.mixed, heatflux.interior)
 }
 
 ## load DOECLIM model shared library
-dyn.load("../fortran/doeclim.so")
+# dyn.load("../fortran/doeclim.so")
+if(.Platform$OS.type == "unix") {
+    dyn.load("../fortran/doeclim.so")
+} else {
+    dyn.load("../fortran/doeclim")
+}
 
 # DOECLIM climate model (0D EBM atmosphere + 1D diffusive ocean)
 # inputs: climate sensitivity (S), ocean vertical diffusivity (kappa), aerosol forcing scale factor (alpha)
