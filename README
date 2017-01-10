@@ -1,20 +1,3 @@
-================================================================================
- Copyright 2016 Tony Wong, Alexander Bakker
- This file is part of BRICK (Building blocks for Relevant Ice and Climate
- Knowledge). BRICK is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
-
- BRICK is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with BRICK.  If not, see <http://www.gnu.org/licenses/>.
-================================================================================
-
 This repository contains the BRICK model source code and analysis scripts.
 
 It contains the sub-models
@@ -39,15 +22,24 @@ Workflow:
 ./calibration/DAIS_calib_driver.R
 --> calibrate the DAIS parameters using paleoclimate data
 
-./calibration/processingPipeline.R
+./calibration/BRICK_calib_driver_R07.R
+--> calibrate Global sea-level rise parameters using modern data and the Rahmstorf 2007 model
+
+./calibration/BRICK_calib_driver_SIMPLE-GSIC.R
+--> calibrate the SIMPLE-GSIC parameters using modern data
+
+./calibration/processingPipeline_BRICKexperiments.R
 --> combine modern and paleo calibration parameters, and calibrate the joint set
     to sea level data using rejection sampling
 --> make hindcasts and projections of sea level
 --> project local sea level and assess flood risks
 --> NOTE: files names must be edited to point to the correct files.
+—-> Run control: set experiments to c
+—-> Run w/ SIMPLE-GSIC: set experiments to e
+—-> Run R07: set experiments to g
 
-./calibration/analysis_and_plots.R
---> create plots and analysis for standard figures
+./calibration/analysis_and_plots_BRICKexperiments.R
+--> create plots and analysis for the Wong, Bakker et al (2016) figures
 --> NOTE: files names must be edited to point to the correct files.
 
 Note that in each of these scripts, some edits will be necessary. These will
@@ -93,6 +85,22 @@ Other README files of interest:
                         DAIS and rest-of-model posterior parameter estimates,
                         and use these fully calibrated parameters to make sea-level
                         rise projections
+
+================================================================================
+ Copyright 2016 Tony Wong, Alexander Bakker
+ This file is part of BRICK (Building blocks for Relevant Ice and Climate
+ Knowledge). BRICK is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ BRICK is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with BRICK.  If not, see <http://www.gnu.org/licenses/>.
 ================================================================================
 
 Please enjoy the code and offer us any and all of your suggestions for ease of

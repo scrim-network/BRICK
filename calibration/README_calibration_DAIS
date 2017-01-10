@@ -1,0 +1,88 @@
+================================================================================
+README_calibration_DAIS
+
+================================================================================
+ Copyright 2016 Tony Wong, Alexander Bakker
+ This file is part of BRICK (Building blocks for Relevant Ice and Climate
+ Knowledge). BRICK is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ BRICK is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with BRICK.  If not, see <http://www.gnu.org/licenses/>.
+================================================================================
+
+To obtain calibrated parameters for the Antarctic Ice Sheet model (DAIS),
+the following routines are required:
+
+in /calibration/
+  DAIS_calib_driver.R     driver script for the MCMC calibration of DAIS
+  DAIS_readData.R         script to read the Antarctic data (Shaffer (2014))
+  DAIS_assimLikelihood.R  likelihood functions for MCMC
+
+in /R/ (if using the R model)
+  anto.R                  model to estimate Antarctic ocean subsurface temperature
+                          from the global temperature anomalies
+  daisanto.R              DAIS physical model including anto.R
+
+in /fortran/              (see /fortran/README for more information)
+  dais.so                 dynamic library for the DAIS model Fortran version
+  /R/daisantoF.R          R wrapper function around the Fortran model, including
+                          anto for the ocean subsurface temperature
+  /R/daisF.R              DAIS physical model, no anto
+
+Following the commands in DAIS_calib_driver.R will result in calibrated DAIS
+and anto model parameters, written by default into a file
+
+  ../output_calibration/DAIS_calibratedParameters_[date-stamp].nc
+
+Each row is a different concomitant parameter set for the DAIS(anto) model. Each
+column is a different model parameter, with the first row giving the parameter
+names.
+
+By default, the model is set up to calibrate the anto.a and anto.b parameters,
+which are for regressing Antarctic ocean subsurface temperature (input to DAIS)
+on global temperature anomalies (output from DOECLIM). If you are only interested
+in running stand-alone DAIS (e.g., Ruckert et al (2016) or Shaffer (2014)), then
+use "Toc" from /data/future_TO.txt for the ocean temperatures (Shaffer (2014)).
+
+The Antarctic ice sheet model (DAIS) was calibrated using Antarctic sea
+level reconstructions in the same method as Shaffer (2014) and Ruckert et al
+(2016), and an additional calibration window was added, using the IPCC AR5
+(Ch 13, p 1151) AIS SLR trend.
+
+================================================================================
+A couple notes about the calibration:
+  * The calibration method is a robust adaptive Markov chain Monte Carlo
+    algorithm (RAM-MCMC), and is described well in Vihola (2012),
+    doi:10.1007/s11222-011-9269-5.
+  * Getting about 500,000 iterations is typically enough. This requires ~10 hours
+    on a typical modern multi-core laptop computer, and can be run in parallel
+    with minimum overhead cost for parallelization onto multiple physical cores,
+    and slightly more overhead cost for parallelization onto multiple threads
+    within a core.
+  * To check how many physical cores your machine has, run in R:
+      detectCores(logical=FALSE)
+  * To check how many logical cores (accounts for multi-threading), run:
+      detectCores(logical=TRUE)
+  * It is safe to assume that for ~100,000 or more (reasonable MCMC lengths)
+    iterations, it is worth it to run parallel chains. This provides:
+      (1) additional posterior samples at little additional computational cost
+      (2) more robust Gelman and Rubin convergence statistics (for when
+          inter-chain variability ~ intra-chain variability)
+    but unfortunately you do not get a progress bar, and adding samples to a
+    parallel MCMC object cannot be done in parallel. So estimate how many samples
+    you will need and how long it will take ahead of time.
+
+================================================================================
+
+Questions? Tony Wong (twong@psu.edu)
+================================================================================
+End
+================================================================================
