@@ -139,12 +139,39 @@ failure_loss_VD <- function(V0   = 2e10, # Value at t0
 # failure_probability_VD:
 #    Estimates the probability of dike failure (due to overtopping) as a function of
 #    dike heightening (X) and LSL
+#
+# p0      failure probability at H0=4.25 m
+# alpha   overtopping exponential constant
+# LSL     local sea level anomaly (m) compared to t0
+# H0      initial dike height (m)
+# x       dike heightening (m)
+# ss.gev  storm surge GEV parameters, time series; using mm, so use H_effective*1000
 # ====================================================================================
-failure_probability_VD <- function(p0         = 0.0038, # at H_0 = 4.25 [m]
-                                   alpha      = 2.6,
-                                   LSL,                 # LSL anomaly [m] compared to t0
-                                   X) {
-  p_fail <- p0 * exp(- alpha * (X - LSL))
+failure_probability_VD <- function(
+  p0 = 0.0038,
+  alpha = 2.6,
+  LSL,
+  H0 = 4.25,
+  x,
+  ss.gev = NULL
+  ) {
+
+  p_fail = rep(NA,length(LSL))
+
+# Note -- The time (t) loop is SLOW! Currently done in-line in VD_NOLA.R
+
+  if(is.null(ss.gev)) {
+    p_fail <- p0 * exp(- alpha * (x - LSL))
+  } else {
+    #p_fail <- p0 * exp(- alpha * (x - LSL))
+    H_effective = H0+x-LSL
+    p_fail <- 1-sapply(1:nrow(ss.gev), function(t) {pgev(q=1000*H_effective, xi=ss.gev[t,'shape'], mu=ss.gev[t,'location'], beta=ss.gev[t,'scale']) })[,1]
+#    p_fail <- 1-sapply(1:nrow(ss.gev), function(t) {pgev(q=1000*H_effective, xi=ss.gev[t,'shape'], mu=ss.gev[t,'location'], beta=ss.gev[t,'scale']) })[,1]
+#    for (t in 1:length(LSL)){
+#      p_fail[t] = 1-pgev(q=1000*H_effective[t], xi=ss.gev[t,'shape'], mu=ss.gev[t,'location'], beta=ss.gev[t,'scale'])
+#    }
+  }
+
   return(p_fail)
 }
 # ====================================================================================

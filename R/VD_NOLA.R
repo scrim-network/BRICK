@@ -1,7 +1,8 @@
 # ====================================================================================
 # Tuning of Van Dantzig model to New Orleans, Louisiana (NOLA)
 #
-# by Alexander Bakker
+# Original code by Alexander Bakker (July 2016)
+# Modified code by Tony Wong (November 2016-present)
 ##==============================================================================
 ## Copyright 2016 Tony Wong, Alexander Bakker
 ## This file is part of BRICK (Building blocks for Relevant Ice and Climate
@@ -30,8 +31,27 @@ require(lhs)
 # VD_NOLA_R:
 #    VanDantzig tuned to NOLA (New Orleans, Louisiana)
 # ====================================================================================
-VD_NOLA_R <-
-  function(params, I_table, T, X, local_sea_level, intercept.h2i, slope.h2i){
+VD_NOLA_R <- function(
+  params,
+  I_table,
+  T,
+  X,
+  local_sea_level,
+  intercept.h2i,
+  slope.h2i,
+  ss.gev=NULL,
+  surge.rise=NULL,
+  H0=4.25
+  ){
+
+#install.packages("extRemes")
+#install.packages("fExtremes")
+#install.packages('ismev')
+#install.packages('zoo')
+library(extRemes)
+library(fExtremes)
+library(ismev)
+library(zoo)
 
     nx <- length(X)    # number of dike heightenings to be evaluated
     np <- nrow(params) # number of parameter sets
@@ -42,45 +62,34 @@ VD_NOLA_R <-
       matrix(c(X, rep(NA,6*nx)), nx, 7, byrow=F,
              dimnames=list(NULL,c("Heightening","Expected_costs","Expected_loss","Investment","Total_p_fail","Average_p_fail","Maximum_p_fail"))))
 
-    if(np == 1 || is.null(np)) {
+    # failure loss for all timesteps, accounting for V0 (the ucnertain value of
+    # goods protected by the dike ring) and delta (the uncertain net discount
+    # rate)
+    failure_loss <- as.matrix(failure_loss_VD(params$V0, params$delta, ts), nrow=nt,ncol=1)
 
-      # failure loss for all timesteps, accounting for V0 (the ucnertain value of
-      # goods protected by the dike ring) and delta (the uncertain net discount
-      # rate)
-      failure_loss <- as.matrix(failure_loss_VD(params$V0, params$delta, ts), nrow=nt,ncol=1)
+    # normalized local sea level change (taking 0 sea level as local_sea_level[1])
+    LSL.norm <- local_sea_level - local_sea_level[1]
 
-      # normalized local sea level change (taking 0 sea level as local_sea_level[1])
-      LSL.norm <- local_sea_level - local_sea_level[1]
-
-      # relative local sea level rise (subsidence + LSL.norm)
+    # relative local sea level rise (subsidence + LSL.norm + surge rise (if non-stat))
+    if(is.null(surge.rise)) {
       LSL.norm.subs <- t(params$sub_rate * t(ts)) + LSL.norm
-
-      for(i in 1:nx) {
-        investment <- (intercept.h2i + slope.h2i*X[i])*(1 + params$I_unc)
-
-        p_fail <- as.matrix(failure_probability_VD(params$p0, params$alpha, LSL.norm.subs, X[i] ), nrow=nt,ncol=1)
-
-        outcome[i,2:7] <- VanDantzig_outcomes(p_fail, failure_loss, investment)
-      }
     } else {
+      LSL.norm.subs <- t(params$sub_rate * t(ts)) + LSL.norm + surge.rise
+    }
 
-      # failure loss for all parameter samples and timesteps
-      failure_loss <- t(sapply(1:length(ts), function(j) {
-        failure_loss_VD(params$V0, params$delta, ts[j]) }))
+    # correction from previous version: slope and intercept are fitted to
+    # Jonkman et al (2009) Table 2, which is "surge level" (total height) vs
+    # investment needed to build and maintain that structure
+    investment <- (intercept.h2i + slope.h2i*(H0+X))*(1 + params$I_unc)
 
-      # normalized local sea level change (taking 0 sea level as local_sea_level[1])
-      LSL.norm <- local_sea_level - local_sea_level[1]
+    # effective dike height is initial height + heightening - local sea level (accounting for subsidence and sea level rise)
+    H_eff <- H0 + matrix(data=rep(X,nt),ncol=nt) - matrix(rep(LSL.norm.subs,nx),nrow=nx,byrow=TRUE)
 
-      # relative local sea level rise (subsidence + LSL.norm)
-      LSL.norm.subs <- t(params$sub_rate * t(ts)) + LSL.norm
+    # failure probability is the survival function of the storm surge GEV at effective dike height
+    p_fail <- 1-sapply(1:nt, function(j) {pgev(q=1000*H_eff[,j], xi=ss.gev['shape'], mu=ss.gev['location'], beta=ss.gev['scale']) })
 
-      for(i in 1:nx) {
-        investment <- (intercept.h2i + slope.h2i*X[i])*(1 + params$I_unc)
-
-        p_fail <- t(sapply(1:length(ts), function(j) {failure_probability_VD(params$p0, params$alpha, LSL.norm.subs[j,], X[i]) }))
-
-        outcome[i,2:7] <- VanDantzig_outcomes(t(p_fail), failure_loss, investment)
-      }
+    for(i in 1:nx) {
+      outcome[i,2:7] <- VanDantzig_outcomes(matrix(p_fail[i,]), failure_loss, investment[i])
     }
 
     return(outcome)
