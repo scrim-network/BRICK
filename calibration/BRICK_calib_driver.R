@@ -25,7 +25,7 @@
 ## along with BRICK.  If not, see <http://www.gnu.org/licenses/>.
 ##==============================================================================
 
-#setwd('~/robustslr_new/calibration')
+#setwd('~/brick/calibration')
 
 rm(list=ls())												# Clear all previous variables
 
@@ -120,7 +120,7 @@ luse.doeclim  = TRUE    # diffusion-ocean-energy balance climate model
 luse.gsic     = TRUE    # glaciers and small ice caps contribution to SLR
 luse.te       = TRUE    # thermosteric expansion contribution to SLR
 luse.simple   = TRUE    # Greenland ice sheet model
-luse.dais     = FALSE    # Antarctic ice sheet model
+luse.dais     = TRUE    # Antarctic ice sheet model
 luse.mymodel  = FALSE   # Example of adding your own model component
 luse.brick = cbind(luse.doeclim, luse.gsic, luse.te, luse.simple, luse.dais)
 

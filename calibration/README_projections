@@ -1,0 +1,157 @@
+================================================================================
+README_projections
+
+================================================================================
+ Copyright 2016 Tony Wong, Alexander Bakker
+ This file is part of BRICK (Building blocks for Relevant Ice and Climate
+ Knowledge). BRICK is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ BRICK is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with BRICK.  If not, see <http://www.gnu.org/licenses/>.
+================================================================================
+
+
+For the impatient:
+
+
+Make projections by running from the terminal (not in R) command line:
+
+  Rscript run_BRICK.R <file.settings> <file.parameters> <file.inputdata> <file.output>
+
+where
+  file.settings       column 1 is the setting name, column 2 is setting value,
+                      column 3 is for comments, beneficial to user, but not used here
+                      Good practice: keep settings file in the run-time directory.
+                      (i.e., wherever this driver script is)
+                      Default provided: /calibration/BRICK_settings.csv
+  file.parameters     file with each row a different set of model parameters at
+                      which to run the model, and each column a different model
+                      parameter
+                      Good practice: Keep the parameters files in the
+                      /output_calibration/ directory, and refer specifically to
+                      the one you want in the execute command.
+                      Default provided: /output_calibration/BRICK_postcalibratedParameters_21Jul2016.csv
+  file.inputdata      radiative forcing to use
+                      Good practice: Keep the forcing files in the /data/
+                      directory.
+                      Provided: /data/forcing_rcp{26,45,6,85}.csv
+  file.output         file to write the sea-level rise output to
+                      Good practice: keep this in the /output/ directory.
+                      Default provided: none (user-defined)
+
+and the run-time directory is wherever the script run_BRICK.R is located (by
+default, in the /calibration/ directory).
+
+
+================================================================================
+
+For the patient, or those who want to get their hands dirty:
+
+
+See above for making projections from the command line, from a post-calibrated
+set of fully coupled BRICK parameters. Requires:
+
+in /calibration/
+  run_BRICK.R
+  run_BRICK_model.R
+  BRICK_settings.csv
+
+in /output_calibration/
+  BRICK_postcalibratedParameters_[date-stamp].csv
+
+in /data/
+  forcing_rcpXX.csv
+
+in /R/
+  forcing_total.R             fucntion to add up the total radiative forcing
+                              (This was formerly part of DOECLIM but has been
+                              separated for transparency and to make the DOECLIM
+                              version in BRICK coded analogously to the other
+                              physical models.)
+  compute_indices.R           function to calculate which indices within the
+                              model output and observational data vectors
+                              correspond to the same times, for comparison
+  BRICK_coupledModel.R        the coupled BRICK model, running each sub-model
+                              subsequently
+  brick_te.R                  model for sea-level rise due to thermosteric expansion
+  GSIC_magicc.R               model for sea-level rise due to glaciers and small ice caps
+  simple.R                    model for sea-level rise due to the Greenland ice
+                              sheet surface mass (im)balance
+  dais.R                      model for Antarctic ice sheet
+  daisanto.R                  model for Antarctic ice sheet, including calculating
+                              Antarctic ocean temperature from global temperature
+                              (anto)
+
+in /fortran/                  (see /fortran/README for more information)
+  doeclim.so                  dynamic library required to run the Fortran version
+                              of the DOECLIM physical model
+  gsic_magicc.so              dynamic library for GSIC-MAGICC physical model
+  brick_te.so                 dynamic library for the thermosteric expansion model
+  simple.so                   dynamic library for the Greenland ice sheet model
+  /R/doeclimF.R               R wrapper function for the Fortran DOECLIM model
+  /R/GSIC_magiccF.R           R wrapper function for the Fortran GSIC-MAGICC model
+  /R/brick_te_F.R             R wrapper function for the Fortran TE model
+  /R/simpleF.R                R wrapper function for the Fortran SIMPLE model
+  /R/daisF.R                  R wrapper function for the Fortran DAIS model
+  /R/daisantoF.R              R wrapper function for the Fortran DAIS model, with anto
+
+
+
+See below for first, combining the results of the DAIS pre-calibration MCMC and the
+rest-of-model BRICK MCMC calibration, and second, making projections interactively.
+
+
+Requires:
+
+in /calibration/
+  BRICK_combinePostcalibration.R      driver script for the post-calibration
+  BRICK_postcalibratedProjections.R   driver script to use the post-calibrated
+                              parameters from BRICK_combinePostcalibration.R (or
+                              a pre-existing parameter set such as those provided)
+                              and make projections of sea-level rise
+
+in /data/
+  forcing_hindcast.csv        use the hindcast forcing to post-calibrate/assimilate
+                              all model parameters
+
+in /R/ and /fortran/, need all of the same model files as above
+
+In BRICK_combinePostcalibration.R:
+
+Input:
+  Output calibrated parameters from DAIS and the rest-of-model:
+    ../output_calibration/BRICK_calibratedParameters_[date-stamp].csv
+    ../output_calibration/DAIS_precalibrationMCMC_parameters_[date-stamp].csv
+
+Output:
+  Post-calibrated parameters:
+    ../output_calibration/BRICK_postcalibratedParameters_[date-stamp].csv
+
+Before projections are made, the separately-calibrated DAIS model posterior
+parameters must be assimilated with the rest-of-model posterior parameters. This
+is done in a "post-calibration" step, by only choosing parameters which yield
+hindcast simulations of global mean sea-level rise which pass through a tunnel
+around the Church and White (2011) sea level data.
+
+
+================================================================================
+These results are preliminary, and this code is not yet published nor
+publicly available. All code, model results, input/output files, and other
+material related to this work is confidential. We want our code to be
+freely available and usable by all, but not yet! Please do not share any
+of these materials at this early stage. But enjoy the code and please
+offer us any and all of your suggestions for ease of use, physical
+accuracy, etc! Thanks!
+
+Questions? Tony Wong (twong@psu.edu)
+================================================================================
+End
+================================================================================
