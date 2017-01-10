@@ -1,34 +1,25 @@
 ##==============================================================================
-##
-##  -file = "BRICK_assimLikelihood_AR1homo.R"   Origional code written July 2014
-##  - Author: Yawen Guan (yig5031@psu.edu)
-##  - Edited to run SLR model by: Kelsey Ruckert (klr324@psu.edu)
-##  - Edited to run DOECLIM model by: Tony Wong (twong@psu.edu)
-##  - Edited for BRICK by: Tony Wong (twong@psu.edu)
-##
-##  -This function computes the log likelihood for a zero-mean AR1 process from
-##       observations as described in  Ruckert et al. (2016).
-##       For further description and references, please read the paper
-##       and the appendix.
-##
-##   -NOTE: Descriptions of how to use this for other observation and models
-##       can be found in the R package in review "VAR1"
-##
-##==============================================================================
-## Copyright 2016 Tony Wong, Alexander Bakker
-## This file is part of BRICK (Building blocks for Relevant Ice and Climate
-## Knowledge). BRICK is free software: you can redistribute it and/or modify
-## it under the terms of the GNU General Public License as published by
-## the Free Software Foundation, either version 3 of the License, or
-## (at your option) any later version.
-##
-## BRICK is distributed in the hope that it will be useful,
-## but WITHOUT ANY WARRANTY; without even the implied warranty of
-## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-## GNU General Public License for more details.
-##
-## You should have received a copy of the GNU General Public License
-## along with BRICK.  If not, see <http://www.gnu.org/licenses/>.
+#
+#  -file = "BRICK_assimLikelihood_AR1homo.R"   Origional code written July 2014
+#  - Author: Yawen Guan (yig5031@psu.edu)
+#  - Edited to run SLR model by: Kelsey Ruckert (klr324@psu.edu)
+#  - Edited to run DOECLIM model by: Tony Wong (twong@psu.edu)
+#  - Edited for BRICK-fastdyn by: Tony Wong (twong@psu.edu)
+#
+#  -This function computes the log likelihood for a zero-mean AR1 process from
+#       observations as described in  Ruckert et al. (2016).
+#       For further description and references, please read the paper
+#       and the appendix.
+#
+#   -NOTE: Descriptions of how to use this for other observation and models
+#       can be found in the R package in review "VAR1"
+#
+# THIS CODE IS PROVIDED AS-IS WITH NO WARRANTY (NEITHER EXPLICIT
+# NOT IMPLICIT).  I SHARE THIS CODE IN HOPES THAT IT IS USEFUL,
+# BUT I AM NOT LIABLE FOR THE BEHAVIOR OF THIS CODE IN YOUR OWN
+# APPLICATION.  YOU ARE FREE TO SHARE THIS CODE SO LONG AS THE
+# AUTHOR(S) AND VERSION HISTORY REMAIN INTACT.
+#
 ##==============================================================================
 
 ##==============================================================================
@@ -37,8 +28,6 @@
 ##					-- sigma1 (sampled) is the whitened innovation sigma
 ## Estimate the log likelihood of the AR1 process
 
-if(TRUE){
-## APPROX AR1?
 logl.ar1 = function(r,sigma1,rho1,eps1=0) # default obs error is 0
 {
   n = length(r) # r is the residuals
@@ -52,38 +41,6 @@ logl.ar1 = function(r,sigma1,rho1,eps1=0) # default obs error is 0
 		    # variance and the obs. errors
   }
   return(logl)
-}
-##
-} else {
-## EXACT AR1?
-library(mvtnorm)
-logl.ar1 <-
-  function(r,sigma1,rho1,eps1) # default obs error is 0. sigma1 is standard error.
-  {
-  library(mvtnorm)
-
-    n = length(r)
-    sigma.proc = sigma1/sqrt(1-rho1^2) # stationary process variance sigma.proc^2
-    if(all(eps1==0)){
-      logl = dnorm(r[1],sd=sigma.proc,log=TRUE)
-      if(n>1) {
-        w = r[2:n] - rho1*r[1:(n-1)] # whitened residuals
-        # logl = logl + sum(dnorm(w,sd=sigma1,log=TRUE))
-        # This is what we had before to make the computation faster.
-        # This approximation should not change the result, but it is worth trying
-        logl = logl + sum(dnorm(w,sd=sqrt(sigma1^2+eps1[-1]^2),log=TRUE))
-      }
-    }else{
-      H <- abs(outer(1:n, 1:n, "-"))
-      v = sigma.proc^2*rho1^H
-      if(length(eps1)>1) {v = v+diag(eps1^2)
-      } else {v = v+diag(rep(eps1^2,n))}
-      # Need R package "mvtnorm"
-      logl = dmvnorm(r,sigma=v,log=TRUE)
-    }
-    return(logl)
-  }
-##
 }
 ##==============================================================================
 ## rest of the statistical model
@@ -104,8 +61,7 @@ log.lik = function( parameters.in,
                     obs,
                     obs.err,
                     trends.te,
-                    luse.brick,
-                    i0
+                    luse.brick
                    ){
 
 	## Run the coupled BRICK model
@@ -118,8 +74,7 @@ log.lik = function( parameters.in,
                             mod.time=mod.time,
                             ind.norm.data=ind.norm.data,
                             ind.norm.sl=ind.norm.sl,
-                            luse.brick=luse.brick,
-                            i0=i0
+                            luse.brick=luse.brick
                           )
 
   ## Calculate contribution from DOECLIM temperature
@@ -262,7 +217,6 @@ log.pri = function(parameters.in , parnames.in, bound.lower.in, bound.upper.in,
 	# Pluck off the model and statistical parameters (only ones without uniform prior)
   ind.S      = match("S",parnames.in)
   ind.invtau = match("invtau.te",parnames.in)
-  ind.rho.gsic = match("rho.gsic",parnames.in)
   lpri.S      = 0
   lpri.invtau = 0
 
@@ -303,8 +257,7 @@ log.post = function(  parameters.in,
                       obs,
                       obs.err,
                       trends.te,
-                      luse.brick,
-                      i0
+                      luse.brick
                       ){
 
   llik = 0
@@ -331,8 +284,7 @@ log.post = function(  parameters.in,
                       obs=obs,
 										  obs.err=obs.err,
 											trends.te=trends.te,
-                      luse.brick=luse.brick,
-                      i0=i0
+                      luse.brick
                       )
     lpost = llik + lpri
   } else {

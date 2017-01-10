@@ -2,25 +2,11 @@
 # Extended Van Dantzig model for the assessment of flood risk and optimizing
 # strategies
 #
-# file contains several subroutines to apply the analysis
+# file contains several subroutines to apply the analysis or call fortran-routines
+#   -
 #
 # by Alexander Bakker
-##==============================================================================
-## Copyright 2016 Tony Wong, Alexander Bakker
-## This file is part of BRICK (Building blocks for Relevant Ice and Climate
-## Knowledge). BRICK is free software: you can redistribute it and/or modify
-## it under the terms of the GNU General Public License as published by
-## the Free Software Foundation, either version 3 of the License, or
-## (at your option) any later version.
-##
-## BRICK is distributed in the hope that it will be useful,
-## but WITHOUT ANY WARRANTY; without even the implied warranty of
-## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-## GNU General Public License for more details.
-##
-## You should have received a copy of the GNU General Public License
-## along with BRICK.  If not, see <http://www.gnu.org/licenses/>.
-##==============================================================================
+# ====================================================================================
 
 require(lhs)
 
@@ -29,7 +15,7 @@ require(lhs)
 #    applies classic VanDantzig
 # ====================================================================================
 VanDantzig_R <-
-  function(params, T, X, local_sea_level){
+  function(params, T, X, global_sea_level){
 
     nx <- length(X)    # number of dike heightenings to be evaluated
     np <- nrow(params) # number of parameter sets
@@ -51,7 +37,8 @@ VanDantzig_R <-
       #               t_star=params$timing_abrupt_increase[1],
       #               t=ts)
 
-      LSL <- local_sea_level
+      #LSL <- global_sea_level[ ,1]
+      LSL <- global_sea_level
 
       for(i in 1:nx) {
         investment <- params$k * X[i] + params$I0
@@ -73,7 +60,7 @@ VanDantzig_R <-
       #          t_star=params$timing_abrupt_increase,
       #          t=ts[j])
       # }))
-      LSL <- local_sea_level
+      LSL <- global_sea_level
 
       for(i in 1:nx) {
         investment <- params$k * X[i] + params$I0

@@ -1,13 +1,13 @@
 # =======================================================================================
-# daisanto: couples
+# DAIS-fortran90 (# estimation by calling fortran routine)
 # DAIS: Simple model for Antarctic ice-sheet volume [m sle] (Schaffer 2014)
-# ANTO: Simple scaling to estimate Antarctic ocean-surface temperatures from atmospheric
-#       Tg
+# dais_fastdyn: includes fast dynamics ice cliff response
 # =======================================================================================
 #
 #  Requires (input variables):
-#  - Ta        Antarctic mean surface temperature [degC] (or global temperature)
+#  - Ta        Antarctic mean surface temperature [degC]
 #  - SL        Sea level [m]
+#  - Toc       High latitude ocean subsurface temperatures [degC]
 #  - dSL       Rate of sea-level change [m/yr] of either
 #              - all components (including AIS)        -> includes_dSLais = 1
 #              - all other components (excluding AIS)  -> includes_dSLais = 0
@@ -15,7 +15,6 @@
 #  Simulates (output variables):
 #  - Rad       Ice sheet radius [m]
 #  - Vais      Volume of Antarctic ice sheet [m3]
-#  - Toc       High latitude ocean subsurface temperatures [degC] (calculated by ANTO)
 
 #  Internal variables:
 #  - b         Undisturbed bed profile [m]
@@ -33,8 +32,9 @@
 #  - r         Radial coordinate
 #
 #  Parameters:
-#  - anto.a    Sensitivity Ta [degC/degC]
-#  - anto.b    Ta(Tg=0)
+#  - Tcrit     Trigger temperature, at which disintegration occurs (deg C) (WAIS/fast dynamics parameter)
+#  - lambda    disintegration rate (m/yr)
+#  - Vmin      minimum volume, below which there is no more ice to disintegrate (m^3)
 #  - b0        Undisturbed bed height at the continent center [m]
 #  - slope     Slope of ice sheet bed before loading [-]
 #  - mu        Profile parameter for parabolic ice sheet surface (related to ice stress) [m0.5]
@@ -51,7 +51,6 @@
 #  - includes_dSLais    logical that tells if < dSL > represents contribution of
 #              - all components (including AIS)        -> includes_dSLais = 1
 #              - all otherm components (excluding AIS) -> includes_dSLais = 0
-#  - lf         Mean AIS fingerprint at AIS shore
 #  - tstep     time step
 #
 #  Constants:
@@ -60,15 +59,19 @@
 #  - rho_i      Ice density [kg/m3]
 #  - rho_m      Rock density [kg/m3]
 #  - Aoc        Surface of the ocean [m2]
+#  - lf         Mean AIS fingerprint at AIS shore
 # =======================================================================================
 
-source("../R/dais.R")
-source("../R/anto.R")
+# =======================================================================================
+# load fortran subroutine (# to check if library is loaded is.loaded("run_dais") )
+if(.Platform$OS.type == "unix") {
+    dyn.load("../fortran/dais_fastdyn.so")
+} else {
+    dyn.load("../fortran/dais_fastdyn")
+}
 
-daisanto <- function(
+dais_fastdynF <- function(
   tstep = 1,
-  anto.a = 0.26,
-  anto.b = 0.62,
   b0    = 775,
   slope = 6 * 10^(-4),
   mu    = 8.7,
@@ -80,6 +83,9 @@ daisanto <- function(
   f0    = 1.2,
   gamma = 2.5,
   alpha = 0.5,
+  Tcrit = -15.0,
+  lambda= 0.01,
+  Vmin  = -999,  # 18-20 million km^3
   Tf    = -1.8,
   rho_w  = 1030,
   rho_i  = 917,
@@ -89,48 +95,55 @@ daisanto <- function(
   Aoc   = 3.619e14,
   lf    = -1.18,
   includes_dSLais= 1,
-  slope.Ta2Tg = 1,
-  intercept.Ta2Tg = 0,
-  Tg,        # Antarctic mean surface temperature [degC]
+  Ta,        # Antarctic mean surface temperature [degC]
+  Toc,       # High latitude ocean subsurface temperatures [degC]
   SL,        # (global mean) sea level [m]
-  dSL) {
+  dSL        #
+) {
 
+  # determine series length
+  ns <- length(Ta)
 
-  Toc <- anto(a=anto.a, b=anto.b, Tf=Tf, Tg=Tg)
+  parameters <- c(b0,
+                  slope,
+                  mu,
+                  h0,
+                  c,
+                  P0,
+                  kappa,
+                  nu,
+                  f0,
+                  gamma,
+                  alpha,
+                  Tf,
+                  rho_w,
+                  rho_i,
+                  rho_m,
+                  Toc_0,
+                  Rad0,
+                  Aoc,
+                  lf,
+                  includes_dSLais,
+                  Tcrit,
+                  lambda,
+                  Vmin)
 
-  # Reconstruct Antarctic surface temperature from global temperature anomalies.
-  # Assumes Ta is global temperature anomaly. If it is not, then do not supply
-  # slope.Ta2Tg and intercept.Ta2Tg to daisantoF(...) and it will do nothing.
-
-  Ta.recon = (Tg-intercept.Ta2Tg)/slope.Ta2Tg   # undo linear regression Tg ~ Ta
-
-  Contribution_AIS <- dais(
-    tstep  = tstep,
-    b0     = b0,
-    slope  = slope,
-    mu     = mu,
-    h0     = h0,
-    c      =  c,
-    P0     = P0,
-    kappa  = kappa,
-    nu     = nu,
-    f0     = f0,
-    gamma  = gamma,
-    alpha  = alpha,
-    Tf     = Tf,
-    rho_w  = rho_w,
-    rho_i  = rho_i,
-    rho_m  = rho_m,
-    Toc_0  = Toc_0,
-    Rad0   = Rad0,
-    Aoc   = Aoc,
-    lf    = lf,
-    includes_dSLais= includes_dSLais,
-    Ta     = Ta.recon,        # Antarctic mean surface temperature [degC]
-    SL     = SL,        # (global mean) sea level [m]
-    Toc    = Toc,        # High latitude ocean subsurface temperatures [degC]
-    dSL    = dSL)
-
-return(Contribution_AIS)
-
+  # call fortran
+  f.output <- .Fortran("run_dais",
+                  ns                 = ns,
+                  tstep              = as.double(tstep),
+                  dais_parameters    = as.double(parameters),
+                  Ant_Temp           = as.double(Ta),
+                  Ant_Sea_Level      = as.double(SL),
+                  Ant_Sur_Ocean_Temp = as.double(Toc),
+                  Ant_SL_rate        = as.double(dSL),
+                  AIS_Radius_out     = as.double(rep(-999.99,ns)),
+                  AIS_Volume_out     = as.double(rep(-999.99,ns)),
+                  AIS_disint_out     = as.double(rep(-999.99,ns))
+  )
+  Vsle = 57*(1-f.output$AIS_Volume_out/f.output$AIS_Volume_out[1]) #Takes steady state present day volume to correspond to 57m SLE
+  Vdisint = f.output$AIS_disint_out
+  ais.out=list(Vsle,Vdisint); names(ais.out)=c("Vais","Vdisint")
+  return(ais.out)
 }
+# =================================================================================

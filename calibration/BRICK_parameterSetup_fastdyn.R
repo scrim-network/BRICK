@@ -8,21 +8,6 @@
 ##
 ## Question? Tony Wong <twong@psu.edu>
 ##==============================================================================
-## Copyright 2016 Tony Wong, Alexander Bakker
-## This file is part of BRICK (Building blocks for Relevant Ice and Climate
-## Knowledge). BRICK is free software: you can redistribute it and/or modify
-## it under the terms of the GNU General Public License as published by
-## the Free Software Foundation, either version 3 of the License, or
-## (at your option) any later version.
-##
-## BRICK is distributed in the hope that it will be useful,
-## but WITHOUT ANY WARRANTY; without even the implied warranty of
-## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-## GNU General Public License for more details.
-##
-## You should have received a copy of the GNU General Public License
-## along with BRICK.  If not, see <http://www.gnu.org/licenses/>.
-##==============================================================================
 
 ## DOECLIM (Urban and Keller, 2010, values
 parnames.doeclim   =NULL; p0.doeclim       =NULL; bound.lower.doeclim=NULL;
@@ -36,16 +21,16 @@ if (luse.doeclim) {
 	index.model.doeclim=c(1,2,3,4,5)		# which are model parameters? (index within parnames.doeclim)
 }
 
-## GSIC-SIMPLE
+## GSIC-MAGICC
 parnames.gsic   =NULL; p0.gsic       =NULL; bound.lower.gsic=NULL;
 bound.upper.gsic=NULL; step.mcmc.gsic=NULL; index.model.gsic=NULL;
 if (luse.gsic) {
-	parnames.gsic   =c("a.gsic"	,"b.gsic","alpha.gsic","beta.gsic","V0.gsic","sigma.gsic"	,"rho.gsic"	)	# parameters names
-	p0.gsic		      =c(-0.825		, 0.41   , 1.63e-4    , 2.85e-5   ,	0.41		, 0.00045			, 0.5				)	# initial parameter guesses
-	bound.lower.gsic=c( -4			, 0.3    , 0          , 0        	, 0.3			, 0						, -0.999		)	# prior range lower bounds
-	bound.upper.gsic=c( -1e-3 	, 0.5    , 1e-3       , 1e-3     	, 0.5			,	0.00150     ,  0.999    )	# prior range upper bounds
-	step.mcmc.gsic	=c(0.2			, 0.05   , 1e-5       , 1e-5     	, 0.01		,	0.0001      , 0.01      )	# step size for parameters in MCMC (proposals)
-	index.model.gsic=c(1,2,3,4,5)			# which are model parameters? (index within parnames.gsic)
+	parnames.gsic   =c("beta0","V0.gsic","n"  ,"Gs0"    , "sigma.gsic", "rho.gsic")	# parameters names
+	p0.gsic		      =c(0.00058, 0.41    , 0.82, 0.0     , 0.00045     , 0.5       )	# initial parameter guesses
+	bound.lower.gsic=c(0      , 0.3     , 0.55, -0.0041 , 0           , -0.999    )	# prior range lower bounds
+	bound.upper.gsic=c(0.041  , 0.5     , 1.0 ,  0.0041 , 0.00150     ,  0.999    )	# prior range upper bounds
+	step.mcmc.gsic	=c(0.01   , 0.01    , 0.1 , 0.01    , 0.0001      , 0.01      )	# step size for parameters in MCMC (proposals)
+	index.model.gsic=c(1,2,3,4)			# which are model parameters? (index within parnames.gsic)
 }
 
 ## BRICK-TE
@@ -76,12 +61,12 @@ if (luse.simple) {
 parnames.dais   =NULL; p0.dais       =NULL; bound.lower.dais=NULL;
 bound.upper.dais=NULL; step.mcmc.dais=NULL; index.model.dais=NULL;
 if (luse.dais) {
-	parnames.dais   =c('anto.a','anto.b','gamma','alpha.dais','mu'  ,'nu'  ,'P0' ,'kappa.dais','f0','h0'  ,'c'  , 'b0','slope','var.dais' ) # parameter names
-	p0.dais         =c( 0.1574 , 0.6677 ,  2    , 0.35       , 8.7  , 0.012, 0.35, 0.04       , 1.2, 1471 , 95  , 775 , 0.0006,0.0004656  )
-	bound.lower.dais=c( 0.0    , 0      ,  0.5  , 0          , 7.05 , 0.003,0.026, 0.025      , 0.6, 735.5, 47.5, 740 , 4.5e-4,0          )
-	bound.upper.dais=c( 1.0    , 2      ,  4.25 , 1          , 13.65, 0.015, 1.5 , 0.085      , 1.8,2206.5,142.5, 820 , 7.5e-4,2          )
+	parnames.dais   =c('anto.a','anto.b','gamma','alpha.dais','mu'  ,'nu'  ,'P0' ,'kappa.dais','f0','h0'  ,'c'  , 'b0','slope','lambda','Tcrit','var.dais' ) # parameter names
+	p0.dais         =c( 0.1574 , 0.6677 ,  2    , 0.35       , 8.7  , 0.012, 0.35, 0.04       , 1.2, 1471 , 95  , 775 , 0.0006, 0.01   , -15   , 0.0004656 )
+	bound.lower.dais=c( 0.0    , 0      ,  0.5  , 0          , 7.05 , 0.003,0.026, 0.025      , 0.6, 735.5, 47.5, 740 , 4.5e-4, 0.005  , -20   , 0         )
+	bound.upper.dais=c( 1.0    , 2      ,  4.25 , 1          , 13.65, 0.015, 1.5 , 0.085      , 1.8,2206.5,142.5, 820 , 7.5e-4, 0.015  , -10   , 2         )
 	step.mcmc.dais	=0.05*(bound.upper.dais-bound.lower.dais) # set size for parameters in MCMC (proposals)
-	index.model.dais=c(1,2,3,4,5,6,7,8,9,10,11,12,13)			# which are model parameters? (index within parnames.dais)
+	index.model.dais=c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15)			# which are model parameters? (index within parnames.dais)
 }
 
 ##==============================================================================

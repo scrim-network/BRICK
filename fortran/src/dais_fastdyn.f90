@@ -1,12 +1,14 @@
 !=================================================================================
 !  Subroutines to run DAIS:
 !  simple model for Antarctic ice-sheet radius/volume [m sle] (Schaffer 2014)
+!   Original coded by Alexander Bakker
+!   WAIS/fast dynamics added by Tony Wong
 !======================================================================================
 !
 ! Private parameters/variables globally used within module
 !
 !   tstep     time step
-!   
+!
 !   b0        Undisturbed bed height at the continent center [m]
 !   slope     Slope of ice sheet bed before loading [-]
 !   mu        Profile parameter for parabolic ice surface (related to ice stress) [m0.5]
@@ -31,6 +33,9 @@
 !   ro_i      Ice density [kg/m3]
 !   ro_m      Rock density [kg/m3]
 !   Aoc       Surface of the ocean [m2]
+!   Tcrit     Trigger temperature, at which disintegration occurs (deg C) (WAIS/fast dynamics parameter)
+!   lambda    disintegration rate (m/yr)
+!   Vmin      minimum volume, below which there is no more ice to disintegrate (m^3)
 !==============================================================================
 
 module dais
@@ -38,7 +43,7 @@ module dais
     USE global
     implicit none
     private
-    
+
 ! parameters:
     real(DP) :: tstep
 
@@ -53,7 +58,10 @@ module dais
     real(DP) :: f0
     real(DP) :: gamma
     real(DP) :: alpha
-    real(DP) :: Tf    
+    real(DP) :: Tf
+    real(DP) :: Tcrit
+    real(DP) :: lambda
+    real(DP) :: Vmin
 
     real(DP) :: Toc_0
     real(DP) :: Rad0
@@ -68,7 +76,7 @@ module dais
 ! variables
     real(DP) :: R       ! Radius ice sheet
     real(DP) :: V       ! Volume ice sheet
-        
+
 ! public subroutines
     public :: dais_step, init_dais
 
@@ -77,19 +85,20 @@ contains
 
 
 !------------------------------------------------------------------------------
-subroutine init_dais(time_step, parameters, SL, Rad, Vol)
+subroutine init_dais(time_step, parameters, SL, Rad, Vol, disint)
 !  =========================================================================
 ! |  Initialize the DAIS parameters and initial variables.                                   |
 !  =========================================================================
 
     real(DP), intent(IN) :: time_step
-    real(DP), dimension(20), intent(IN) :: parameters
+    real(DP), dimension(23), intent(IN) :: parameters
     real(DP), intent(IN)  :: SL
     real(DP), intent(OUT) :: Rad
     real(DP), intent(OUT) :: Vol
-    
+    real(DP), intent(OUT) :: disint
+
     real(DP) :: rc, rho_w, rho_i, rho_m
-    
+
 
 ! Assign values to model parameters
     tstep  = time_step
@@ -113,6 +122,9 @@ subroutine init_dais(time_step, parameters, SL, Rad, Vol)
     Aoc    = parameters(18)
     lf     = parameters(19)
     includes_dSLais = parameters(20)
+    Tcrit  = parameters(21)
+    lambda = parameters(22)
+    Vmin   = parameters(23)
 
 ! Initialize intermediate parameters
     del  = rho_w / rho_i
@@ -129,13 +141,14 @@ subroutine init_dais(time_step, parameters, SL, Rad, Vol)
 
     Rad = R
     Vol = V
-    
+    disint = 0.
+
 end subroutine init_dais
 !------------------------------------------------------------------------------
 
 
 !------------------------------------------------------------------------------
-subroutine dais_step(Ta, SL, Toc, dSL, Rad, Vol)
+subroutine dais_step(Ta, SL, Toc, dSL, Rad, Vol, disint)
 !  ==========================================================================
 ! | Calculate current state from previous state
 ! |
@@ -150,6 +163,7 @@ subroutine dais_step(Ta, SL, Toc, dSL, Rad, Vol)
 ! | Output:
 ! |       Rad:    Ice sheet's radius [m]
 ! |       Vol:    Ice sheet's volume [m3]
+! |       disint: Volume of disintegrated ice during this time step [m SLE]
 !  ==========================================================================
 
     implicit none
@@ -161,14 +175,16 @@ subroutine dais_step(Ta, SL, Toc, dSL, Rad, Vol)
 
     real(DP), intent(OUT) :: Rad
     real(DP), intent(OUT) :: Vol
-    
+    real(DP), intent(OUT) :: disint
+
     real(DP) :: hr, rc, P, beta
     real(DP) :: rR, Btot
     real(DP) :: mit, F, ISO
     real(DP) :: Hw, Speed
     real(DP) :: fac
     real(DP) :: c_iso
-    
+    real(DP) :: disint_rate
+
 ! Start model
     hr   = h0 + c * Ta        ! equation 5
     rc   = (b0 - SL)/slope    ! application of equation 1 (paragraph after eq3)
@@ -182,7 +198,7 @@ subroutine dais_step(Ta, SL, Toc, dSL, Rad, Vol)
       Btot = P * Pi * R**2 - &
         Pi * beta * (hr - b0 + slope*R) * (R*R - rR*rR) - &
         (4. * Pi * beta * mu**0.5 *   (R-rR)**2.5) / 5.  + &
-        (4. * Pi * beta * mu**0.5 * R*(R-rR)**1.5) / 3. 
+        (4. * Pi * beta * mu**0.5 * R*(R-rR)**1.5) / 3.
     else
       Btot = P * Pi*R**2
     end if
@@ -191,19 +207,19 @@ subroutine dais_step(Ta, SL, Toc, dSL, Rad, Vol)
     F   = 0.   ! no ice flux
     ISO = 0.   ! (third term equation 14) NAME?
     fac = Pi * (1.+eps1) * (4./3. * mu**0.5 * R**1.5 - slope*R**2) ! ratio dV/dR (eq 14)
-    
+
 ! In case there is a marine ice sheet / grounding line
     if(R > rc) then
       fac   = fac - ( 2.*pi*eps2 * (slope*R**2 - b0*R) ) ! correction fac (eq 14)
 
       Hw = slope*R - b0 + SL  ! equation 10
-      
+
   ! Ice speed at grounding line (equation 11)
       Speed = f0 * &
         ((1.-alpha) + alpha * ((Toc - Tf)/(Toc_0 - Tf))**2) * &
         (Hw**gamma) / ( (slope*Rad0 - b0)**(gamma-1.) )
       F     = 2.*Pi*R * del * Hw * Speed   ! equation 9
-      
+
       ! ISO term depends on dSL_tot (third term equation 14 !! NAME)
       c_iso = 2.*Pi*eps2* (slope*rc**2 - (b0/slope)*rc)
 
@@ -213,13 +229,25 @@ subroutine dais_step(Ta, SL, Toc, dSL, Rad, Vol)
          (1.-includes_dSLais) * ((1.-c_iso)/c_iso) * (dSL - lf * (Btot - F) / Aoc)  !dSL = dSL_nonAIS
     end if
 
+    ! WAIS/fast dynamics. If temperature is above the trigger temperature and there
+    ! is any ice volume left to disintegrate, disintegrate some
+
+!print *, Tcrit, lambda, V, Vmin
+
+!!    if((Ta > Tcrit) .and. (V > 18.0e15)) then
+    if(Ta > Tcrit) then
+      disint_rate = -lambda*(24.78e15)/57.
+    else
+      disint_rate = 0.
+    end if
+
     ! Ice sheet volume (equation 13)
-    R      = R + tstep*(Btot-F+ISO)/fac
-    V      = V + tstep*(Btot-F+ISO)
+    R      = R + tstep*(Btot-F+ISO+disint_rate)/fac
+    V      = V + tstep*(Btot-F+ISO+disint_rate)
 
     Rad = R
     Vol = V
-
+    disint = -disint_rate*tstep*57./24.78e15
 
 end subroutine dais_step
 !------------------------------------------------------------------------------

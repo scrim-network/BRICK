@@ -3,18 +3,23 @@
 # DAIS: Simple model for Antarctic ice-sheet volume [m sle] (Schaffer 2014)
 # ANTO: Simple scaling to estimate Antarctic ocean-surface temperatures from atmospheric
 #       Tg
+# dais_fastdyn: includes fast dynamics ice cliff response
 # =======================================================================================
 #
 #  Requires (input variables):
-#  - Ta        Antarctic mean surface temperature [degC] (or global temperature)
+#  - Tg        global mean surface temperature anomaly [deg C]
 #  - SL        Sea level [m]
 #  - dSL       Rate of sea-level change [m/yr] of either
 #              - all components (including AIS)        -> includes_dSLais = 1
 #              - all other components (excluding AIS)  -> includes_dSLais = 0
+#  - slope.Ta2Tg       slope of linear regression between Antarctic temperature and global surface temperature anomalies
+#  - intercept.Ta2Tg   intercept of this linear regression
+#                       (if slope and intercept are not provided, assumed to be Antarctic temperature already)
 #
 #  Simulates (output variables):
 #  - Rad       Ice sheet radius [m]
 #  - Vais      Volume of Antarctic ice sheet [m3]
+#  - Ta        Antarctic mean surface temperature [degC] (or global temperature)
 #  - Toc       High latitude ocean subsurface temperatures [degC] (calculated by ANTO)
 
 #  Internal variables:
@@ -35,6 +40,9 @@
 #  Parameters:
 #  - anto.a    Sensitivity Ta [degC/degC]
 #  - anto.b    Ta(Tg=0)
+#  - Tcrit     Trigger temperature, at which disintegration occurs (deg C) (WAIS/fast dynamics parameter)
+#  - lambda    disintegration rate (m/yr)
+#  - Vmin      minimum volume, below which there is no more ice to disintegrate (m^3)
 #  - b0        Undisturbed bed height at the continent center [m]
 #  - slope     Slope of ice sheet bed before loading [-]
 #  - mu        Profile parameter for parabolic ice sheet surface (related to ice stress) [m0.5]
@@ -51,7 +59,6 @@
 #  - includes_dSLais    logical that tells if < dSL > represents contribution of
 #              - all components (including AIS)        -> includes_dSLais = 1
 #              - all otherm components (excluding AIS) -> includes_dSLais = 0
-#  - lf         Mean AIS fingerprint at AIS shore
 #  - tstep     time step
 #
 #  Constants:
@@ -59,13 +66,12 @@
 #  - rho_w      (Sea) water density [kg/m3]
 #  - rho_i      Ice density [kg/m3]
 #  - rho_m      Rock density [kg/m3]
-#  - Aoc        Surface of the ocean [m2]
 # =======================================================================================
 
-source("../R/dais.R")
+source("../fortran/R/dais_fastdynF.R")
 source("../R/anto.R")
 
-daisanto <- function(
+daisanto_fastdynF <- function(
   tstep = 1,
   anto.a = 0.26,
   anto.b = 0.62,
@@ -80,6 +86,9 @@ daisanto <- function(
   f0    = 1.2,
   gamma = 2.5,
   alpha = 0.5,
+  Tcrit = -15.0,
+  lambda= 0.01,
+  Vmin  = 19e15,  # 18-20 million km^3
   Tf    = -1.8,
   rho_w  = 1030,
   rho_i  = 917,
@@ -91,10 +100,9 @@ daisanto <- function(
   includes_dSLais= 1,
   slope.Ta2Tg = 1,
   intercept.Ta2Tg = 0,
-  Tg,        # Antarctic mean surface temperature [degC]
-  SL,        # (global mean) sea level [m]
-  dSL) {
-
+  Tg,        # global mean surface temperature anomaly [deg C]
+  SL,
+  dSL=0){
 
   Toc <- anto(a=anto.a, b=anto.b, Tf=Tf, Tg=Tg)
 
@@ -104,33 +112,48 @@ daisanto <- function(
 
   Ta.recon = (Tg-intercept.Ta2Tg)/slope.Ta2Tg   # undo linear regression Tg ~ Ta
 
-  Contribution_AIS <- dais(
-    tstep  = tstep,
-    b0     = b0,
-    slope  = slope,
-    mu     = mu,
-    h0     = h0,
-    c      =  c,
-    P0     = P0,
-    kappa  = kappa,
-    nu     = nu,
-    f0     = f0,
-    gamma  = gamma,
-    alpha  = alpha,
-    Tf     = Tf,
-    rho_w  = rho_w,
-    rho_i  = rho_i,
-    rho_m  = rho_m,
-    Toc_0  = Toc_0,
-    Rad0   = Rad0,
-    Aoc   = Aoc,
-    lf    = lf,
-    includes_dSLais= includes_dSLais,
-    Ta     = Ta.recon,        # Antarctic mean surface temperature [degC]
-    SL     = SL,        # (global mean) sea level [m]
-    Toc    = Toc,        # High latitude ocean subsurface temperatures [degC]
-    dSL    = dSL)
+  # determine series length
+  ns <- length(Toc)
 
-return(Contribution_AIS)
+  parameters <- c(b0,
+                  slope,
+                  mu,
+                  h0,
+                  c,
+                  P0,
+                  kappa,
+                  nu,
+                  f0,
+                  gamma,
+                  alpha,
+                  Tf,
+                  rho_w,
+                  rho_i,
+                  rho_m,
+                  Toc_0,
+                  Rad0,
+                  Aoc,
+                  lf,
+                  includes_dSLais,
+                  Tcrit,
+                  lambda,
+                  Vmin)
 
+  # call fortran
+  f.output <- .Fortran("run_dais",
+                  ns                 = ns,
+                  tstep              = as.double(tstep),
+                  dais_parameters    = as.double(parameters),
+                  Ant_Temp           = as.double(Ta.recon),
+                  Ant_Sea_Level      = as.double(SL),
+                  Ant_Sur_Ocean_Temp = as.double(Toc),
+                  Ant_SL_rate        = as.double(dSL),
+                  AIS_Radius_out     = as.double(rep(-999.99,ns)),
+                  AIS_Volume_out     = as.double(rep(-999.99,ns)),
+                  AIS_disint_out     = as.double(rep(-999.99,ns))
+  )
+  Vsle = 57*(1-f.output$AIS_Volume_out/f.output$AIS_Volume_out[1]) #Takes steady state present day volume to correspond to 57m SLE
+  Vdisint = f.output$AIS_disint_out
+  ais.out=list(Vsle,Vdisint,f.output$AIS_Volume_out); names(ais.out)=c("Vais","Vdisint","Vm3")
+  return(ais.out)
 }

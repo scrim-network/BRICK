@@ -9,24 +9,6 @@
 ##
 ##	Questions? -- Tony Wong <twong@psu.edu
 ##==============================================================================
-## Copyright 2016 Tony Wong, Alexander Bakker
-## This file is part of BRICK (Building blocks for Relevant Ice and Climate
-## Knowledge). BRICK is free software: you can redistribute it and/or modify
-## it under the terms of the GNU General Public License as published by
-## the Free Software Foundation, either version 3 of the License, or
-## (at your option) any later version.
-##
-## BRICK is distributed in the hope that it will be useful,
-## but WITHOUT ANY WARRANTY; without even the implied warranty of
-## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-## GNU General Public License for more details.
-##
-## You should have received a copy of the GNU General Public License
-## along with BRICK.  If not, see <http://www.gnu.org/licenses/>.
-##==============================================================================
-
-#setwd('~/robustslr_new/calibration')
-
 rm(list=ls())												# Clear all previous variables
 
 ## Install packages/get libraries
@@ -52,13 +34,7 @@ source('../fortran/R/doeclimF.R')       # the DOECLIM model
 source('../fortran/R/GSIC_magiccF.R')   # the GSIC model
 source('../fortran/R/brick_te_F.R')     # TE (thermosteric expansion) model
 source('../fortran/R/simpleF.R')        # GIS (Greenland Ice Sheet) model
-source('../fortran/R/daisantoF.R')			# DAIS (Antarctic Ice Sheet) model
-
-## Source the R versions too, just in case
-source('../R/GSIC_magicc.R')					# the GSIC model
-source('../R/brick_te.R')							# TE (thermosteric expansion) model
-source('../R/simple.R')								# GIS (Greenland Ice Sheet) model
-source('../R/daisanto.R')							# DAIS (Antarctic Ice Sheet) model
+#source('../fortran/R/daisantoF.R')     # DAIS (Antarctic Ice Sheet) model
 
 ## Source some useful functions for manipulating data
 source('../R/forcing_total.R')					# function to add up the total forcing
@@ -91,17 +67,6 @@ ind.norm.data = data.frame(
 		c( "temp"              , "ocheat"            , "gsic"             , "gis"               , "te"                 , "ais"               , "sl"                ) ,
 		c(which(mod.time==1850),which(mod.time==1960),which(mod.time==1960),which(mod.time==1960),which(mod.time==1961),which(mod.time==1961),which(mod.time==1961)) ,
 		c(which(mod.time==1870),which(mod.time==1990),which(mod.time==1960),which(mod.time==1990),which(mod.time==1990),which(mod.time==1990),which(mod.time==1990)) )
-
-## Set the indices of the initial condition for each sub-model
-i0 = vector("list",nrow(ind.norm.data)); names(i0)=as.character(ind.norm.data[,1])
-
-## GSIC initial conditions are actually relative to 1990 (Wigley and Raper 2005)
-## Re-set these. The simulation is relative to 1990, but results and comparison
-## to data is relative to 1960.
-i0$gsic = which(mod.time==1990)
-
-## GIS initial conditions are relative to 1961-1990
-i0$gis = which(mod.time==1961)
 
 ##==============================================================================
 
@@ -142,18 +107,17 @@ require('DEoptim')
 library(DEoptim)
 source('../calibration/BRICK_DEoptim.R')
 p0.deoptim=p0													# initialize optimized initial parameters
-niter.deoptim=200								  		# number of iterations for DE optimization
+niter.deoptim=300								  		# number of iterations for DE optimization
 NP.deoptim=11*length(index.model)			# population size for DEoptim (do at least 10*[N parameters])
 F.deoptim=0.8													# as suggested by Storn et al (2006)
 CR.deoptim=0.9												# as suggested by Storn et al (2006)
 outDEoptim <- DEoptim(minimize_residuals_brick, bound.lower[index.model], bound.upper[index.model],
 				DEoptim.control(NP=NP.deoptim,itermax=niter.deoptim,F=F.deoptim,CR=CR.deoptim,trace=FALSE),
 				parnames.in=parnames[index.model], forcing.in=forcing        , l.project=l.project      ,
-				#slope.Ta2Tg.in=slope.Ta2Tg       , intercept.Ta2Tg.in=intercept.Ta2Tg,
+				slope.Ta2Tg.in=slope.Ta2Tg       , intercept.Ta2Tg.in=intercept.Ta2Tg,
 				ind.norm.data=ind.norm.data      , ind.norm.sl=ind.norm      , mod.time=mod.time        ,
 				oidx = oidx.all                  , midx = midx.all           , obs=obs.all              ,
-				obs.err = obs.err.all            , trends.te = trends.te     , luse.brick = luse.brick	,
-				i0 = i0
+				obs.err = obs.err.all            , trends.te = trends.te     , luse.brick = luse.brick
 				)
 p0.deoptim[index.model] = outDEoptim$optim$bestmem
 
@@ -167,8 +131,7 @@ brick.out = brick_model(parameters.in=p0.deoptim,
 												mod.time=mod.time,
 												ind.norm.data = ind.norm.data,
 												ind.norm.sl = ind.norm,
-												luse.brick = luse.brick,
-												i0 = i0
+												luse.brick = luse.brick
 												)
 
 par(mfrow=c(3,2))
@@ -195,32 +158,25 @@ lines(brick.out$doeclim.out$time[midx.sl], brick.out$slr.out[midx.sl], col="purp
 ## in the GIS residuals. The sigma.simple parameter also was trouble, but not
 ## anymore (if convergence issues arise, this might be why).
 
+## If rho/sigma.simple.fixed = NULL, then will be calibrated
+resid = brick.out$simple.out$sle.gis[midx.gis] - obs.gis[oidx.gis]
+ac = acf(resid, lag.max=5, plot=FALSE, main="")
 sigma.simple.fixed = NULL
 rho.simple.fixed   = NULL
-
-## Read an old rho.simple.fixed?
-if(TRUE){
-	rho.simple.fixed = as.numeric(read.csv('../output_calibration/rho_simple_fixed_01Nov2016.csv'))
-} else {
-	## If rho/sigma.simple.fixed = NULL, then will be calibrated
-	resid = brick.out$simple.out$sle.gis[midx.gis] - obs.gis[oidx.gis]
-	ac = acf(resid, lag.max=5, plot=FALSE, main="")
-
-	## If not in the declared parameter names, then fix the estimate of the
-	## AR(1) process sqrt(variance) and autocorrelation
-	if(is.na(match("sigma.simple",parnames))) sigma.simple.fixed = sd(resid)
-	if(is.na(match("rho.simple",parnames)))   rho.simple.fixed = ac$acf[2]
-
-	## rho.simple.fixed should be somewhere around 0.85-0.90
-	## Fix it at a value you decide. Model results are insensitive to this choice,
-	## provided it is realistic (between 0.85 and 1). Write to a file.
-
-	today=Sys.Date(); today=format(today,format="%d%b%Y")
-	filename=paste('../output_calibration/rho_simple_fixed_',today,'.csv', sep="")
-	write.table(rho.simple.fixed, file=filename, sep=",", qmethod="double", row.names=FALSE)
-}
+## If not in the declared parameter names, then fix the estimate of the
+## AR(1) process sqrt(variance) and autocorrelation
+if(is.na(match("sigma.simple",parnames))) sigma.simple.fixed = sd(resid)
+if(is.na(match("rho.simple",parnames)))   rho.simple.fixed = ac$acf[2]
 
 print(paste('rho.simple.fixed=',rho.simple.fixed))
+
+## rho.simple.fixed should be somewhere around 0.85-0.90
+## Fix it at a value you decide. Model results are insensitive to this choice,
+## provided it is realistic (between 0.85 and 1). Write to a file.
+
+today=Sys.Date(); today=format(today,format="%d%b%Y")
+filename=paste('../output_calibration/rho_simple_fixed_',today,'.csv', sep="")
+write.table(rho.simple.fixed, file=filename, sep=",", qmethod="double", row.names=FALSE)
 
 ##==============================================================================
 ## Establish a gamma prior for drawing 1/tau.
@@ -308,8 +264,8 @@ amcmc.out1 = MCMC(log.post, niter.mcmc, p0.deoptim, scale=step.mcmc, adapt=TRUE,
 									oidx = oidx.all                , midx = midx.all            , obs=obs.all                       ,
 									obs.err = obs.err.all          , trends.te = trends.te      , bound.lower.in=bound.lower        ,
 									bound.upper.in=bound.upper     , shape.in=shape.invtau      , scale.in=scale.invtau             ,
-									rho.simple.in=rho.simple.fixed , sigma.simple.in=sigma.simple.fixed, luse.brick=luse.brick			,
-									i0=i0
+									rho.simple.in=rho.simple.fixed , sigma.simple.in=sigma.simple.fixed,
+									luse.brick=luse.brick
 									)
 t.end=proc.time()											# save timing
 chain1 = amcmc.out1$samples
@@ -325,8 +281,8 @@ amcmc.extend1 = MCMC.add.samples(amcmc.out1, niter.mcmc,
 									oidx = oidx.all                , midx = midx.all            , obs=obs.all                       ,
 									obs.err = obs.err.all          , trends.te = trends.te      , bound.lower.in=bound.lower        ,
 									bound.upper.in=bound.upper     , shape.in=shape.invtau      , scale.in=scale.invtau             ,
-									rho.simple.in=rho.simple.fixed , sigma.simple.in=sigma.simple.fixed, luse.brick=luse.brick			,
-									i0=i0
+									rho.simple.in=rho.simple.fixed , sigma.simple.in=sigma.simple.fixed,
+									luse.brick=luse.brick
 									)
 t.end=proc.time()
 chain1 = amcmc.extend1$samples
@@ -345,8 +301,8 @@ amcmc.par1 = MCMC.parallel(log.post, niter.mcmc, p0.deoptim, n.chain=4, n.cpu=4,
 									oidx = oidx.all                , midx = midx.all            , obs=obs.all                       ,
 									obs.err = obs.err.all          , trends.te = trends.te      , bound.lower.in=bound.lower        ,
 									bound.upper.in=bound.upper     , shape.in=shape.invtau      , scale.in=scale.invtau             ,
-									rho.simple.in=rho.simple.fixed , sigma.simple.in=sigma.simple.fixed, luse.brick=luse.brick			,
-									i0=i0
+									rho.simple.in=rho.simple.fixed , sigma.simple.in=sigma.simple.fixed,
+									luse.brick=luse.brick
 									)
 t.end=proc.time()											# save timing
 chain1=amcmc.par1[[1]]$samples
@@ -355,15 +311,24 @@ chain3=amcmc.par1[[3]]$samples
 chain4=amcmc.par1[[4]]$samples
 }
 
+## Extend and run more MCMC samples from parallel? (note: extension is not in parallel)
+if(FALSE){
+t.beg=proc.time()
+amcmc.extend1 = MCMC.add.samples(amcmc.par1, niter.mcmc,
+									parnames.in=parnames, bound.lower.in=bound.lower, bound.upper.in=bound.upper,
+									l.project=l.project, shape.in=shape.invtau, scale.in=scale.invtau,
+									rho.simple.in=rho.simple.fixed, sigma.simple.in=sigma.simple.fixed)	# use Robust Adaptive MCMC (RAM)
+t.end=proc.time()
+chain1=amcmc.extend1[[1]]$samples
+chain2=amcmc.extend1[[2]]$samples
+}
+
 ##==============================================================================
 
-## Diagnostic plots
-if(FALSE) {
-## Check #1: History plots
+## History plots (diagnostic)
 par(mfrow=c(5,5))
 for (pp in 1:length(parnames)) {
 	plot(chain1[,pp], type="l", ylab=parnames[pp], xlab="Number of Runs", main="")
-}
 }
 
 ##==============================================================================
@@ -396,7 +361,6 @@ for (i in 1:length(niter.test)){
 plot(niter.test,gr.stat)
 
 ## GR statistic gets and stays below 1.1 by iteration ...? (set this to n.burnin)
-##	Wong et al 2016 -- n.min = 2e5, but discard entire first half of chain
 n.burnin = 5e5
 n.sample = nrow(chain1)-n.burnin
 parameters1=chain1[(n.burnin+1):nrow(chain1),]
@@ -412,7 +376,7 @@ for (pp in 1:length(parnames)) {
 	hist(parameters.posterior[,pp], xlab=parnames[pp], main='')
 }
 
-## Write the calibrated parameters file (netCDF version)
+## Write the calibrated parameters file (netCDF)
 
 ## Get maximum length of parameter name, for width of array to write to netcdf
 ## this code will write an n.parameters (rows) x n.ensemble (columns) netcdf file
@@ -420,9 +384,9 @@ for (pp in 1:length(parnames)) {
 lmax=0
 for (i in 1:length(parnames)){lmax=max(lmax,nchar(parnames[i]))}
 
-## Name the output file
+## Name the file
 today=Sys.Date(); today=format(today,format="%d%b%Y")
-filename.parameters = paste('../output_calibration/BRICK-model_calibratedParameters_control_',today,'.nc',sep="")
+filename.parameters = paste('../output_calibration/BRICK_calibratedParameters_',today,'.nc',sep="")
 
 library(ncdf4)
 dim.parameters <- ncdim_def('n.parameters', '', 1:ncol(parameters.posterior), unlim=FALSE)

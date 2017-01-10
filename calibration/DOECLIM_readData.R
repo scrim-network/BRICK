@@ -10,6 +10,12 @@
 #		+ surface temperature, HadCRUT4 global means (1850-2012), Morice et al (2012)
 #		+ ocean heat, 0-3000 m (1953-1996), Gouretski and Koltermann (2007)
 #
+# THIS CODE IS PROVIDED AS-IS WITH NO WARRANTY (NEITHER EXPLICIT
+# NOR IMPLICIT).  I SHARE THIS CODE IN HOPES THAT IT IS USEFUL,
+# BUT I AM NOT LIABLE FOR THE BEHAVIOR OF THIS CODE IN YOUR OWN
+# APPLICATION.  YOU ARE FREE TO SHARE THIS CODE SO LONG AS THE
+# AUTHOR(S) AND VERSION HISTORY REMAIN INTACT.
+#
 #   -NOTE: This file contains data that is sourced into the other programs. Information
 #       regarding this data can be found below:
 #
@@ -24,21 +30,6 @@
 #       -Anomalies with respect to the 20th century average
 #       -http://www.ncdc.noaa.gov/cag/time-series/global
 #
-##==============================================================================
-## Copyright 2016 Tony Wong, Alexander Bakker
-## This file is part of BRICK (Building blocks for Relevant Ice and Climate
-## Knowledge). BRICK is free software: you can redistribute it and/or modify
-## it under the terms of the GNU General Public License as published by
-## the Free Software Foundation, either version 3 of the License, or
-## (at your option) any later version.
-##
-## BRICK is distributed in the hope that it will be useful,
-## but WITHOUT ANY WARRANTY; without even the implied warranty of
-## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-## GNU General Public License for more details.
-##
-## You should have received a copy of the GNU General Public License
-## along with BRICK.  If not, see <http://www.gnu.org/licenses/>.
 ##==============================================================================
 
 # HADCRUT4 annual global mean surface temperature

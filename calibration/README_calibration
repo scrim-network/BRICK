@@ -1,0 +1,109 @@
+================================================================================
+README_calibration
+================================================================================
+
+To obtain calibrated (MCMC) model parameters for the coupled BRICK model (except
+for DAIS), the following routines are required:
+
+in /calibration/
+  BRICK_calib_driver.R        Driver script for the MCMC calibration. This file
+                              includes definition of which sub-models to include.
+  BRICK_parameterSetup.R      Script to set up the parameter names, default values,
+                              and upper/lower prior bounds. Also sets up the
+                              indices for model/statistical parameters.
+  BRICK_DEoptim.R             Script defining a residual-minimizing metric for
+                              using the differential evolution optimization
+                              algorithm to obtain a better initial parameter
+                              choice, which will speed up the MCMC convergence.
+  BRICK_assimLikelihood.R     likelihood functions for MCMC
+  DOECLIM_readData.R          script to read the temperature and ocean heat
+                              uptake data for calibrating DOECLIM
+  GSIC_readData.R             script to read the glaciers and small ice caps data
+  SIMPLE_readData.R           read the Greenland surface mass balance data
+  TE_readData.R               read global mean sea level data and thermosteric
+                              sea-level rise trends for calibrating TE model
+
+in /R/
+  forcing_total.R             fucntion to add up the total radiative forcing
+                              (This was formerly part of DOECLIM but has been
+                              separated for transparency and to make the DOECLIM
+                              version in BRICK coded analogously to the other
+                              physical models.)
+  compute_indices.R           function to calculate which indices within the
+                              model output and observational data vectors
+                              correspond to the same times, for comparison
+  BRICK_coupledModel.R        the coupled BRICK model, running each sub-model
+                              subsequently
+  brick_te.R                  model for sea-level rise due to thermosteric expansion
+  GSIC_magicc.R               model for sea-level rise due to glaciers and small ice caps
+  simple.R                    model for sea-level rise due to the Greenland ice
+                              sheet surface mass (im)balance
+
+in /fortran/                  (see /fortran/README for more information)
+  doeclim.so                  dynamic library required to run the Fortran version
+                              of the DOECLIM physical model
+  gsic_magicc.so              dynamic library for GSIC-MAGICC physical model
+  brick_te.so                 dynamic library for the thermosteric expansion model
+  simple.so                   dynamic library for the Greenland ice sheet model
+  /R/doeclimF.R               R wrapper function for the Fortran DOECLIM model
+  /R/GSIC_magiccF.R           R wrapper function for the Fortran GSIC-MAGICC model
+  /R/brick_te_F.R             R wrapper function for the Fortran TE model
+  /R/simpleF.R                R wrapper function for the Fortran SIMPLE model
+
+in /data/
+  forcing_hindcast.csv
+
+
+See the README file in the /data/ directory for an overview of the various
+sources of calibration and forcing data.
+
+Following the commands in BRICK_calib_driver.R will result in calibrated model
+parameters, written by default into a file
+
+  ../output_calibration/BRICK_calibratedParameters_[date-stamp].nc
+
+Each row is a different concomitant parameter set for the sub-models. Each
+column is a different model parameter.
+
+See README_calibration_DAIS for a description of how the DAIS model is
+calibrated (using the same RAM-MCMC approach as here), leading up to creation
+of the DAIS calibrated parameters file
+
+  ../output_calibration/DAISfastdyn_calibratedParameters_[uniform/gamma]_[date-stamp].nc
+
+================================================================================
+A couple notes about the calibration:
+  * The calibration method is a robust adaptive Markov chain Monte Carlo
+    algorithm (RAM-MCMC), and is described well in Vihola (2012),
+    doi:10.1007/s11222-011-9269-5.
+  * Getting about 500,000 iterations is typically enough. This requires ~20 minutes
+    on a typical modern multi-core laptop computer, and can be run in parallel
+    with minimum overhead cost for parallelization onto multiple physical cores,
+    and slightly more overhead cost for parallelization onto multiple threads
+    within a core.
+  * To check how many physical cores your machine has, run in R:
+      detectCores(logical=FALSE)
+  * To check how many logical cores (accounts for multi-threading), run:
+      detectCores(logical=TRUE)
+  * It is safe to assume that for ~100,000 or more (reasonable MCMC lengths)
+    iterations, it is worth it to run parallel chains. This provides:
+      (1) additional posterior samples at little additional computational cost
+      (2) more robust Gelman and Rubin convergence statistics (for when
+          inter-chain variability ~ intra-chain variability)
+    but unfortunately you do not get a progress bar, and adding samples to a
+    parallel MCMC object cannot be done in parallel. So estimate how many samples
+    you will need and how long it will take ahead of time.
+
+
+  * To re-create the results of Wong et al (2016), run BRICK_calib_driver.R with:
+	- niter.mcmc=1e6
+	- MCMC.parallel(…) command with n.cpu=4
+	- burnin=5e5
+	- Make sure the invtau.te prior distribution parameters are the same
+	  as in the paper (about 1.81 and 0.0025)
+
+================================================================================
+Questions? Tony Wong (twong@psu.edu)
+================================================================================
+End
+================================================================================

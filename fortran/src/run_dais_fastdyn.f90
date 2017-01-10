@@ -6,7 +6,7 @@
 subroutine run_dais(ns, tstep, dais_parameters,                   &
                                Ant_Temp,           Ant_Sea_Level, &
                                Ant_Sur_Ocean_Temp, Ant_SL_rate,   &
-                               AIS_Radius_out,     AIS_Volume_out)
+                               AIS_Radius_out,     AIS_Volume_out, AIS_disint_out)
 !  ===============================================================================
 ! | Inputs:
 ! |    Variables:
@@ -48,6 +48,7 @@ subroutine run_dais(ns, tstep, dais_parameters,                   &
 ! | Outputs:
 ! |     Rad       Radius Antarctic ice sheet [m]
 ! |     Vais      Volume Antarctic ice sheet [m sle]
+! |     disint    Volume of disintegrated ice, due to fast dynamics [m sle]
 !  =========================================================================
 
     USE global
@@ -59,7 +60,7 @@ subroutine run_dais(ns, tstep, dais_parameters,                   &
 
 ! parameters
     real(DP),     intent(IN) :: tstep
-    real(DP), dimension(20), intent(IN) :: dais_parameters
+    real(DP), dimension(23), intent(IN) :: dais_parameters
 
 ! input variables
     real(DP), dimension(ns), intent(IN) :: Ant_Temp
@@ -67,26 +68,28 @@ subroutine run_dais(ns, tstep, dais_parameters,                   &
     real(DP), dimension(ns), intent(IN) :: Ant_Sur_Ocean_Temp
     real(DP), dimension(ns), intent(IN) :: Ant_SL_rate
 
-! output variables    
+! output variables
     real(DP), dimension(ns), intent(OUT) :: AIS_Radius_out
     real(DP), dimension(ns), intent(OUT) :: AIS_Volume_out
+    real(DP), dimension(ns), intent(OUT) :: AIS_disint_out
 
     integer(i4b) :: i ! time step counter
-    
+
 
 ! Initialize dais (parameters and initial variable values)
     i = 1
     call init_dais(tstep, dais_parameters, Ant_Sea_Level(i), &
-                   AIS_Radius_out(i), AIS_Volume_out(i) )
-                                  
+                   AIS_Radius_out(i), AIS_Volume_out(i), AIS_disint_out(i) )
+
 ! estimate outputs
     do i=2,ns
-    
+
         ! global sea level rise (Note, timestep sl_rate should be i rather than i-1)
         call dais_step(Ant_Temp(i-1), Ant_Sea_Level(i-1), &
                        Ant_Sur_Ocean_Temp(i-1), Ant_SL_rate(i), &
-                       AIS_Radius_out(i), AIS_Volume_out(i) )
-                        
+                       AIS_Radius_out(i), AIS_Volume_out(i), AIS_disint_out(i) )
+        AIS_disint_out(i) = AIS_disint_out(i)+AIS_disint_out(i-1)
+
     end do
 
     RETURN

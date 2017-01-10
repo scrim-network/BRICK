@@ -1,5 +1,5 @@
 ##==============================================================================
-## R Function: DAIS_assimLikelihood.R
+## R Function: DAISfastdyn_assimLikelihood.R
 ## -Antarctic Ice Sheet (AIS) model
 ##
 ## compute (log) likelihood for observations
@@ -47,21 +47,27 @@ log.lik = function( parameters.in,
   b0 =parameters.in[match("b0" ,parnames.in)]
   slope =parameters.in[match("slope" ,parnames.in)]
   var.dais =parameters.in[match("var.dais" ,parnames.in)]
+  Tcrit =parameters.in[match("Tcrit" ,parnames.in)]
+  lambda =parameters.in[match("lambda" ,parnames.in)]
 
-  dais.out = daisantoF(
-                       anto.a=anto.a, anto.b=anto.b,
-                       slope.Ta2Tg=slope.Ta2Tg.in, intercept.Ta2Tg=intercept.Ta2Tg.in,
-                       gamma=gamma  , alpha=alpha  ,
-                       mu=mu        , nu=nu        ,
-                       P0=P0        , kappa=kappa  ,
-                       f0=f0        , h0=h0        ,
-                       c=c          , b0=b0        ,
-                       slope=slope  ,
-                       Tg=Tg.in     ,
-                       SL=SL.in     , dSL=dSL.in)
+#  dais.out = dais_fastdynF(
+  dais.out = daisanto_fastdynF(
+                    anto.a=anto.a, anto.b=anto.b,
+                    gamma=gamma  , alpha=alpha  ,
+                    mu=mu        , nu=nu        ,
+                    P0=P0        , kappa=kappa  ,
+                    f0=f0        , h0=h0        ,
+                    c=c          , b0=b0        ,
+                    slope=slope  , SL=SL.in     ,
+                    dSL=dSL.in   , includes_dSLais=1,
+                    #Ta=Ta.in     , Toc=Toc.in   ,
+                    Tg=Tg.in      ,
+                    slope.Ta2Tg = slope.Ta2Tg,
+                    intercept.Ta2Tg = intercept.Ta2Tg,
+                    Tcrit=Tcrit   , lambda=lambda
+                    )
 
-  dais.out.norm = dais.out - mean(dais.out[ind.norm.in])
-
+  dais.out.norm = dais.out$Vais - mean(dais.out$Vais[ind.norm.in])
 
   llik0  = 0
 
@@ -72,7 +78,7 @@ log.lik = function( parameters.in,
   # because there will be noise around the trend in the first 20 years; don't want
   # to throw out the run because of a little noise.
 
-  resid.sl = ( SL.new-mean(SL.new[1:20]) ) - ( dais.out[midx.sl]-mean(dais.out[midx.sl[1:20]]) )
+  resid.sl = ( SL.new-mean(SL.new[1:20]) ) - ( dais.out$Vais[midx.sl]-mean(dais.out$Vais[midx.sl[1:20]]) )
 
   # Only admit runs which fit the Pliocene window, to 1-sigma
   resid.lig = abs(obs.in[1]+0-dais.out.norm[obs.step.in[1]])
@@ -105,35 +111,63 @@ if(!is.na(resid.lig)){
 
     # Calculate the likelihood. The observations are not correlated. They are independent
     llik0 = sum (dnorm(resid, mean=rep(0,length(resid)), sd = c(sqrt(var.dais + obs.err.in[1:4]^2), trends.err.in), log=TRUE))
+#    llik0 = sum (dnorm(resid, mean=rep(0,length(resid)), sd = c(sqrt(var.dais + obs.err.in[1:4]^2)), log=TRUE))
 
     llik = llik0 # assume residuals are independent
   } else {
     llik = -Inf
   }
 } else {
-  llik=-Inf
+llik=-Inf
 }
   llik
 }
 ##==============================================================================
 ## Log-prior
-log.pri = function(parameters.in, parnames.in, alpha.var.in, beta.var.in,
-                   bound.lower.in, bound.upper.in)
+log.pri = function( parameters.in,
+                    parnames.in,
+                    alpha.var.in,
+                    beta.var.in,
+                    shape.lambda=NULL,
+                    rate.lambda=NULL,
+                    shape.Tcrit=NULL,
+                    rate.Tcrit=NULL,
+                    bound.lower.in,
+                    bound.upper.in
+                    )
 {
 
+  ind.lambda = match("lambda",parnames.in)
   ind.var = match("var.dais",parnames.in)
   var.dais =parameters.in[ind.var]
+  lambda =parameters.in[match("lambda",parnames.in)]
+  Tcrit =parameters.in[match("Tcrit",parnames.in)]
 
   # var.dais has inverse gamma prior, so there is a lower bound at 0 but no
   # upper bound
-  in.range = all(parameters.in[1:(ind.var-1)] < bound.upper.in[1:(ind.var-1)]) &
-             all(parameters.in > bound.lower.in)
+  if(fd.priors=='u') {
+    in.range = all(parameters.in[1:(ind.var-1)] < bound.upper.in[1:(ind.var-1)]) &
+               all(parameters.in > bound.lower.in)
+  }
+  if(fd.priors=='g') {
+    in.range = all(parameters.in[1:(ind.lambda-1)] < bound.upper.in[1:(ind.lambda-1)]) &
+               all(parameters.in[1:(ind.lambda-1)] > bound.lower.in[1:(ind.lambda-1)]) &
+               all(parameters.in[ind.var] > bound.lower.in[ind.var]) &
+               all(parameters.in[ind.lambda] > 0) &
+               all(parameters.in[ind.lambda+1] < 0)
+  }
 
   var_pri = 0
+  lambda_pri = 0
+  Tcrit_pri = 0
 
   if(in.range) {
     var_pri = (-alpha.var.in - 1)*log(var.dais) + (-beta.var.in/var.dais)
-    lpri=0 + var_pri
+    if(fd.priors=='g') {
+      lambda_pri = dgamma(x=lambda, shape=shape.lambda, rate=rate.lambda, log=TRUE)
+      Tcrit_pri = dgamma(x=-Tcrit, shape=shape.Tcrit, rate=rate.Tcrit, log=TRUE)
+    }
+    lpri=0 + var_pri + lambda_pri + Tcrit_pri
   } else {
     lpri = -Inf
   }
@@ -151,6 +185,10 @@ log.post = function(parameters.in,
                     ind.norm.in,
                     alpha.var,
                     beta.var,
+                    shape.lambda=NULL,
+                    rate.lambda=NULL,
+                    shape.Tcrit=NULL,
+                    rate.Tcrit=NULL,
                     slope.Ta2Tg.in=1,
                     intercept.Ta2Tg.in=0,
                     Tg.in=NULL,
@@ -161,14 +199,15 @@ log.post = function(parameters.in,
 {
   lpri = log.pri(parameters.in , parnames.in=parnames.in,
                  alpha.var.in=alpha.var, beta.var.in=beta.var,
+                 shape.lambda=shape.lambda, rate.lambda=rate.lambda,
+                 shape.Tcrit=shape.Tcrit, rate.Tcrit=rate.Tcrit,
                  bound.lower.in=bound.lower.in, bound.upper.in=bound.upper.in )
   if(is.finite(lpri)) { # evaluate likelihood if nonzero prior probability
     lpost = log.lik( parameters.in=parameters.in  , parnames.in=parnames.in ,
                      obs.in=obs.in                , obs.err.in=obs.err.in   ,
                      obs.step.in=obs.step.in      , ind.trends.in=ind.trends.in ,
                      trends.ais.in=trends.ais.in  , trends.err.in = trends.err.in ,
-                     slope.Ta2Tg.in=slope.Ta2Tg.in, intercept.Ta2Tg.in=intercept.Ta2Tg.in,
-                     Tg.in=Tg.in                  ,
+                     slope.Ta2Tg.in=slope.Ta2Tg.in, intercept.Ta2Tg.in=intercept.Ta2Tg.in, Tg.in=Tg.in,
                      #Ta.in=Ta.in                  , Toc.in=Toc.in     ,
                      SL.in=SL.in                  , dSL.in=dSL.in     ,
                      ind.norm.in=ind.norm.in )  +  lpri

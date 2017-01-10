@@ -1,5 +1,5 @@
 # Define "all"
-all: dais.so simple.so brick_te.so gsic_magicc.so doeclim.so
+all: dais.so simple.so brick_te.so gsic_magicc.so doeclim.so dais_fastdyn.so
 
 # Fortran compiler:
 F90 = /usr/local/bin/gfortran # g95
@@ -38,6 +38,9 @@ gsic_magicc.so: $(OP)/global.o $(OP)/gsic_magicc.o $(OP)/run_gsic_magicc.o
 doeclim.so: $(OP)/global.o $(OP)/doeclim.o $(OP)/run_doeclim.o
 	$(F90) -o $@ $(Flags) -shared $(Incl) $^
 
+dais_fastdyn.so: $(OP)/global.o $(OP)/dais_fastdyn.o $(OP)/run_dais_fastdyn.o
+	$(F90) -o $@ $(Flags) -shared $(Incl) $^
+
 # ==============================================================
 ## Main Object files ##
 # ==============================================================
@@ -55,6 +58,13 @@ $(OP)/run_dais.o: $(OP)/global.o $(OP)/dais.o $(SP)/run_dais.f90
 
 $(OP)/dais.o: $(OP)/global.o $(SP)/dais.f90
 	$(F90) -c $(Flags) $(Incl) $(SP)/dais.f90 -o $@
+
+## DAIS, with fast dynamics emulator ##
+$(OP)/run_dais_fastdyn.o: $(OP)/global.o $(OP)/dais.o $(SP)/run_dais_fastdyn.f90
+	$(F90) -c $(Flags) $(Incl) $(SP)/run_dais_fastdyn.f90 -o $@
+
+$(OP)/dais_fastdyn.o: $(OP)/global.o $(SP)/dais_fastdyn.f90
+	$(F90) -c $(Flags) $(Incl) $(SP)/dais_fastdyn.f90 -o $@
 
 ## SIMPLE ##
 $(OP)/run_simple.o: $(OP)/global.o $(OP)/simple.o $(SP)/run_simple.f90

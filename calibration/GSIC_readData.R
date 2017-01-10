@@ -1,11 +1,16 @@
 ##==============================================================================
 #
-#  -original file = "Read_GSIC_data.R"   Code written July 3, 2014
+#  -file = "Read_GSIC_data.R"   Code written July 3, 2014
 #  - Author: Kelsey Ruckert (klr324@psu.edu)
-#  - Modified by: Tony Wong (twong@psu.edu) (June 2016)
 #
 #  -This program loads in temperature and Glacier & Small Ice Caps (GSIC) data for use in model
 #       and uncertainty calculations.
+#
+# THIS CODE IS PROVIDED AS-IS WITH NO WARRANTY (NEITHER EXPLICIT
+# NOR IMPLICIT).  I SHARE THIS CODE IN HOPES THAT IT IS USEFUL,
+# BUT I AM NOT LIABLE FOR THE BEHAVIOR OF THIS CODE IN YOUR OWN
+# APPLICATION.  YOU ARE FREE TO SHARE THIS CODE SO LONG AS THE
+# AUTHOR(S) AND VERSION HISTORY REMAIN INTACT.
 #
 #   -NOTE: This file contains data that is sourced into the other programs. Information
 #       regarding this data can be found below:
@@ -15,21 +20,6 @@
 #       -Institute of Arctic and Alpine Research University of Colorado
 #       -updated version - Occasional Paper No. 58 (2005)
 #
-##==============================================================================
-## Copyright 2016 Tony Wong, Alexander Bakker
-## This file is part of BRICK (Building blocks for Relevant Ice and Climate
-## Knowledge). BRICK is free software: you can redistribute it and/or modify
-## it under the terms of the GNU General Public License as published by
-## the Free Software Foundation, either version 3 of the License, or
-## (at your option) any later version.
-##
-## BRICK is distributed in the hope that it will be useful,
-## but WITHOUT ANY WARRANTY; without even the implied warranty of
-## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-## GNU General Public License for more details.
-##
-## You should have received a copy of the GNU General Public License
-## along with BRICK.  If not, see <http://www.gnu.org/licenses/>.
 ##==============================================================================
 
 ## Historical global mean sea level contribution from Glacier and Small Ice Cap melt

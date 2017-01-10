@@ -1,0 +1,13 @@
+This directory is reserved for the R interfaces between the R driver code and
+the physical models coded in Fortran.
+
+The doeclimF.R model is the supported version of Fortran DOECLIM called from R.
+It has had the "total_forcing" function, which applies the "alpha.doeclim"
+aerosol scaling parameter (essentially uncertainty in the forcing data) to the
+radiative forcing, and adds it all up. This function is now "forcing_total.R" in
+the /AISfastdynamics/R directory with the rest of the R models.
+
+The doeclim_classic.R model is the older version, with the "forcing_total"
+function still intact as part of the doeclim model.
+
+Questions? Tony Wong (twong@psu.edu)
