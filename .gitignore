@@ -1,0 +1,12 @@
+lobj/
+*.so
+*.dll
+.Rhistory
+*.RData
+*.mod
+output/
+output_calibration/
+output_model/
+*.o
+*/obj
+*.zip

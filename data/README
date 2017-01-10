@@ -1,0 +1,96 @@
+================================================================================
+README file describing the data sets included here, for the calibration or
+forcing of BRICK.
+================================================================================
+ Copyright 2016 Tony Wong, Alexander Bakker
+ This file is part of BRICK (Building blocks for Relevant Ice and Climate
+ Knowledge). BRICK is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ BRICK is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with BRICK.  If not, see <http://www.gnu.org/licenses/>.
+================================================================================
+
+forcing_rcp26.csv   Radiative forcing file for projections, using RCP 2.6
+forcing_rcp45.csv   Radiative forcing file for projections, using RCP 4.5
+forcing_rcp6.csv    Radiative forcing file for projections, using RCP 6
+forcing_rcp85.csv   Radiative forcing file for projections, using RCP 8.5
+                    These files are used to force DOECLIM.
+                    They come from the data available at
+                      http://www.pik-potsdam.de/~mmalte/rcps/
+    (accessed on: 28 July-1 Aug 2016)
+
+HadCRUT.4.4.0.0.annual_ns_avg.txt
+    HadCRUT4 lobal mean temperature anomaly data. Available at
+      http://www.metoffice.gov.uk/hadobs/hadcrut4/data/current/download.html
+      (this website also gives good explanation of what each column represents)
+    Citation
+      Morice, C. P., J. J. Kennedy, N. A. Rayner, and P. D. Jones (2012),
+      Quantifying uncertainties in global and regional temperature change using
+      an ensemble of observational estimates: The HadCRUT4 dataset,
+      J. Geophys. Res., 117, D08101, doi:10.1029/2011JD017187.
+    (accessed on: 15 July 2016)
+
+HadCRUT.4.4.0.0.annual_ns_avg_realisations (directory)
+    Contains the individual ensemble members, along with the uncertainty
+    estimates, which are important for calibration of DOECLIM.
+    (the same website as above also gives good explanation of what each column represents)
+    (accessed on: 27 July 2016)
+
+gouretski_ocean_heat_3000m.txt
+    Ocean heat uptake (units of 10^22 J), from
+      Gouretski, V., and K. P. Koltermann (2007), How much is the ocean really
+      warming? Geophys. Res. Lett., 34, L01610, doi:10.1029/2006GL027834.
+    (accessed on: 15 July 2016)
+
+GMSL_ChurchWhite2011_yr_2015.txt
+    Global mean sea level from Church and White (2011)
+    Extended to 2013 (by them), available at
+      http://www.cmar.csiro.au/sealevel/sl_data_cmar.html
+    Citation
+      Church, J.A. & White, N.J. Surv Geophys (2011) 32: 585.
+      doi:10.1007/s10712-011-9119-1
+    (accessed on: 15 July 2016)
+
+future_GSL.txt    reconstructed/projected sea level rises (basically diff(SL))
+future_SL.txt     reconstructed/projected sea levels (includes Church and White, 2011)
+future_TA.txt     reconstructed/projected Antarctic sea-level temperatures,
+                  derived from global average surface temperature anomalies
+                  (if you plot against HadCRUT4 data, disturbingly good fit)
+future_TO.txt     reconstructed/projected Antarctic (high-latitude) ocean
+                  subsurface temperatures (also derived from surface temperature
+                  anomalies)
+    These files are all from Shaffer (2014)
+      Shaffer, G.: Formulation, calibration and validation of the DAIS model
+      (version 1), a simple Antarctic ice sheet model sensitive to variations of
+      sea level and ocean subsurface temperature, Geosci. Model Dev., 7,
+      1803-1818, doi:10.5194/gmd-7-1803-2014, 2014.
+    (accessed on: 15 July 2016)
+
+NOAA_IPCC_RCPtempsscenarios.csv
+    RCP temperature data, used in original GSIC-MAGICC calibration instead of
+    calibrating DOECLIM as well
+    (accessed on: 15 July 2016)
+
+GSICobservations_UPDATED.csv
+    Glacier & Small Ice Caps (GSIC) Data from National Snow & Ice Data Center (NSIDC)
+      http://nsidc.org/forms/G10002_or.html?major_version=1
+    Institute of Arctic and Alpine Research University of Colorado
+    (updated version - Occasional Paper No. 58 (2005))
+    (accessed on: 15 July 2016)
+
+Greenland_OBS_MAR_InSAR_updated
+    Greenland Ice Sheet (GIS) mass balance data. From
+      Sasgen, Ingo, et al. "Timing and origin of recent regional ice-mass loss
+      in Greenland." Earth and Planetary Science Letters 333 (2012): 293-303.
+      doi:10.1016/j.epsl.2012.03.033
+    (accessed on: 15 July 2016)
+
+Questions? Tony Wong (twong@psu.edu)
