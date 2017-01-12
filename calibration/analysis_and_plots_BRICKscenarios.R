@@ -84,6 +84,7 @@ loss = vector("list",3); names(loss)=scen.rcp
 investment = vector("list",3); names(investment)=scen.rcp
 preturn = vector("list",3); names(preturn)=scen.rcp
 lsl = vector("list",3); names(lsl)=scen.rcp
+init = vector("list",3); names(init)=scen.rcp
 
 # second level are AIS fast dynamics scenarios
 scen.ais = c('none','gamma','uniform')
@@ -94,6 +95,7 @@ for (rcp in scen.rcp) {
   investment[[rcp]] = vector("list",3); names(investment[[rcp]])=scen.ais
   preturn[[rcp]] = vector("list",3); names(preturn[[rcp]])=scen.ais
   lsl[[rcp]] = vector("list",3); names(lsl[[rcp]])=scen.ais
+  init[[rcp]] = vector("list",3); names(init[[rcp]])=scen.ais
 
 # third level are storm surge scenarios
   for (ais in scen.ais) {
@@ -445,16 +447,23 @@ library(zoo)
 
 # nodes for pdfs of sea-level rise, storm surge, and flood risk, and list
 # vectors for storing the density estimates for each scenario
-f.sealev <- lsl
-f.surlev <- lsl
-f.surge.rise <- lsl
-f.seasurlev <- lsl
-f.flood <- lsl
+f.sealev <- init
+f.surlev <- init
+cdf.sealev <- init
+cdf.surlev <- init
+sf.sealev <- init
+sf.surlev <- init
+f.surge.rise <- init
+f.seasurlev <- init
+f.flood <- init
+cdf.seasurlev <- init
+sf.seasurlev <- init
+lsl.norm <- init
 
 lsl.lower <- 0
-lsl.upper <- 10
+lsl.upper <- 15
 lsl.n <- 2^10 # powers of 2 are good for density estimation in R
-              # 2^10 = 1024 is first one greater than number of ensemble members
+              # 2^10 = 1024 ~ number of ensemble members
 
 flood.n <- lsl.n
 
@@ -473,26 +482,41 @@ nc_close(ncdata)
 
 ## initialize
 f.surge.stat <- vector("list",length(scen.rcp)); names(f.surge.stat) <- scen.rcp
+cdf.surge.stat <- vector("list",length(scen.rcp)); names(cdf.surge.stat) <- scen.rcp
+sf.surge.stat <- vector("list",length(scen.rcp)); names(sf.surge.stat) <- scen.rcp
 f.surge.avg <- vector("list",length(scen.rcp)); names(f.surge.avg) <- scen.rcp
 for (rcp in scen.rcp) {
   f.surge.stat[[rcp]] <- vector("list",length(scen.ais)); names(f.surge.stat[[rcp]]) <- scen.ais
+  cdf.surge.stat[[rcp]] <- vector("list",length(scen.ais)); names(cdf.surge.stat[[rcp]]) <- scen.ais
+  sf.surge.stat[[rcp]] <- vector("list",length(scen.ais)); names(sf.surge.stat[[rcp]]) <- scen.ais
   f.surge.avg[[rcp]] <- vector("list",length(scen.ais)); names(f.surge.avg[[rcp]]) <- scen.ais
   for (ais in scen.ais) {
     f.surlev[[rcp]][[ais]] <- vector("list",2); names(f.surlev[[rcp]][[ais]])=scen.ss
     f.seasurlev[[rcp]][[ais]] <- vector("list",2); names(f.seasurlev[[rcp]][[ais]])=scen.ss
     f.flood[[rcp]][[ais]] <- vector("list",2); names(f.flood[[rcp]][[ais]])=scen.ss
     f.surge.stat[[rcp]][[ais]] <- mat.or.vec(n.ensemble[[ais]],flood.n)
+    cdf.surge.stat[[rcp]][[ais]] <- mat.or.vec(n.ensemble[[ais]],flood.n)
+    sf.surge.stat[[rcp]][[ais]] <- mat.or.vec(n.ensemble[[ais]],flood.n)
   }
 }
+
+tmp <- density(x=lsl$rcp26$none, from=lsl.lower, to=lsl.upper, n=lsl.n)
+x.lsl <- tmp$x
+dx.lsl <- mean(diff(x.lsl))
 
 ## distribution of sea-level and storm surges
 iproj <- which(mod.time==2065)
 inorm <- which(mod.time==2015)
 for (rcp in scen.rcp) {
   for (ais in scen.ais) {
-    lsl[[rcp]][[ais]] <- lsl[[rcp]][[ais]][iproj,] - lsl[[rcp]][[ais]][inorm,]
-    f.sealev[[rcp]][[ais]] <- density(x=lsl[[rcp]][[ais]], from=lsl.lower, to=lsl.upper, n=lsl.n)
-    f.surge.rise[[rcp]][[ais]] <- density(x=lsl[[rcp]][[ais]]*surge.factor, from=lsl.lower, to=lsl.upper, n=lsl.n)
+    lsl.norm[[rcp]][[ais]] <- lsl[[rcp]][[ais]][iproj,] - lsl[[rcp]][[ais]][inorm,]
+    f.sealev[[rcp]][[ais]] <- density(x=lsl.norm[[rcp]][[ais]], from=lsl.lower, to=lsl.upper, n=lsl.n)
+    f.sealev[[rcp]][[ais]] <- f.sealev[[rcp]][[ais]]$y/sum(f.sealev[[rcp]][[ais]]$y*dx.lsl) # normalize
+    cdf.sealev[[rcp]][[ais]] <- cumsum(f.sealev[[rcp]][[ais]]*dx.lsl)
+    cdf.sealev[[rcp]][[ais]] <- cdf.sealev[[rcp]][[ais]]-cdf.sealev[[rcp]][[ais]][1] # normalize (beginning=0)
+    cdf.sealev[[rcp]][[ais]] <- cdf.sealev[[rcp]][[ais]]/cdf.sealev[[rcp]][[ais]][lsl.n] # normalize (end=1)
+    sf.sealev[[rcp]][[ais]] <- 1-cdf.sealev[[rcp]][[ais]]
+    f.surge.rise[[rcp]][[ais]] <- density(x=lsl.norm[[rcp]][[ais]]*surge.factor, from=lsl.lower, to=lsl.upper, n=lsl.n)
     # and initialize storm surge
     for (ss in scen.ss) {
       f.surlev[[rcp]][[ais]][[ss]] <- rep(NA, lsl.n)
@@ -500,8 +524,6 @@ for (rcp in scen.rcp) {
   }
 }
 
-x.lsl <- f.sealev$rcp85$none$x
-dx.lsl <- mean(diff(x.lsl))
 
 ## distribution of storm surge level
 ## convolution of surge.rise distribution + gev.stat distribution
@@ -519,9 +541,9 @@ for (rcp in scen.rcp) {
                                                         beta=gev.stat[i,'scale'],
                                                         log=FALSE))
       f.surge.stat[[rcp]][[ais]][i,] <- f.surge.stat[[rcp]][[ais]][i,]/sum( dx.lsl*f.surge.stat[[rcp]][[ais]][i,])
+      cdf.surge.stat[[rcp]][[ais]][i,] <- cumsum(f.surge.stat[[rcp]][[ais]][i,]*dx.lsl)
+      sf.surge.stat[[rcp]][[ais]][i,] <- 1-cdf.surge.stat[[rcp]][[ais]][i,]
     }
-
-# need to add an index for each ensemble member
 
     # one option: average the probabilities across all ensemble members, and re-normalize
     f.surge.avg[[rcp]][[ais]] <- apply(f.surge.stat[[rcp]][[ais]], 2, mean)
@@ -530,47 +552,51 @@ for (rcp in scen.rcp) {
     for (ss in scen.ss) {
       if(ss=='st') {
         f.surlev[[rcp]][[ais]][[ss]] <- f.surge.avg[[rcp]][[ais]]
-        f.seasurlev[[rcp]][[ais]][[ss]] <- convolve(x=f.surlev[[rcp]][[ais]][[ss]], y=rev(f.sealev[[rcp]][[ais]]$y))
-        f.seasurlev[[rcp]][[ais]][[ss]] <- f.seasurlev[[rcp]][[ais]][[ss]]/sum(dx.lsl*f.seasurlev[[rcp]][[ais]][[ss]])
+        f.surlev[[rcp]][[ais]][[ss]] <- f.surlev[[rcp]][[ais]][[ss]]/sum(f.surlev[[rcp]][[ais]][[ss]]*dx.lsl) # normalize
+        f.seasurlev[[rcp]][[ais]][[ss]] <- convolve(x=f.surlev[[rcp]][[ais]][[ss]], y=rev(f.sealev[[rcp]][[ais]]))
+        f.seasurlev[[rcp]][[ais]][[ss]] <- f.seasurlev[[rcp]][[ais]][[ss]]/sum(dx.lsl*f.seasurlev[[rcp]][[ais]][[ss]]) # normalize
       } else {
         f.surlev[[rcp]][[ais]][[ss]] <- convolve(x=f.surge.rise[[rcp]][[ais]]$y, y=rev(f.surge.avg[[rcp]][[ais]]))
-        f.surlev[[rcp]][[ais]][[ss]] <- f.surlev[[rcp]][[ais]][[ss]]/sum(dx.lsl*f.surlev[[rcp]][[ais]][[ss]])
-        f.seasurlev[[rcp]][[ais]][[ss]] <- convolve(x=f.surlev[[rcp]][[ais]][[ss]], y=rev(f.sealev[[rcp]][[ais]]$y))
-        f.seasurlev[[rcp]][[ais]][[ss]] <- f.seasurlev[[rcp]][[ais]][[ss]]/sum(dx.lsl*f.seasurlev[[rcp]][[ais]][[ss]])
+        f.surlev[[rcp]][[ais]][[ss]] <- f.surlev[[rcp]][[ais]][[ss]]/sum(dx.lsl*f.surlev[[rcp]][[ais]][[ss]]) # normalize
+        f.seasurlev[[rcp]][[ais]][[ss]] <- convolve(x=f.surlev[[rcp]][[ais]][[ss]], y=rev(f.sealev[[rcp]][[ais]]))
+        f.seasurlev[[rcp]][[ais]][[ss]] <- f.seasurlev[[rcp]][[ais]][[ss]]/sum(dx.lsl*f.seasurlev[[rcp]][[ais]][[ss]]) # normalize
       }
+      cdf.seasurlev[[rcp]][[ais]][[ss]] <- cumsum(f.seasurlev[[rcp]][[ais]][[ss]]*dx.lsl)
+      cdf.seasurlev[[rcp]][[ais]][[ss]] <- cdf.seasurlev[[rcp]][[ais]][[ss]]-cdf.seasurlev[[rcp]][[ais]][[ss]][1] # normalize (beginning=0)
+      cdf.seasurlev[[rcp]][[ais]][[ss]] <- cdf.seasurlev[[rcp]][[ais]][[ss]]/cdf.seasurlev[[rcp]][[ais]][[ss]][lsl.n] # normalize (end=1)
+      sf.seasurlev[[rcp]][[ais]][[ss]] <- 1-cdf.seasurlev[[rcp]][[ais]][[ss]]
+      cdf.surlev[[rcp]][[ais]][[ss]] <- cumsum(f.surlev[[rcp]][[ais]][[ss]]*dx.lsl)
+      cdf.surlev[[rcp]][[ais]][[ss]] <- cdf.surlev[[rcp]][[ais]][[ss]]-cdf.surlev[[rcp]][[ais]][[ss]][1] # normalize (beginning=0)
+      cdf.surlev[[rcp]][[ais]][[ss]] <- cdf.surlev[[rcp]][[ais]][[ss]]/cdf.surlev[[rcp]][[ais]][[ss]][lsl.n] # normalize (end=1)
+      sf.surlev[[rcp]][[ais]][[ss]] <- 1-cdf.surlev[[rcp]][[ais]][[ss]]
     }
   }
 }
 
+##==============================================================================
 
 
+
+
+
+##==============================================================================
+## FIGURES
+##==============================================================================
+
+
+
+
+
+
+##==============================================================================
+
+##=========     (column 1) pdfs of sea level rise and storm surge, all scenarios
+## FIGURE 1     (column 2) corresponding survival functions
 ##=========
-## FIGURE 1
-##=========
-rcp.best <- 'rcp26'; ais.best <- 'none'; ss.best <- 'st'
-rcp.worst <- 'rcp85'; ais.worst <- 'uniform'; ss.worst <- 'ns'
 
-pfail.best.prot <- 1/Ropt[[rcp.best]][[ais.best]][[ss.best]]
-pfail.worst.prot <- 1/Ropt[[rcp.worst]][[ais.worst]][[ss.worst]]
-pfail.best.noac <- 1/preturn[[rcp.best]][[ais.best]][[ss.best]][1,]
-pfail.worst.noac <- 1/preturn[[rcp.worst]][[ais.worst]][[ss.worst]][1,]
+pdf(paste(plotdir,'pdfs_slr-ss-risk.pdf',sep=''),width=8,height=8,colormodel='cmyk')
 
-pfail.low <- 0
-pfail.high <- 0.1
-pfail.n <- 2^8
-
-f.pfail.best.noac <- density(x=pfail.best.noac, from=pfail.low, to=pfail.high, n=pfail.n)
-f.pfail.worst.noac <- density(x=pfail.worst.noac, from=pfail.low, to=pfail.high, n=pfail.n)
-f.pfail.best.prot <- density(x=pfail.best.prot, from=pfail.low, to=pfail.high, n=pfail.n)
-f.pfail.worst.prot <- density(x=pfail.worst.prot, from=pfail.low, to=pfail.high, n=pfail.n)
-
-
-
-
-
-pdf(paste(plotdir,'pdfs_slr-ss-risk.pdf',sep=''),width=3.5,height=8,colormodel='cmyk')
-
-par(mfrow=c(3,1), mai=c(.5,.35,.05,.5))
+par(mfrow=c(2,2), mai=c(.5,.35,.05,.5))
 # (a) pdfs of local sea-level rise (2065)
 plot(x.lsl, f.sealev$rcp26$none$y, type='l', xlim=c(0,1.1), ylim=c(0,10), lwd=1.5,
      col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lty=1,
@@ -620,10 +646,175 @@ mtext(side=3, text=expression(bold('   b')), line=-1, cex=.9, adj=0);
 text(.53,3.7,"stationary", pos=4, cex=1.3)
 text(1.01,2.5,"non-stationary", pos=4, cex=1.3)
 
-#legend(0.7,4,c("stationary","all others: non-stationary\n (see panel (a) legend)"),
-#       lty=c(1,NA), lwd=2, cex=1.2,
-#       col=c(rgb(mycol[6,1],mycol[6,2],mycol[6,3]), NA),
-#       bty='n')
+# (c) survival functions of sea-level rise
+par(mai=c(.45,.35,.15,.5))
+# rcp2.6
+plot( x.lsl, log10(sf.sealev$rcp26$none), type='l', xlim=c(0,1), ylim=c(-3.2,0),
+      lty=1, col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lwd=1.5, xlab='', ylab='', xaxt='n', yaxt='n', xaxs='i', yaxs='i')
+lines(x.lsl, log10(sf.sealev$rcp26$gamma), type='l',
+      lty=2, col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lwd=1.5)
+lines(x.lsl, log10(sf.sealev$rcp26$uniform), type='l',
+      lty=3, col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lwd=1.5)
+# rcp4.5
+lines(x.lsl, log10(sf.sealev$rcp45$none), type='l',
+      lty=1, col=rgb(mycol[2,1],mycol[2,2],mycol[13,3]), lwd=1.5)
+lines(x.lsl, log10(sf.sealev$rcp45$gamma), type='l',
+      lty=2, col=rgb(mycol[2,1],mycol[2,2],mycol[13,3]), lwd=1.5)
+lines(x.lsl, log10(sf.sealev$rcp45$uniform), type='l',
+      lty=3, col=rgb(mycol[2,1],mycol[2,2],mycol[13,3]), lwd=1.5)
+# rcp8.5
+lines(x.lsl, log10(sf.sealev$rcp85$none), type='l',
+      lty=1, col=rgb(mycol[11,1],mycol[11,2],mycol[13,3]), lwd=1.5)
+lines(x.lsl, log10(sf.sealev$rcp85$gamma), type='l',
+      lty=2, col=rgb(mycol[11,1],mycol[11,2],mycol[13,3]), lwd=1.5)
+lines(x.lsl, log10(sf.sealev$rcp85$uniform), type='l',
+      lty=3, col=rgb(mycol[11,1],mycol[11,2],mycol[13,3]), lwd=1.5)
+# x-axis, ticks and text
+axis(1,seq(0,1,0.2),lab=c("0","0.2","0.4","0.6","0.8","1"))
+mtext('Projected sea level in 2065\nrelative to 2015 [m]', side=1, line=3);
+# y-axis, ticks and text
+axis(2, at=seq(-3,0), label=parse(text=paste("10^", seq(-3,0), sep="")), las=1)
+mtext('Survival function [1-CDF]', side = 2, line=2.6);
+# add a panel label
+mtext(side=3, text=expression(bold('   c')), line=-1.1, cex=.9, adj=0);
+# add the 1:100, 1:500, 1:1000 levels
+lines(c(-4,4),c(-2,-2),lty=2,col='black'); text(0.1,-1.85,"1:100 level")
+#lines(c(-4,4),c(-log10(500),-log10(500)),lty=2,col='black'); text(0.1,-2.55,"1:500 level");
+lines(c(-4,4),c(-3,-3),lty=2,col='black'); text(0.1,-2.85,"1:1000 level")
+
+# (d) survival functions of storm surge
+par(mai=c(.45,.35,.15,.5))
+# rcp2.6
+plot( x.lsl, log10(sf.surlev$rcp26$none$st), type='l', xlim=c(0,3), ylim=c(-2.2,0),
+      lty=1, col=rgb(mycol[6,1],mycol[6,2],mycol[6,3]), lwd=1.5, xlab='', ylab='', xaxt='n', yaxt='n', xaxs='i', yaxs='i')
+lines(x.lsl, log10(sf.surlev$rcp26$none$ns), type='l',
+      lty=1, col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lwd=1.5)
+lines(x.lsl, log10(sf.surlev$rcp26$gamma$ns), type='l',
+      lty=2, col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lwd=1.5)
+lines(x.lsl, log10(sf.surlev$rcp26$uniform$ns), type='l',
+      lty=3, col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lwd=1.5)
+# rcp4.5
+lines(x.lsl, log10(sf.surlev$rcp45$none$ns), type='l',
+      lty=1, col=rgb(mycol[2,1],mycol[2,2],mycol[13,3]), lwd=1.5)
+lines(x.lsl, log10(sf.surlev$rcp45$gamma$ns), type='l',
+      lty=2, col=rgb(mycol[2,1],mycol[2,2],mycol[13,3]), lwd=1.5)
+lines(x.lsl, log10(sf.surlev$rcp45$uniform$ns), type='l',
+      lty=3, col=rgb(mycol[2,1],mycol[2,2],mycol[13,3]), lwd=1.5)
+# rcp8.5
+lines(x.lsl, log10(sf.surlev$rcp85$none$ns), type='l',
+      lty=1, col=rgb(mycol[11,1],mycol[11,2],mycol[13,3]), lwd=1.5)
+lines(x.lsl, log10(sf.surlev$rcp85$gamma$ns), type='l',
+      lty=2, col=rgb(mycol[11,1],mycol[11,2],mycol[13,3]), lwd=1.5)
+lines(x.lsl, log10(sf.surlev$rcp85$uniform$ns), type='l',
+      lty=3, col=rgb(mycol[11,1],mycol[11,2],mycol[13,3]), lwd=1.5)
+# x-axis, ticks and text
+axis(1,seq(0,3,0.5),lab=c("0","0.5","1","1.5","2","2.5","3"))
+mtext('Projected surge level in 2065\nrelative to 2015 [m]', side=1, line=3);
+# y-axis, ticks and text
+axis(2, at=seq(-3,0), label=parse(text=paste("10^", seq(-3,0), sep="")), las=1)
+mtext('Survival function [1-CDF]', side = 2, line=2.6);
+# add a panel label
+mtext(side=3, text=expression(bold('   d')), line=-1.1, cex=.9, adj=0);
+# add the 1:100, 1:500, 1:1000 levels
+lines(c(-4,4),c(-2,-2),lty=2,col='black'); text(0.1,-1.85,"1:100 level")
+#lines(c(-4,4),c(-log10(500),-log10(500)),lty=2,col='black'); text(0.1,-2.55,"1:500 level");
+lines(c(-4,4),c(-3,-3),lty=2,col='black'); text(0.1,-2.85,"1:1000 level")
+
+
+# TODO
+# TODO
+# TODO -- check survival functions, redo with the MHHW tide gauge data
+# TODO
+# TODO
+
+##==============================================================================
+
+
+
+
+
+
+
+
+##==============================================================================
+
+##=========   (col 1, row 1) pdfs of total sea+storm level, all scenarios
+## FIGURE 2   (col 1, row 2) pdfs of return level at current protection
+##=========   (col 2) corresponding survival functions?
+
+# TODO
+# TODO -- add above the calculations needed to plot these thigns
+# TODO -- actually modify and create this plot
+# TODO
+# TODO
+
+
+##==============================================================================
+
+
+
+
+
+
+
+
+
+
+##==============================================================================
+
+##=========
+## FIGURE 3   box-whisker plots of return periods with no building.
+##=========   center all around 100-year, use log10-scale.
+
+# TODO
+# TODO -- add above the calculations needed to plot these thigns
+# TODO -- actually modify and create this plot
+# TODO
+# TODO
+
+
+##==============================================================================
+
+
+
+
+
+
+
+
+##==============================================================================
+##==============================================================================
+## end of main paper stuff. so far, nothing below this line is included AT ALL
+##==============================================================================
+##==============================================================================
+
+
+
+
+
+
+
+##==============================================================================
+##==============================================================================
+## Scrap/scratch work:
+
+
+rcp.best <- 'rcp26'; ais.best <- 'none'; ss.best <- 'st'
+rcp.worst <- 'rcp85'; ais.worst <- 'uniform'; ss.worst <- 'ns'
+
+pfail.best.prot <- 1/Ropt[[rcp.best]][[ais.best]][[ss.best]]
+pfail.worst.prot <- 1/Ropt[[rcp.worst]][[ais.worst]][[ss.worst]]
+pfail.best.noac <- 1/preturn[[rcp.best]][[ais.best]][[ss.best]][1,]
+pfail.worst.noac <- 1/preturn[[rcp.worst]][[ais.worst]][[ss.worst]][1,]
+
+pfail.low <- 0
+pfail.high <- 0.1
+pfail.n <- 2^8
+
+f.pfail.best.noac <- density(x=pfail.best.noac, from=pfail.low, to=pfail.high, n=pfail.n)
+f.pfail.worst.noac <- density(x=pfail.worst.noac, from=pfail.low, to=pfail.high, n=pfail.n)
+f.pfail.best.prot <- density(x=pfail.best.prot, from=pfail.low, to=pfail.high, n=pfail.n)
+f.pfail.worst.prot <- density(x=pfail.worst.prot, from=pfail.low, to=pfail.high, n=pfail.n)
 
 # (c) pdfs of flood risk (average annual exceedance probability)
 par(mai=c(.5,.35,.1,.5))
@@ -666,15 +857,7 @@ tmp <- 1/preturn[[rcp.tmp]][[ais.tmp]][[ss.tmp]][1,]; itmp <- which(tmp>0.01); t
 
 
 
-
-
-
-
-
-
-##=========
-## FIGURE 2
-##=========
+##==============================================================================
 
 pdf(paste(plotdir,'oneScen_EUM_best_vandantzig.pdf',sep=''),width=3.5,height=3.5,colormodel='cmyk')
 
@@ -705,19 +888,7 @@ axis(1,xlabels, cex.axis=1.)
 
 dev.off()
 
-##=========
-
-
-
-
-
-
-
-
-
-
-
-
+##==============================================================================
 
 ##=========
 ## FIGURE 3 (GOOD version, for rcp85.uniform.ns)
@@ -801,14 +972,7 @@ legend(-.05,9.2,c("best case","worst case"),
 
 dev.off()
 
-##=========
-
-
-
-
-
-
-
+##==============================================================================
 
 ##=========
 ## FIGURE 3 (version for rcp85.gamma.ns)
@@ -892,13 +1056,7 @@ legend(.1,9.2,c("best case","worst case"),
 
 dev.off()
 
-##=========
-
-
-
-
-
-
+##==============================================================================
 
 ##=========
 ## FIGURE 3 (version with return period)
@@ -934,14 +1092,7 @@ mtext('Return period [years]', side=3, line=2.3, cex=1);
 
 dev.off()
 
-##=========
-
-
-
-
-
-
-
+##==============================================================================
 
 ##=========
 ## FIGURE 3 (version with all scenarios)
@@ -982,22 +1133,6 @@ legend(2,6,c("RCP2.6","RCP4.5","RCP8.5"),
        bty='n')
 
 dev.off()
-
-##=========
-
-
-
-
-
-
-
-
-
-
-##==============================================================================
-##==============================================================================
-
-
 
 ##==============================================================================
 ##==============================================================================
@@ -1114,11 +1249,6 @@ write.csv(table.mean, "../output_model/scenarios_mean.csv")
 
 
 
-##==============================================================================
-##==============================================================================
-## end of main paper stuff. so far, nothing below this line is included AT ALL
-##==============================================================================
-##==============================================================================
 
 
 

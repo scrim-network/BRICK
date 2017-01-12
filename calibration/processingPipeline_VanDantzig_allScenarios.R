@@ -114,9 +114,9 @@ if(exists('filename.allslr')) {
     for (ais in c('gamma','uniform')) {
       slr[[rcp]][[ais]] <- slr[[rcp]][[ais]][,1:n.ens]
     }
-    slr[[rcp]]$none <- slr[[rcp]]$gamma
+    slr[[rcp]]$none <- slr.nofd[[rcp]]$gamma
     irnd <- sample(1:n.ens, floor(0.5*n.ens), replace=FALSE)
-    slr[[rcp]]$none[,irnd] <- slr[[rcp]]$uniform[,irnd]
+    slr[[rcp]]$none[,irnd] <- slr.nofd[[rcp]]$uniform[,irnd]
   }
 
   # write the ensembles to a file so you don't have ot do this again
