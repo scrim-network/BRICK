@@ -3,7 +3,7 @@
 # round up all of the yearly tide gauge files
 # They were accessed from https://tidesandcurrents.noaa.gov/waterlevels.html?id=8761724
 # on 11 Jan 2017.
-#
+# Then calculate MLE estimates of GEV parameters.
 # I accounted for leap years; every four years, the end date decreases by 1,
 # because the maximum number of days of data that can be downloaded per CSV
 # is 365.
@@ -42,6 +42,7 @@ data.all.sort$Water.Level <- data.all.sort$Water.Level*1000
 days.year <- 365.25 # number of days in a year, on average
 nyear <- floor(as.numeric(max(data.all.sort$Date.Time)/days.year))
 data.all.sort$Water.Level.avg <- data.all.sort$Water.Level
+data.all.sort$lsl <- data.all.sort$Water.Level
 data.all.sort$lsl.avg <- data.all.sort$Water.Level
 data.all.sort$lsl.avg.rel <- data.all.sort$Water.Level
 lsl.max <- rep(NA,nyear)  # annual block maxima
@@ -52,18 +53,26 @@ lsl.max <- rep(NA,nyear)  # annual block maxima
 # - Calculate annual block maxima
 # - Fit GEV
 # Alternative method:
-# - Use NOAA/USACE SLR trend of 9.24 mm/year.
+# - Use NOAA/USACE SLR trend of 9.24 mm/year (https://tidesandcurrents.noaa.gov/est/curves.shtml?stnid=8761724)
 # - Subtract this SLR trend from the tidge gauge data.
 # - Normalize the result to have mean of zero.
 # - Calculate annual block maxima, fit GEV to these, as usual.
 # - Yields result which is lower than the annual means method (both are nice ways
 # to account for sea-level rise.)
+slr.rate <- 9.24/365  # sea level rise per day
+slr <- as.numeric(slr.rate*data.all.sort$Date.Time)
+
+data.all.sort$lsl <- data.all.sort$Water.Level - slr
+data.all.sort$lsl <- data.all.sort$lsl - mean(data.all.sort$lsl)
 for (tt in 1:nyear) {
   iyear <- which(data.all.sort$Date.Time <  days.year*tt &
                  data.all.sort$Date.Time >= days.year*(tt-1))
   data.all.sort$lsl.avg[iyear] <- rep(mean(data.all.sort$Water.Level[iyear]),length(iyear))
   data.all.sort$lsl.avg.rel[iyear] <- data.all.sort$Water.Level[iyear]-data.all.sort$lsl.avg[iyear]
-  lsl.max[tt] <- max(data.all.sort$lsl.avg.rel[iyear])
+  # Method 1:
+  #lsl.max[tt] <- max(data.all.sort$lsl.avg.rel[iyear])
+  # Method 2:
+  lsl.max[tt] <- max(data.all.sort$lsl[iyear])
 }
 
 # install.packages("extRemes")
@@ -106,3 +115,16 @@ plot(fit_q_year/1000,log10(1-q[2:100001]),type='l', xlim=c(0,6))
 #==============================================================================
 # End
 #==============================================================================
+if(FALSE){ # scratch work
+storm_surgeL <- 1e5 # desired storm surge level
+q = seq(0,1,length.out= storm_surgeL +1)  # quantile array
+fit1 = qgev(q, xi=gev.mle1$shape, mu=gev.mle1$location, beta=gev.mle1$scale)
+fit1 = fit1[fit1< max(fit1)]
+
+# Find which q is the 100-yr value
+num = which(q <= 0.99)
+num.max = which.max(num)
+year100prob <- num.max +1
+# check to make sure the year100prob value is the 100-yr value (10^-2)
+print(fit1[year100prob])
+}

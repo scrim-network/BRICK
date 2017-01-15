@@ -28,16 +28,16 @@ rm(list=ls())
 library(ncdf4)
 
 ## File name for the BRICK physical model output (netCDF4)
-filename.brick.nofd = '../output_model/BRICK-model_physical_fd-gamma_08Dec2016.nc'#no-FD case uses gamma, without disintegration
-filename.brick.uniform = '../output_model/BRICK-model_physical_fd-uniform_08Dec2016.nc'
-filename.brick.gamma = '../output_model/BRICK-model_physical_fd-gamma_08Dec2016.nc'
-filename.brick.allslr = '../output_model/BRICK-model_physical_allslr_09Jan2017.nc'
+#filename.brick.nofd = '../output_model/BRICK-model_physical_fd-gamma_08Dec2016.nc'#no-FD case uses gamma, without disintegration
+#filename.brick.uniform = '../output_model/BRICK-model_physical_fd-uniform_08Dec2016.nc'
+#filename.brick.gamma = '../output_model/BRICK-model_physical_fd-gamma_08Dec2016.nc'
+filename.brick.allslr = '../output_model/BRICK-model_physical_allslr_13Jan2017.nc'
 
 ## File name for the Van Dantzig model output (netCDF4)
 ## Each of these also has x3 RCP scenarios, x2 storm surge scenarios
-filename.vandantzig.nofd = '../output_model/VanDantzig_fd-none_2065_09Jan2017.nc'
-filename.vandantzig.uniform = '../output_model/VanDantzig_fd-uniform_2065_09Jan2017.nc'
-filename.vandantzig.gamma = '../output_model/VanDantzig_fd-gamma_2065_09Jan2017.nc'
+filename.vandantzig.nofd = '../output_model/VanDantzig_fd-none_2065_13Jan2017.nc'
+filename.vandantzig.uniform = '../output_model/VanDantzig_fd-uniform_2065_13Jan2017.nc'
+filename.vandantzig.gamma = '../output_model/VanDantzig_fd-gamma_2065_13Jan2017.nc'
 
 ## File name for the BRICK post-calibrated parameters (netcdf) (the BRICK output came from these guys)
 filename.parameters.nofd = '../output_calibration/BRICK-model_postcalibratedParameters_fd-none_08Dec2016.nc'
@@ -461,7 +461,7 @@ sf.seasurlev <- init
 lsl.norm <- init
 
 lsl.lower <- 0
-lsl.upper <- 15
+lsl.upper <- 8
 lsl.n <- 2^10 # powers of 2 are good for density estimation in R
               # 2^10 = 1024 ~ number of ensemble members
 
@@ -594,27 +594,27 @@ for (rcp in scen.rcp) {
 ## FIGURE 1     (column 2) corresponding survival functions
 ##=========
 
-pdf(paste(plotdir,'pdfs_slr-ss-risk.pdf',sep=''),width=8,height=8,colormodel='cmyk')
+pdf(paste(plotdir,'pdfs_sf_slr_surge.pdf',sep=''),width=8,height=7,colormodel='cmyk')
 
-par(mfrow=c(2,2), mai=c(.5,.35,.05,.5))
+par(mfrow=c(2,2), mai=c(.6,.63,.2,.26))
 # (a) pdfs of local sea-level rise (2065)
-plot(x.lsl, f.sealev$rcp26$none$y, type='l', xlim=c(0,1.1), ylim=c(0,10), lwd=1.5,
+plot(x.lsl, f.sealev$rcp26$none, type='l', xlim=c(0,1.1), ylim=c(0,10), lwd=1.5,
      col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lty=1,
      xlab='', ylab='', xaxt='n', yaxt='n', xaxs='i', yaxs='i', axes=FALSE)
-lines(x.lsl, f.sealev$rcp26$gamma$y, type='l', col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lty=2)
-lines(x.lsl, f.sealev$rcp26$uniform$y, type='l', col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lty=3)
-lines(x.lsl, f.sealev$rcp45$none$y, type='l', col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lty=1)
-lines(x.lsl, f.sealev$rcp45$gamma$y, type='l', col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lty=2)
-lines(x.lsl, f.sealev$rcp45$uniform$y, type='l', col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lty=3)
-lines(x.lsl, f.sealev$rcp85$none$y, type='l', col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]), lty=1)
-lines(x.lsl, f.sealev$rcp85$gamma$y, type='l', col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]), lty=2)
-lines(x.lsl, f.sealev$rcp85$uniform$y, type='l', col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]), lty=3)
+lines(x.lsl, f.sealev$rcp26$gamma, type='l', col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lty=2)
+lines(x.lsl, f.sealev$rcp26$uniform, type='l', col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lty=3)
+lines(x.lsl, f.sealev$rcp45$none, type='l', col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lty=1)
+lines(x.lsl, f.sealev$rcp45$gamma, type='l', col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lty=2)
+lines(x.lsl, f.sealev$rcp45$uniform, type='l', col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lty=3)
+lines(x.lsl, f.sealev$rcp85$none, type='l', col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]), lty=1)
+lines(x.lsl, f.sealev$rcp85$gamma, type='l', col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]), lty=2)
+lines(x.lsl, f.sealev$rcp85$uniform, type='l', col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]), lty=3)
 
-axis(1,seq(0,1,0.2),lab=c("0","0.2","0.4","0.6","0.8","1"), cex.axis=1.3)
+axis(1,seq(0,1,0.2),lab=c("0","0.2","0.4","0.6","0.8","1"), cex.axis=1.2)
 u <- par("usr")
-arrows(0, u[3],0, .95*u[4], code = 2, xpd = TRUE)
-mtext('Probability density', side=2, line=1.2, cex=.9);
-mtext('Projected sea level in 2065 relative to 2015 [m]', side=1, line=2.3, cex=.9);
+arrows(0, u[3],0, .95*u[4], code = 2, length=.15, xpd = TRUE)
+mtext('Probability density', side=2, line=1.2, cex=1);
+mtext('Projected sea level in 2065 relative to 2015 [m]', side=1, line=2.3, cex=1);
 mtext(side=3, text=expression(bold('   a')), line=-1, cex=.9, adj=0);
 
 legend(0.5,9.5,c("RCP2.6","RCP4.5","RCP8.5","no FD","FD, gamma","FD, uniform"),
@@ -623,8 +623,8 @@ legend(0.5,9.5,c("RCP2.6","RCP4.5","RCP8.5","no FD","FD, gamma","FD, uniform"),
        bty='n')
 
 # (b) pdfs of storm surge
-par(mai=c(.45,.35,.15,.5))
-plot(x.lsl, f.surlev$rcp26$none$st, type='l', xlim=c(0,3), ylim=c(0,4), lwd=1.5,
+par(mai=c(.6,.63,.2,.26))
+plot(x.lsl, f.surlev$rcp26$none$st, type='l', xlim=c(0,4), ylim=c(0,3), lwd=1.5,
      col=rgb(mycol[6,1],mycol[6,2],mycol[6,3]), lty=1,
      xlab='', ylab='', xaxt='n', yaxt='n', xaxs='i', yaxs='i', axes=FALSE)
 lines(x.lsl, f.surlev$rcp26$none$ns, type='l', col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lty=2)
@@ -637,17 +637,17 @@ lines(x.lsl, f.surlev$rcp85$none$ns, type='l', col=rgb(mycol[11,1],mycol[11,2],m
 lines(x.lsl, f.surlev$rcp85$gamma$ns, type='l', col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]), lty=2)
 lines(x.lsl, f.surlev$rcp85$uniform$ns, type='l', col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]), lty=3)
 
-axis(1,seq(0,3,0.5),lab=c("0","0.5","1","1.5","2","2.5","3"), cex.axis=1.3)
+axis(1,seq(0,4,0.5),lab=c("0","","1","","2","","3","","4"), cex.axis=1.2)
 u <- par("usr")
-arrows(0, u[3],0, .95*u[4], code = 2, xpd = TRUE)
-mtext('Probability density', side=2, line=1.2, cex=.9);
-mtext('Projected surge level in 2065 relative to 2015 [m]', side=1, line=2.3, cex=.9);
+arrows(0, u[3],0, .95*u[4], code = 2, length=.15, xpd = TRUE)
+mtext('Probability density', side=2, line=1.2, cex=1);
+mtext('Projected surge level in 2065 relative to 2015 [m]', side=1, line=2.3, cex=1);
 mtext(side=3, text=expression(bold('   b')), line=-1, cex=.9, adj=0);
-text(.53,3.7,"stationary", pos=4, cex=1.3)
-text(1.01,2.5,"non-stationary", pos=4, cex=1.3)
+text(.45,2.6,"stationary", pos=4, cex=1.3)
+text(1.1,2,"non-stationary", pos=4, cex=1.3)
 
 # (c) survival functions of sea-level rise
-par(mai=c(.45,.35,.15,.5))
+par(mai=c(.6,.63,.2,.26))
 # rcp2.6
 plot( x.lsl, log10(sf.sealev$rcp26$none), type='l', xlim=c(0,1), ylim=c(-3.2,0),
       lty=1, col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lwd=1.5, xlab='', ylab='', xaxt='n', yaxt='n', xaxs='i', yaxs='i')
@@ -670,22 +670,22 @@ lines(x.lsl, log10(sf.sealev$rcp85$gamma), type='l',
 lines(x.lsl, log10(sf.sealev$rcp85$uniform), type='l',
       lty=3, col=rgb(mycol[11,1],mycol[11,2],mycol[13,3]), lwd=1.5)
 # x-axis, ticks and text
-axis(1,seq(0,1,0.2),lab=c("0","0.2","0.4","0.6","0.8","1"))
-mtext('Projected sea level in 2065\nrelative to 2015 [m]', side=1, line=3);
+axis(1,seq(0,1,0.2),lab=c("0","0.2","0.4","0.6","0.8","1"), cex.axis=1.2)
+mtext('Projected sea level in 2065 relative to 2015 [m]', side=1, line=2.3, cex=1);
 # y-axis, ticks and text
-axis(2, at=seq(-3,0), label=parse(text=paste("10^", seq(-3,0), sep="")), las=1)
+axis(2, at=seq(-3,0), label=parse(text=paste("10^", seq(-3,0), sep="")), las=1, cex.axis=1.2)
 mtext('Survival function [1-CDF]', side = 2, line=2.6);
 # add a panel label
 mtext(side=3, text=expression(bold('   c')), line=-1.1, cex=.9, adj=0);
 # add the 1:100, 1:500, 1:1000 levels
-lines(c(-4,4),c(-2,-2),lty=2,col='black'); text(0.1,-1.85,"1:100 level")
+lines(c(-4,4),c(-2,-2),lty=2,col='black'); text(0.16,-1.85,"1:100 level", cex=1.2)
 #lines(c(-4,4),c(-log10(500),-log10(500)),lty=2,col='black'); text(0.1,-2.55,"1:500 level");
-lines(c(-4,4),c(-3,-3),lty=2,col='black'); text(0.1,-2.85,"1:1000 level")
+lines(c(-4,4),c(-3,-3),lty=2,col='black'); text(0.16,-2.85,"1:1000 level", cex=1.2)
 
 # (d) survival functions of storm surge
-par(mai=c(.45,.35,.15,.5))
+par(mai=c(.6,.63,.2,.26))
 # rcp2.6
-plot( x.lsl, log10(sf.surlev$rcp26$none$st), type='l', xlim=c(0,3), ylim=c(-2.2,0),
+plot( x.lsl, log10(sf.surlev$rcp26$none$st), type='l', xlim=c(0,4), ylim=c(-2.2,0),
       lty=1, col=rgb(mycol[6,1],mycol[6,2],mycol[6,3]), lwd=1.5, xlab='', ylab='', xaxt='n', yaxt='n', xaxs='i', yaxs='i')
 lines(x.lsl, log10(sf.surlev$rcp26$none$ns), type='l',
       lty=1, col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lwd=1.5)
@@ -708,22 +708,23 @@ lines(x.lsl, log10(sf.surlev$rcp85$gamma$ns), type='l',
 lines(x.lsl, log10(sf.surlev$rcp85$uniform$ns), type='l',
       lty=3, col=rgb(mycol[11,1],mycol[11,2],mycol[13,3]), lwd=1.5)
 # x-axis, ticks and text
-axis(1,seq(0,3,0.5),lab=c("0","0.5","1","1.5","2","2.5","3"))
-mtext('Projected surge level in 2065\nrelative to 2015 [m]', side=1, line=3);
+axis(1,seq(0,4,0.5),lab=c("0","","1","","2","","3","","4"), cex.axis=1.2)
+mtext('Projected surge level in 2065 relative to 2015 [m]', side=1, line=2.3, cex=1);
 # y-axis, ticks and text
-axis(2, at=seq(-3,0), label=parse(text=paste("10^", seq(-3,0), sep="")), las=1)
+axis(2, at=seq(-3,0), label=parse(text=paste("10^", seq(-3,0), sep="")), las=1, cex.axis=1.2)
 mtext('Survival function [1-CDF]', side = 2, line=2.6);
 # add a panel label
 mtext(side=3, text=expression(bold('   d')), line=-1.1, cex=.9, adj=0);
 # add the 1:100, 1:500, 1:1000 levels
-lines(c(-4,4),c(-2,-2),lty=2,col='black'); text(0.1,-1.85,"1:100 level")
+lines(c(-4,4),c(-2,-2),lty=2,col='black'); text(0.6,-1.88,"1:100 level", cex=1.2)
 #lines(c(-4,4),c(-log10(500),-log10(500)),lty=2,col='black'); text(0.1,-2.55,"1:500 level");
-lines(c(-4,4),c(-3,-3),lty=2,col='black'); text(0.1,-2.85,"1:1000 level")
+lines(c(-4,4),c(-3,-3),lty=2,col='black'); text(0.1,-2.85,"1:1000 level", cex=1.2)
 
+dev.off()
 
 # TODO
 # TODO
-# TODO -- check survival functions, redo with the MHHW tide gauge data
+# TODO -- check survival functions, bunching at the upper end.
 # TODO
 # TODO
 
@@ -738,9 +739,9 @@ lines(c(-4,4),c(-3,-3),lty=2,col='black'); text(0.1,-2.85,"1:1000 level")
 
 ##==============================================================================
 
-##=========   (col 1, row 1) pdfs of total sea+storm level, all scenarios
-## FIGURE 2   (col 1, row 2) pdfs of return level at current protection
-##=========   (col 2) corresponding survival functions?
+##=========   (row 1) pdfs of total sea+storm level, all scenarios
+## FIGURE 2   (row 2) survival functions
+##=========   (row 3) (if needed) corresponding survival functions?
 
 # TODO
 # TODO -- add above the calculations needed to plot these thigns
@@ -748,6 +749,104 @@ lines(c(-4,4),c(-3,-3),lty=2,col='black'); text(0.1,-2.85,"1:1000 level")
 # TODO
 # TODO
 
+pdf(paste(plotdir,'pdfs_sf_sea+surge.pdf',sep=''),width=3.5,height=7,colormodel='cmyk')
+
+par(mfrow=c(3,1), mai=c(.6,.63,.2,.26))
+# (a) pdfs of sea-level rise + storm surge
+# stationary
+plot(x.lsl, f.seasurlev$rcp26$none$st, type='l', xlim=c(0,4), ylim=c(0,3), lwd=1.5,
+     col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lty=1,
+     xlab='', ylab='', xaxt='n', yaxt='n', xaxs='i', yaxs='i', axes=FALSE)
+lines(x.lsl, f.seasurlev$rcp26$gamma$st, type='l', col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lty=2)
+lines(x.lsl, f.seasurlev$rcp26$uniform$st, type='l', col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lty=3)
+lines(x.lsl, f.seasurlev$rcp45$none$st, type='l', col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lty=1)
+lines(x.lsl, f.seasurlev$rcp45$gamma$st, type='l', col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lty=2)
+lines(x.lsl, f.seasurlev$rcp45$uniform$st, type='l', col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lty=3)
+lines(x.lsl, f.seasurlev$rcp85$none$st, type='l', col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]), lty=1)
+lines(x.lsl, f.seasurlev$rcp85$gamma$st, type='l', col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]), lty=2)
+lines(x.lsl, f.seasurlev$rcp85$uniform$st, type='l', col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]), lty=3)
+# non-stationary
+lines(x.lsl, f.seasurlev$rcp26$none$ns, type='l', col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lty=2)
+lines(x.lsl, f.seasurlev$rcp26$gamma$ns, type='l', col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lty=2)
+lines(x.lsl, f.seasurlev$rcp26$uniform$ns, type='l', col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lty=3)
+lines(x.lsl, f.seasurlev$rcp45$none$ns, type='l', col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lty=1)
+lines(x.lsl, f.seasurlev$rcp45$gamma$ns, type='l', col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lty=2)
+lines(x.lsl, f.seasurlev$rcp45$uniform$ns, type='l', col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lty=3)
+lines(x.lsl, f.seasurlev$rcp85$none$ns, type='l', col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]), lty=1)
+lines(x.lsl, f.seasurlev$rcp85$gamma$ns, type='l', col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]), lty=2)
+lines(x.lsl, f.seasurlev$rcp85$uniform$ns, type='l', col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]), lty=3)
+
+axis(1,seq(0,4,0.5),lab=c("0","","1","","2","","3","","4"), cex.axis=1.2)
+u <- par("usr")
+arrows(0, u[3],0, .95*u[4], code = 2, length=.15, xpd = TRUE)
+mtext('Probability density', side=2, line=1.2, cex=1);
+mtext('Projected sea+storm level in 2065 relative to 2015 [m]', side=1, line=2.3, cex=1);
+mtext(side=3, text=expression(bold('   a')), line=-1, cex=.9, adj=0);
+
+
+# (b) survival functions of sea + storm surge level
+par(mai=c(.6,.63,.2,.26))
+# stationary
+plot( x.lsl, log10(sf.seasurlev$rcp26$none$st), type='l', xlim=c(0,4), ylim=c(-2.2,0),
+      lty=1, col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lwd=1.5, xlab='', ylab='', xaxt='n', yaxt='n', xaxs='i', yaxs='i')
+lines(x.lsl, log10(sf.seasurlev$rcp26$gamma$st), type='l',
+      lty=2, col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lwd=1.5)
+lines(x.lsl, log10(sf.seasurlev$rcp26$uniform$st), type='l',
+      lty=3, col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lwd=1.5)
+lines(x.lsl, log10(sf.seasurlev$rcp45$none$st), type='l',
+      lty=1, col=rgb(mycol[2,1],mycol[2,2],mycol[13,3]), lwd=1.5)
+lines(x.lsl, log10(sf.seasurlev$rcp45$gamma$st), type='l',
+      lty=2, col=rgb(mycol[2,1],mycol[2,2],mycol[13,3]), lwd=1.5)
+lines(x.lsl, log10(sf.seasurlev$rcp45$uniform$st), type='l',
+      lty=3, col=rgb(mycol[2,1],mycol[2,2],mycol[13,3]), lwd=1.5)
+lines(x.lsl, log10(sf.seasurlev$rcp85$none$st), type='l',
+      lty=1, col=rgb(mycol[11,1],mycol[11,2],mycol[13,3]), lwd=1.5)
+lines(x.lsl, log10(sf.seasurlev$rcp85$gamma$st), type='l',
+      lty=2, col=rgb(mycol[11,1],mycol[11,2],mycol[13,3]), lwd=1.5)
+lines(x.lsl, log10(sf.seasurlev$rcp85$uniform$st), type='l',
+      lty=3, col=rgb(mycol[11,1],mycol[11,2],mycol[13,3]), lwd=1.5)
+# non-stationary
+lines(x.lsl, log10(sf.seasurlev$rcp26$none$ns), type='l',
+      lty=1, col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lwd=1.5)
+lines(x.lsl, log10(sf.seasurlev$rcp26$gamma$ns), type='l',
+      lty=2, col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lwd=1.5)
+lines(x.lsl, log10(sf.seasurlev$rcp26$uniform$ns), type='l',
+      lty=3, col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lwd=1.5)
+lines(x.lsl, log10(sf.seasurlev$rcp45$none$ns), type='l',
+      lty=1, col=rgb(mycol[2,1],mycol[2,2],mycol[13,3]), lwd=1.5)
+lines(x.lsl, log10(sf.seasurlev$rcp45$gamma$ns), type='l',
+      lty=2, col=rgb(mycol[2,1],mycol[2,2],mycol[13,3]), lwd=1.5)
+lines(x.lsl, log10(sf.seasurlev$rcp45$uniform$ns), type='l',
+      lty=3, col=rgb(mycol[2,1],mycol[2,2],mycol[13,3]), lwd=1.5)
+lines(x.lsl, log10(sf.seasurlev$rcp85$none$ns), type='l',
+      lty=1, col=rgb(mycol[11,1],mycol[11,2],mycol[13,3]), lwd=1.5)
+lines(x.lsl, log10(sf.seasurlev$rcp85$gamma$ns), type='l',
+      lty=2, col=rgb(mycol[11,1],mycol[11,2],mycol[13,3]), lwd=1.5)
+lines(x.lsl, log10(sf.seasurlev$rcp85$uniform$ns), type='l',
+      lty=3, col=rgb(mycol[11,1],mycol[11,2],mycol[13,3]), lwd=1.5)
+
+# x-axis, ticks and text
+axis(1,seq(0,4,0.5),lab=c("0","","1","","2","","3","","4"), cex.axis=1.2)
+mtext('Projected sea+surge level in 2065 relative to 2015 [m]', side=1, line=2.3, cex=1);
+# y-axis, ticks and text
+axis(2, at=seq(-3,0), label=parse(text=paste("10^", seq(-3,0), sep="")), las=1, cex.axis=1.2)
+mtext('Survival function [1-CDF]', side = 2, line=2.8);
+# add a panel label
+mtext(side=3, text=expression(bold('   b')), line=-1.1, cex=.9, adj=0);
+# add the 1:100, 1:500, 1:1000 levels
+lines(c(-4,4),c(-2,-2),lty=2,col='black'); text(0.6,-1.88,"1:100 level", cex=1.2)
+lines(c(-4,4),c(-log10(500),-log10(500)),lty=2,col='black'); text(0.1,-2.55,"1:500 level");
+#lines(c(-4,4),c(-3,-3),lty=2,col='black'); text(0.1,-2.85,"1:1000 level", cex=1.2)
+
+dev.off()
+
+
+
+legend(0.5,9.5,c("RCP2.6","RCP4.5","RCP8.5","no FD","FD, gamma","FD, uniform"),
+       lty=c(1,1,1,1,2,3), lwd=2, cex=1.2,
+       col=c(rgb(mycol[13,1],mycol[13,2],mycol[13,3]),rgb(mycol[2,1],mycol[2,2],mycol[2,3]),rgb(mycol[11,1],mycol[11,2],mycol[11,3]),'black','black','black'),
+       bty='n')
+
 
 ##==============================================================================
 
@@ -759,8 +858,17 @@ lines(c(-4,4),c(-3,-3),lty=2,col='black'); text(0.1,-2.85,"1:1000 level")
 
 
 
-
 ##==============================================================================
+return.period <- mat.or.vec(18*n.ensemble['none'], 2); cnt <- 1
+scen.names <- rep(NA,18)
+for (rcp in scen.rcp) {for (ais in scen.ais) {for (ss in scen.ss) {
+    scen.names[cnt] <- paste(rcp,ais,ss)
+    return.period[(n.ensemble['none']*(cnt-1)+1):(n.ensemble['none']*cnt), 1] <- cnt
+    return.period[(n.ensemble['none']*(cnt-1)+1):(n.ensemble['none']*cnt), 2] <- preturn[[rcp]][[ais]][[ss]][1,]
+    cnt <- cnt+1
+}}}
+colnames(return.period) <- c('Scenario','ReturnPeriod')
+
 
 ##=========
 ## FIGURE 3   box-whisker plots of return periods with no building.
@@ -772,6 +880,17 @@ lines(c(-4,4),c(-3,-3),lty=2,col='black'); text(0.1,-2.85,"1:1000 level")
 # TODO
 # TODO
 
+pdf(paste(plotdir,'returnperiods.pdf',sep=''),width=3.5,height=4,colormodel='cmyk')
+
+par(mfrow=c(1,1), mai=c(.6,.63,.2,.26))
+boxplot(ReturnPeriod~Scenario,data=return.period, horizontal=TRUE, log='x',
+        xlab="", ylab="", outline=FALSE, ylim=c(8,100000), xaxt='n', yaxt='n')
+axis(1,c(1,10,1e2,1e3,1e4),lab=c("1","10","100","1,000","10,000"), cex.axis=1.2)
+mtext('Return period [years]', side=1, line=2.3, cex=1.2)
+axis(2,seq(1,18),lab=scen.names, cex.axis=1.2, las=1)
+mtext('Scenario', side=3, line=1.3, cex=1.2, adj=-.3)
+
+dev.off()
 
 ##==============================================================================
 

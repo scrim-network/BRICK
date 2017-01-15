@@ -63,38 +63,77 @@ BRICK_estimateGEV_NOLA <- function(
   ){
 
 # estimate first year storm surge GEV, using tide gauge data from Grand Isle.
-
-#install.packages("extRemes")
-#install.packages("fExtremes")
-#install.packages('ismev')
-#install.packages('zoo')
-library(extRemes)
-library(fExtremes)
-library(ismev)
-library(zoo)
-
 print('Reading tide gauge data...')
 
-# these data are in millimeters
-dat.la <- read.csv('../data/tideGauge_hourly_GrandIsle.csv')
+dat.dir <- '../data/tideGauge_GrandIsle/'
+files.tg <- list.files(path=dat.dir,pattern='csv')
+
+# all dates/times are relative to first observation (1980-11-11 16:00 GMT)
+data <- read.csv(paste(dat.dir,'CO-OPS__8761724__hr.csv',sep=''))
+origin <- as.POSIXlt(data$Date.Time, tz='GMT')[1]
+
+# first file to start the data array
+data.new <- read.csv(paste(dat.dir,files.tg[1],sep=''))
+time.new <- as.POSIXlt(data.new$Date.Time, tz='GMT')
+time.new.rel <- difftime(time.new, origin, unit='days')
+data.new[,1] <- time.new.rel
+data.all <- data.new
+
+for (ff in 2:length(files.tg)) {
+  data.new <- read.csv(paste(dat.dir,files.tg[ff],sep=''))
+  time.new <- as.POSIXlt(data.new$Date.Time, tz='GMT')
+  time.new.rel <- difftime(time.new, origin, unit='days')
+  data.new[,1] <- time.new.rel
+  data.all <- rbind(data.all,data.new)
+}
+
+# sort the tide gauge data array by the time.relative column
+# (not necessarily in order, and possibly some overlap between adjacent year files)
+data.all.sort <- data.all[order(data.all$Date.Time),]
+
+# Get water levels in mm
+data.all.sort$Water.Level <- data.all.sort$Water.Level*1000
 
 print('...done!')
 
 print('Estimating stationary GEV parameters...')
 
-## Estimate stationary GEV parameters using Grand Isle data
-dat <- dat.la
-lsl <- dat[,5]
-year <- unique(dat[,1])
-nyear <- length(year)
-lsl.res <- rep(NA,length(lsl))
-lsl.avg <- rep(NA,nyear)
-lsl.max <- rep(NA,nyear)
-for (t in 1:nyear) {
-  itmp <- which(dat[,1]==year[t])
-  lsl.avg[t] <- mean(lsl[itmp])
-  lsl.res[itmp] <- lsl[itmp]-lsl.avg[t]
-  lsl.max[t] <- max(lsl.res[itmp])
+# bin by year, or otherwise make the timestamp actually useful
+# Note: to get actual datestamp back, just do data.all.sort$Date.TIme + origin
+days.year <- 365.25 # number of days in a year, on average
+nyear <- floor(as.numeric(max(data.all.sort$Date.Time)/days.year))
+data.all.sort$Water.Level.avg <- data.all.sort$Water.Level
+data.all.sort$lsl <- data.all.sort$Water.Level
+data.all.sort$lsl.avg <- data.all.sort$Water.Level
+data.all.sort$lsl.avg.rel <- data.all.sort$Water.Level
+lsl.max <- rep(NA,nyear)  # annual block maxima
+
+# One method:
+# - Calculate annual means
+# - Subtract these off
+# - Calculate annual block maxima
+# - Fit GEV
+# Alternative method:
+# - Use NOAA/USACE SLR trend of 9.24 mm/year (https://tidesandcurrents.noaa.gov/est/curves.shtml?stnid=8761724)
+# - Subtract this SLR trend from the tidge gauge data.
+# - Normalize the result to have mean of zero.
+# - Calculate annual block maxima, fit GEV to these, as usual.
+# - Yields result which is lower than the annual means method (both are nice ways
+# to account for sea-level rise.)
+slr.rate <- 9.24/365  # sea level rise per day
+slr <- as.numeric(slr.rate*data.all.sort$Date.Time)
+
+data.all.sort$lsl <- data.all.sort$Water.Level - slr
+data.all.sort$lsl <- data.all.sort$lsl - mean(data.all.sort$lsl)
+for (tt in 1:nyear) {
+  iyear <- which(data.all.sort$Date.Time <  days.year*tt &
+                 data.all.sort$Date.Time >= days.year*(tt-1))
+  data.all.sort$lsl.avg[iyear] <- rep(mean(data.all.sort$Water.Level[iyear]),length(iyear))
+  data.all.sort$lsl.avg.rel[iyear] <- data.all.sort$Water.Level[iyear]-data.all.sort$lsl.avg[iyear]
+  # Method 1:
+  #lsl.max[tt] <- max(data.all.sort$lsl.avg.rel[iyear])
+  # Method 2:
+  lsl.max[tt] <- max(data.all.sort$lsl[iyear])
 }
 
 # First, estimate GEV parameters using maximum likelihood.

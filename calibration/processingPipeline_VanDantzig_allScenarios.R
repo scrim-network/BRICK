@@ -36,12 +36,12 @@
 ## Input file names from previous parameter sampling/calibration/simulation
 
 ## Sea-level rise projections
-filename.allslr <- "../output_model/BRICK-model_physical_allslr_09Jan2017.nc"
+filename.allslr <- "../output_model/BRICK-model_physical_allslr_13Jan2017.nc"
 #filename.gamma <- "../output_model/BRICK-model_physical_fd-gamma_08Dec2016.nc"
 #filename.uniform <- "../output_model/BRICK-model_physical_fd-uniform_08Dec2016.nc"
 
 ## GEV parameters, fit from tide gauge data
-filename.gevstat <- '../output_calibration/BRICK_GEVsample_09Jan2017.nc'
+filename.gevstat <- '../output_calibration/BRICK_GEVsample_13Jan2017.nc'
 
 ## Surge level increase factors (USACE)
 filename.surgefactor <- '../output_calibration/BRICK_surgefactor_09Jan2017.nc'
@@ -113,6 +113,7 @@ if(exists('filename.allslr')) {
   for (rcp in scen.rcp) {
     for (ais in c('gamma','uniform')) {
       slr[[rcp]][[ais]] <- slr[[rcp]][[ais]][,1:n.ens]
+      slr.nofd[[rcp]][[ais]] <- slr.nofd[[rcp]][[ais]][,1:n.ens]
     }
     slr[[rcp]]$none <- slr.nofd[[rcp]]$gamma
     irnd <- sample(1:n.ens, floor(0.5*n.ens), replace=FALSE)
@@ -255,7 +256,8 @@ if(exists('filename.vdparams')) {
 
 ## Comment/modify in case you only want to (re-)run a selection of the scenarios
 #scen.ais <- c("none","gamma","uniform")
-scen.ais <- c("gamma","uniform")
+scen.ais <- c("none","uniform")
+#scen.ais <- 'gamma'
 
 for (ais in scen.ais) {
 
