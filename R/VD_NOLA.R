@@ -114,7 +114,7 @@ parameter_sampling_DP <- function(n_obs, p0, alpha, V0, delta, I_range, sub_rate
   z[,3] <-  qunif(z[,3],         V0[1],      V0[2])
   z[,4] <-  qunif(z[,4],      delta[1],   delta[2])
   z[,5] <-  qunif(z[,5],    I_range[1], I_range[2])
-  z[,6] <- qlnorm(z[,6], log(sub_rate),        0.4) # sdlog to yield about stdev from Dixon et al. (2006)
+  z[,6] <- qlnorm(z[,6], log(sub_rate),        0.4) # sdlog to yield about stdev from Dixon et al. (2006), 2.5mm/y
 
   parameters         <- as.data.frame(z)
   names(parameters)  <- c("p0", "alpha", "V0", "delta", "I_unc", "sub_rate")

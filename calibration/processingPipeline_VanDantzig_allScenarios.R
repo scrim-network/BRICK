@@ -256,7 +256,7 @@ if(exists('filename.vdparams')) {
 
 ## Comment/modify in case you only want to (re-)run a selection of the scenarios
 #scen.ais <- c("none","gamma","uniform")
-scen.ais <- c("none","uniform")
+scen.ais <- c("gamma","uniform")
 #scen.ais <- 'gamma'
 
 for (ais in scen.ais) {
