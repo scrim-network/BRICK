@@ -13,7 +13,7 @@
 #  - Tg        global temperature [degC]
 #
 #  Simulates (output variables):
-#  - TE        cumulative sea-level contribution from thermosteric expansion [m]
+#  - TE        cumulative sea-level contribution from thermal expansion [m]
 #              since t0 (i=1)
 #              by definition Gs(1) = 0
 #

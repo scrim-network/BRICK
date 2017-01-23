@@ -70,6 +70,7 @@ subroutine run_brick(ns, tstep, &
 ! 
 ! Outputs:
 !   temp_out  	        Global mean surface temperature [degC]
+!   ocheat_out  	    ocean heat uptake [10^22 J]
 !   sl_te_out           sea-level rise relative to 1850 (or beg. of run) from thermal expansion [m SLE]
 !   sl_gis_out          sea-level rise relative to 1850 (or beg. of run) from Greenland ice sheet [m SLE]
 !   sl_ais_out          sea-level rise relative to 1850 (or beg. of run) from Antarctic ice sheet [m SLE]
@@ -78,6 +79,10 @@ subroutine run_brick(ns, tstep, &
 
     USE global
     USE brick_te
+    USE dais
+    USE doeclim
+    USE gsic_magicc
+    USE simple
 
     implicit none
 
@@ -86,26 +91,54 @@ subroutine run_brick(ns, tstep, &
 ! parameters
     real(DP),     intent(IN) :: tstep
 
+    real(DP),     intent(IN) :: doeclim_t2co
+    real(DP),     intent(IN) :: doeclim_kappa
+    real(DP),     intent(IN) :: gsic_magicc_beta0
+    real(DP),     intent(IN) :: gsic_magicc_n
+    real(DP),     intent(IN) :: gsic_magicc_Teq
+    real(DP),     intent(IN) :: simple_a
+    real(DP),     intent(IN) :: simple_b
+    real(DP),     intent(IN) :: simple_alpha
+    real(DP),     intent(IN) :: simple_beta
     real(DP),     intent(IN) :: brick_te_a
     real(DP),     intent(IN) :: brick_te_b
     real(DP),     intent(IN) :: brick_te_invtau
+    real(DP), dimension(20), intent(IN) :: dais_parameters
 
-! intial conditions
+! intial conditions (may be viewed as parameters)
+    real(DP),     intent(IN) :: gsic_magicc_V0
+    real(DP),     intent(IN) :: gsic_magicc_Gs0
+    real(DP),     intent(IN) :: simple_V0
     real(DP),     intent(IN) :: brick_te_TE_0
+
     real(DP),     intent(IN) :: brick_te_i0
 
 ! input variables
     real(DP), dimension(ns), intent(IN)  :: Gl_Temp
 
 ! output variables
-    real(DP), dimension(ns), intent(OUT) :: TE_out
+    real(DP), dimension(ns), intent(OUT) :: temp_out
+    real(DP), dimension(ns), intent(OUT) :: ocheat_out
+    real(DP), dimension(ns), intent(OUT) :: sl_te_out
+    real(DP), dimension(ns), intent(OUT) :: sl_gis_out
+    real(DP), dimension(ns), intent(OUT) :: sl_ais_out
+    real(DP), dimension(ns), intent(OUT) :: sl_gsic_out
 
     integer(i4b) :: i   ! time step counter
 !===============================================================================
 
 ! Initialize brick (parameters and initial variable values)
-    call init_brick(tstep, brick_te_a, brick_te_b, brick_te_invtau, &
-                          brick_te_TE_0, TE_out(i0) )
+    i=1
+    call init_brick(tstep, doeclim_t2co, doeclim_kappa, &
+                    gsic_magicc_beta0, gsic_magicc_n, gsic_magicc_Teq, &
+                    simple_a, simple_b, simple_alpha, simple_beta, &
+                    brick_te_a, brick_te_b, brick_te_invtau, &
+                    dais_parameters, &
+                    gsic_magicc_V0, gsic_magicc_Gs0, &
+                    simple_V0, &
+                    brick_te_TE_0, &
+                    temp_out(i), ocheat_out(i), &
+                    sl_te_out(i), sl_gis_out(i), sl_ais_out(i), sl_gsic_out(i) )
 
 ! estimate outputs
 
