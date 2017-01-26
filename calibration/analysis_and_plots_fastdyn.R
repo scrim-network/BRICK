@@ -29,8 +29,14 @@ filename.DAIScalibration = "../output_calibration/DAISfastdyn_precalibrationMCMC
 ## Get nice plotting colors: mycol array
 source('../Useful/colorblindPalette.R')
 
+## And set the IPCC RCP colors
+col26 <- c(0, 0, 255)/255
+col45 <- c(121, 188, 255)/255
+col60 <- c(255, 130, 45)/255
+col85 <- c(255, 0, 0)/255
+
 ## Where would you like to save the plots?
-plotdir='~/Box\ Sync/Wong-Projects/AIS_fast_dynamics/ToSubmit_CCL/figures/'
+plotdir='~/Box\ Sync/Wong-Projects/AIS_fast_dynamics/ToSubmit_CC/figures/'
 #plotdir='../'
 
 ##==============================================================================
@@ -196,51 +202,51 @@ layout(cbind(c(1,4,7),c(2,5,7),c(3,6,7)))
 par(mai=c(.5,.7,.2,.08))
 
 # >>> SURFACE TEMPERATURE <<<
-plot(mod.time[midx.temp], temp.50[midx.temp], type='l', col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lwd=2, xlab='',
+plot(mod.time[midx.temp], temp.50[midx.temp], type='l', col=rgb(col45[1],col45[2],col45[3]), lwd=2, xlab='',
      ylab='', xlim=c(1850,2016), ylim=c(-.3,1.5), cex.axis=1.2);
   mtext(side=1, text='Year', line=2.3, cex=.9);
   mtext(side=2, text='Surface temperature\n[deg C]', line=2.3, cex=.9);
   mtext(side=3, text=expression(bold(' a')), line=-1.5, cex=.9, adj=0);
-  polygon(c(mod.time[midx.temp],rev(mod.time[midx.temp])), c(temp.95,rev(temp.05)), col=rgb(mycol[2,1],mycol[2,2],mycol[2,3],.5), border=NA);
+  polygon(c(mod.time[midx.temp],rev(mod.time[midx.temp])), c(temp.95,rev(temp.05)), col=rgb(col45[1],col45[2],col45[3],.5), border=NA);
   lines(obs.temp.time[oidx.temp], obs.temp.norm[oidx.temp], type='l', col=rgb(mycol[6,1],mycol[6,2],mycol[6,3]), lwd=2);
 	lines(c(-1e6,1e6),c(0,0),type='l',lty=2,col='black');
   polygon(c(obs.temp.time[oidx.temp],rev(obs.temp.time[oidx.temp])),
 					c(obs.temp.norm[oidx.temp]+n.sig*obs.temp.err[oidx.temp],rev(obs.temp.norm[oidx.temp]-n.sig*obs.temp.err[oidx.temp])),
           col=rgb(mycol[6,1],mycol[6,2],mycol[6,3],.5), border=NA);
   #legend(1839,1.65,c("5-95% range, modeled","2-sigma range, observations"),
-  #       col=c(rgb(mycol[2,1],mycol[2,2],mycol[2,3]),rgb(mycol[6,1],mycol[6,2],mycol[6,3])), lwd=2, bty='n', cex=1.2)
+  #       col=c(rgb(col45[1],col45[2],col45[3]),rgb(mycol[6,1],mycol[6,2],mycol[6,3])), lwd=2, bty='n', cex=1.2)
 
 # >>> OCEAN HEAT <<<
-plot(mod.time, ocheat.50, type='l', col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lwd=2, xlab='',
+plot(mod.time, ocheat.50, type='l', col=rgb(col45[1],col45[2],col45[3]), lwd=2, xlab='',
      ylab='', xlim=c(1950,2016), ylim=c(-50,50), cex.lab=1.2, cex.axis=1.2);
   mtext(side=1, text='Year', line=2.3, cex=.9);
   mtext(side=2, text='Ocean heat uptake\n[10^22 J]', line=2.3, cex=.9);
   mtext(side=3, text=expression(bold(' b')), line=-1.5, cex=.9, adj=0);
-  polygon(c(mod.time,rev(mod.time)), c(ocheat.95,rev(ocheat.05)), col=rgb(mycol[2,1],mycol[2,2],mycol[2,3],.5), border=NA);
+  polygon(c(mod.time,rev(mod.time)), c(ocheat.95,rev(ocheat.05)), col=rgb(col45[1],col45[2],col45[3],.5), border=NA);
   lines(obs.ocheat.time, obs.ocheat.norm, type='l', col=rgb(mycol[6,1],mycol[6,2],mycol[6,3]), lwd=2);
 	lines(c(-1e6,1e6),c(0,0),type='l',lty=2,col='black');
   polygon(c(obs.ocheat.time,rev(obs.ocheat.time)), c(obs.ocheat.norm+n.sig*obs.ocheat.err,rev(obs.ocheat.norm-n.sig*obs.ocheat.err)),
           col=rgb(mycol[6,1],mycol[6,2],mycol[6,3],.5), border=NA);
 
 # >>> GSIC <<<
-plot(mod.time, gsic.50, type='l', col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lwd=2, xlab='',
+plot(mod.time, gsic.50, type='l', col=rgb(col45[1],col45[2],col45[3]), lwd=2, xlab='',
      ylab='', xlim=c(1950,2016), ylim=c(-.01,.04), cex.lab=1.2, cex.axis=1.2);
   mtext(side=1, text='Year', line=2.3, cex=.9);
   mtext(side=2, text='Glaciers and\nsmall ice caps [m SLE]', line=2.3, cex=.9);
   mtext(side=3, text=expression(bold(' c')), line=-1.5, cex=.9, adj=0);
-  polygon(c(mod.time,rev(mod.time)), c(gsic.95,rev(gsic.05)), col=rgb(mycol[2,1],mycol[2,2],mycol[2,3],.5), border=NA);
+  polygon(c(mod.time,rev(mod.time)), c(gsic.95,rev(gsic.05)), col=rgb(col45[1],col45[2],col45[3],.5), border=NA);
   lines(obs.gsic.time, obs.gsic.norm, type='l', col=rgb(mycol[6,1],mycol[6,2],mycol[6,3]), lwd=2);
 	lines(c(-1e6,1e6),c(0,0),type='l',lty=2,col='black');
   polygon(c(obs.gsic.time,rev(obs.gsic.time)), c(obs.gsic.norm+n.sig*obs.gsic.err,rev(obs.gsic.norm-n.sig*obs.gsic.err)),
           col=rgb(mycol[6,1],mycol[6,2],mycol[6,3],.5), border=NA);
 
 # >>> GIS <<<
-plot(mod.time, gis.50, type='l', col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lwd=2, xlab='',
+plot(mod.time, gis.50, type='l', col=rgb(col45[1],col45[2],col45[3]), lwd=2, xlab='',
      ylab='', xlim=c(1950,2016), ylim=c(-.003,.01), cex.lab=1.2, cex.axis=1.2);
   mtext(side=1, text='Year', line=2.3, cex=.9);
   mtext(side=2, text='Greenland Ice Sheet\n[m SLE]', line=2.3, cex=.9);
   mtext(side=3, text=expression(bold(' d')), line=-1.5, cex=.9, adj=0);
-  polygon(c(mod.time,rev(mod.time)), c(gis.95,rev(gis.05)), col=rgb(mycol[2,1],mycol[2,2],mycol[2,3],.5), border=NA);
+  polygon(c(mod.time,rev(mod.time)), c(gis.95,rev(gis.05)), col=rgb(col45[1],col45[2],col45[3],.5), border=NA);
   lines(obs.gis.time, obs.gis.norm, type='l', col=rgb(mycol[6,1],mycol[6,2],mycol[6,3]), lwd=2);
 	lines(c(-1e6,1e6),c(0,0),type='l',lty=2,col='black');
   polygon(c(obs.gis.time,rev(obs.gis.time)), c(obs.gis.norm+n.sig*sqrt(obs.gis.err^2),rev(obs.gis.norm-n.sig*sqrt(obs.gis.err^2))),
@@ -258,12 +264,12 @@ lo1993 = yc1993+(trends.te[2,2]/1000)*(x1993-c1993)
 hi1993 = yc1993+(trends.te[2,3]/1000)*(x1993-c1993)
 y1993 = yc1993+(trends.te[2,1]/1000)*(x1993-c1993)
 
-plot(mod.time, te.50, type='l', col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lwd=2, xlab='',
+plot(mod.time, te.50, type='l', col=rgb(col45[1],col45[2],col45[3]), lwd=2, xlab='',
      ylab='', xlim=c(1950,2016), ylim=c(-.04,.04), cex.lab=1.2, cex.axis=1.2);
   mtext(side=1, text='Year', line=2.3, cex=.9);
   mtext(side=2, text='Thermal expansion\n[m SLE]', line=2.3, cex=.9);
   mtext(side=3, text=expression(bold(' e')), line=-1.5, cex=.9, adj=0);
-  polygon(c(mod.time,rev(mod.time)), c(te.95,rev(te.05)), col=rgb(mycol[2,1],mycol[2,2],mycol[2,3],.5), border=NA);
+  polygon(c(mod.time,rev(mod.time)), c(te.95,rev(te.05)), col=rgb(col45[1],col45[2],col45[3],.5), border=NA);
 	lines(x1971,y1971, type='l', col=rgb(mycol[6,1],mycol[6,2],mycol[6,3]), lwd=2);
   polygon(c(x1971,rev(x1971)), c(lo1971,rev(hi1971)), col=rgb(mycol[6,1],mycol[6,2],mycol[6,3],.5), border=NA);
 	lines(x1993,y1993, type='l', col=rgb(mycol[6,1],mycol[6,2],mycol[6,3]), lwd=2);
@@ -271,12 +277,12 @@ plot(mod.time, te.50, type='l', col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lwd=2
 	polygon(c(x1993,rev(x1993)), c(lo1993,rev(hi1993)), col=rgb(mycol[6,1],mycol[6,2],mycol[6,3],.5), border=NA);
 
 # >>> TOTAL SLR <<<
-plot(mod.time, slr.50, type='l', col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lwd=2, xlab='',
+plot(mod.time, slr.50, type='l', col=rgb(col45[1],col45[2],col45[3]), lwd=2, xlab='',
      ylab='', xlim=c(1850,2016), ylim=c(-.3,.2), cex.lab=1.2, cex.axis=1.2);
   mtext(side=1, text='Year', line=2.3, cex=.9);
   mtext(side=2, text='Total sea level [m]', line=2.3, cex=.9);
   mtext(side=3, text=expression(bold(' f')), line=-1.5, cex=.9, adj=0);
-  polygon(c(mod.time,rev(mod.time)), c(slr.95,rev(slr.05)), col=rgb(mycol[2,1],mycol[2,2],mycol[2,3],.5), border=NA);
+  polygon(c(mod.time,rev(mod.time)), c(slr.95,rev(slr.05)), col=rgb(col45[1],col45[2],col45[3],.5), border=NA);
   lines(obs.sl.time, obs.sl.norm, type='l', col=rgb(mycol[6,1],mycol[6,2],mycol[6,3]), lwd=2);
 	lines(c(-1e6,1e6),c(0,0),type='l',lty=2,col='black');
   polygon(c(obs.sl.time,rev(obs.sl.time)), c(obs.sl.norm+n.sig*obs.sl.err,rev(obs.sl.norm-n.sig*obs.sl.err)),
@@ -284,15 +290,15 @@ plot(mod.time, slr.50, type='l', col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lwd=
 
 # >>> AIS PALEO, SMOOTHED <<<
 ipaleo=which(t.paleo==-149999):which(t.paleo==1)
-plot(t.paleo[ipaleo], ais.paleo.50[ipaleo], type='l', col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lwd=2, xlab='',
+plot(t.paleo[ipaleo], ais.paleo.50[ipaleo], type='l', col=rgb(col45[1],col45[2],col45[3]), lwd=2, xlab='',
      ylab='', xlim=c(t.paleo[ipaleo[1]],t.paleo[ipaleo[length(ipaleo)]]), ylim=c(-25,25),
 		 cex.lab=1.2, cex.axis=1.2);
   mtext(side=1, text='Year [before present]', line=2.3, cex=.9);
   mtext(side=2, text='Antarctic Ice Sheet\n[m SLE]', line=2.3, cex=.9);
   mtext(side=3, text=expression(bold(' g')), line=-1.5, cex=.9, adj=0);
   lines(t.paleo[ipaleo], ais.nofd.50[ipaleo], type='l', col=rgb(mycol[12,1],mycol[12,2],mycol[12,3]), lwd=2);
-  polygon(c(t.paleo[ipaleo],rev(t.paleo[ipaleo])), c(ais.nofd.max[ipaleo],rev(ais.nofd.min[ipaleo])), col=rgb(mycol[13,1],mycol[13,2],mycol[13,3],.5), border=NA);
-  polygon(c(t.paleo[ipaleo],rev(t.paleo[ipaleo])), c(ais.paleo.95[ipaleo],rev(ais.paleo.05[ipaleo])), col=rgb(mycol[2,1],mycol[2,2],mycol[2,3],.5), border=NA);
+  polygon(c(t.paleo[ipaleo],rev(t.paleo[ipaleo])), c(ais.nofd.max[ipaleo],rev(ais.nofd.min[ipaleo])), col=rgb(col26[1],col26[2],col26[3],.5), border=NA);
+  polygon(c(t.paleo[ipaleo],rev(t.paleo[ipaleo])), c(ais.paleo.95[ipaleo],rev(ais.paleo.05[ipaleo])), col=rgb(col45[1],col45[2],col45[3],.5), border=NA);
 	for (i in 1:3) {
   	polygon(c( date[c(obs.years[i]-1000,obs.years[i]+1000)], rev(date[c(obs.years[i]-1000,obs.years[i]+1000)]) ),
 	 			  	c( c(windows[i,2],windows[i,2])                , rev(c(windows[i,1],windows[i,1]))                 ),
@@ -301,7 +307,7 @@ plot(t.paleo[ipaleo], ais.paleo.50[ipaleo], type='l', col=rgb(mycol[2,1],mycol[2
 	i=4; points(date[obs.years[i]],mean(windows[i,]),pch=15,col=rgb(mycol[6,1],mycol[6,2],mycol[6,3]))
 	lines(c(-1e6,1e6),c(0,0),type='l',lty=2,col='black');
   legend(-90000,29,c("5-95% range, model, with fast dynamics","2-sigma range, observations","Max. likelihood ensemble range, no fast dynamics"),
-         col=c(rgb(mycol[2,1],mycol[2,2],mycol[2,3]),rgb(mycol[6,1],mycol[6,2],mycol[6,3]),rgb(mycol[13,1],mycol[13,2],mycol[13,3])), lwd=2, bty='n', cex=1.2)
+         col=c(rgb(col45[1],col45[2],col45[3]),rgb(mycol[6,1],mycol[6,2],mycol[6,3]),rgb(col26[1],col26[2],col26[3])), lwd=2, bty='n', cex=1.2)
 
 dev.off()
 
@@ -361,25 +367,24 @@ source('../Useful/MultipleOutput.R') # defines the ":=" operator
 
 ## Actually tally up the data
 for (t in 1:length(t.proj)){
-	c(gsl.rcp26.uni.05[t], gsl.rcp26.uni.50[t], gsl.rcp26.uni.95[t]) := quantile(gsl.rcp26.uni[t,], c(0.05,.50,.95), na.rm=TRUE)
-  c(gsl.rcp45.uni.05[t], gsl.rcp45.uni.50[t], gsl.rcp45.uni.95[t]) := quantile(gsl.rcp45.uni[t,], c(0.05,.50,.95), na.rm=TRUE)
-  c(gsl.rcp85.uni.05[t], gsl.rcp85.uni.50[t], gsl.rcp85.uni.95[t]) := quantile(gsl.rcp85.uni[t,], c(0.05,.50,.95), na.rm=TRUE)
-	c(gsl.nofd.rcp26.uni.05[t], gsl.nofd.rcp26.uni.50[t], gsl.nofd.rcp26.uni.95[t]) := quantile(gsl.nofd.rcp26.uni[t,], c(0.05,.50,.95), na.rm=TRUE)
-  c(gsl.nofd.rcp45.uni.05[t], gsl.nofd.rcp45.uni.50[t], gsl.nofd.rcp45.uni.95[t]) := quantile(gsl.nofd.rcp45.uni[t,], c(0.05,.50,.95), na.rm=TRUE)
-  c(gsl.nofd.rcp85.uni.05[t], gsl.nofd.rcp85.uni.50[t], gsl.nofd.rcp85.uni.95[t]) := quantile(gsl.nofd.rcp85.uni[t,], c(0.05,.50,.95), na.rm=TRUE)
-	c(gsl.rcp26.gam.05[t], gsl.rcp26.gam.50[t], gsl.rcp26.gam.95[t]) := quantile(gsl.rcp26.gam[t,], c(0.05,.50,.95), na.rm=TRUE)
-  c(gsl.rcp45.gam.05[t], gsl.rcp45.gam.50[t], gsl.rcp45.gam.95[t]) := quantile(gsl.rcp45.gam[t,], c(0.05,.50,.95), na.rm=TRUE)
-  c(gsl.rcp85.gam.05[t], gsl.rcp85.gam.50[t], gsl.rcp85.gam.95[t]) := quantile(gsl.rcp85.gam[t,], c(0.05,.50,.95), na.rm=TRUE)
+    c(gsl.rcp26.uni.05[t], gsl.rcp26.uni.50[t], gsl.rcp26.uni.95[t]) := quantile(gsl.rcp26.uni[t,], c(0.05,.50,.95), na.rm=TRUE)
+    c(gsl.rcp45.uni.05[t], gsl.rcp45.uni.50[t], gsl.rcp45.uni.95[t]) := quantile(gsl.rcp45.uni[t,], c(0.05,.50,.95), na.rm=TRUE)
+    c(gsl.rcp85.uni.05[t], gsl.rcp85.uni.50[t], gsl.rcp85.uni.95[t]) := quantile(gsl.rcp85.uni[t,], c(0.05,.50,.95), na.rm=TRUE)
+    c(gsl.nofd.rcp26.uni.05[t], gsl.nofd.rcp26.uni.50[t], gsl.nofd.rcp26.uni.95[t]) := quantile(gsl.nofd.rcp26.uni[t,], c(0.05,.50,.95), na.rm=TRUE)
+    c(gsl.nofd.rcp45.uni.05[t], gsl.nofd.rcp45.uni.50[t], gsl.nofd.rcp45.uni.95[t]) := quantile(gsl.nofd.rcp45.uni[t,], c(0.05,.50,.95), na.rm=TRUE)
+    c(gsl.nofd.rcp85.uni.05[t], gsl.nofd.rcp85.uni.50[t], gsl.nofd.rcp85.uni.95[t]) := quantile(gsl.nofd.rcp85.uni[t,], c(0.05,.50,.95), na.rm=TRUE)
+    c(gsl.rcp26.gam.05[t], gsl.rcp26.gam.50[t], gsl.rcp26.gam.95[t]) := quantile(gsl.rcp26.gam[t,], c(0.05,.50,.95), na.rm=TRUE)
+    c(gsl.rcp45.gam.05[t], gsl.rcp45.gam.50[t], gsl.rcp45.gam.95[t]) := quantile(gsl.rcp45.gam[t,], c(0.05,.50,.95), na.rm=TRUE)
+    c(gsl.rcp85.gam.05[t], gsl.rcp85.gam.50[t], gsl.rcp85.gam.95[t]) := quantile(gsl.rcp85.gam[t,], c(0.05,.50,.95), na.rm=TRUE)
 	c(gsl.nofd.rcp26.gam.05[t], gsl.nofd.rcp26.gam.50[t], gsl.nofd.rcp26.gam.95[t]) := quantile(gsl.nofd.rcp26.gam[t,], c(0.05,.50,.95), na.rm=TRUE)
-  c(gsl.nofd.rcp45.gam.05[t], gsl.nofd.rcp45.gam.50[t], gsl.nofd.rcp45.gam.95[t]) := quantile(gsl.nofd.rcp45.gam[t,], c(0.05,.50,.95), na.rm=TRUE)
-  c(gsl.nofd.rcp85.gam.05[t], gsl.nofd.rcp85.gam.50[t], gsl.nofd.rcp85.gam.95[t]) := quantile(gsl.nofd.rcp85.gam[t,], c(0.05,.50,.95), na.rm=TRUE)
-  c(fastdyn.rcp26.uni.05[t], fastdyn.rcp26.uni.50[t], fastdyn.rcp26.uni.95[t]) := quantile(gsl.rcp26.uni[t,]-gsl.nofd.rcp26.uni[t,], c(0.05,.50,.95), na.rm=TRUE)
-  c(fastdyn.rcp45.uni.05[t], fastdyn.rcp45.uni.50[t], fastdyn.rcp45.uni.95[t]) := quantile(gsl.rcp45.uni[t,]-gsl.nofd.rcp45.uni[t,], c(0.05,.50,.95), na.rm=TRUE)
-  c(fastdyn.rcp85.uni.05[t], fastdyn.rcp85.uni.50[t], fastdyn.rcp85.uni.95[t]) := quantile(gsl.rcp85.uni[t,]-gsl.nofd.rcp85.uni[t,], c(0.05,.50,.95), na.rm=TRUE)
-  c(fastdyn.rcp26.gam.05[t], fastdyn.rcp26.gam.50[t], fastdyn.rcp26.gam.95[t]) := quantile(gsl.rcp26.gam[t,]-gsl.nofd.rcp26.gam[t,], c(0.05,.50,.95), na.rm=TRUE)
-  c(fastdyn.rcp45.gam.05[t], fastdyn.rcp45.gam.50[t], fastdyn.rcp45.gam.95[t]) := quantile(gsl.rcp45.gam[t,]-gsl.nofd.rcp45.gam[t,], c(0.05,.50,.95), na.rm=TRUE)
-  c(fastdyn.rcp85.gam.05[t], fastdyn.rcp85.gam.50[t], fastdyn.rcp85.gam.95[t]) := quantile(gsl.rcp85.gam[t,]-gsl.nofd.rcp85.gam[t,], c(0.05,.50,.95), na.rm=TRUE)
-
+    c(gsl.nofd.rcp45.gam.05[t], gsl.nofd.rcp45.gam.50[t], gsl.nofd.rcp45.gam.95[t]) := quantile(gsl.nofd.rcp45.gam[t,], c(0.05,.50,.95), na.rm=TRUE)
+    c(gsl.nofd.rcp85.gam.05[t], gsl.nofd.rcp85.gam.50[t], gsl.nofd.rcp85.gam.95[t]) := quantile(gsl.nofd.rcp85.gam[t,], c(0.05,.50,.95), na.rm=TRUE)
+    c(fastdyn.rcp26.uni.05[t], fastdyn.rcp26.uni.50[t], fastdyn.rcp26.uni.95[t]) := quantile(gsl.rcp26.uni[t,]-gsl.nofd.rcp26.uni[t,], c(0.05,.50,.95), na.rm=TRUE)
+    c(fastdyn.rcp45.uni.05[t], fastdyn.rcp45.uni.50[t], fastdyn.rcp45.uni.95[t]) := quantile(gsl.rcp45.uni[t,]-gsl.nofd.rcp45.uni[t,], c(0.05,.50,.95), na.rm=TRUE)
+    c(fastdyn.rcp85.uni.05[t], fastdyn.rcp85.uni.50[t], fastdyn.rcp85.uni.95[t]) := quantile(gsl.rcp85.uni[t,]-gsl.nofd.rcp85.uni[t,], c(0.05,.50,.95), na.rm=TRUE)
+    c(fastdyn.rcp26.gam.05[t], fastdyn.rcp26.gam.50[t], fastdyn.rcp26.gam.95[t]) := quantile(gsl.rcp26.gam[t,]-gsl.nofd.rcp26.gam[t,], c(0.05,.50,.95), na.rm=TRUE)
+    c(fastdyn.rcp45.gam.05[t], fastdyn.rcp45.gam.50[t], fastdyn.rcp45.gam.95[t]) := quantile(gsl.rcp45.gam[t,]-gsl.nofd.rcp45.gam[t,], c(0.05,.50,.95), na.rm=TRUE)
+    c(fastdyn.rcp85.gam.05[t], fastdyn.rcp85.gam.50[t], fastdyn.rcp85.gam.95[t]) := quantile(gsl.rcp85.gam[t,]-gsl.nofd.rcp85.gam[t,], c(0.05,.50,.95), na.rm=TRUE)
 }
 
 iproj = which(t.proj==2000):which(t.proj==2100)
@@ -415,41 +420,41 @@ pdf(paste(plotdir,'projections_SLR_total.pdf',sep=''),width=4,height=5.5,colormo
 par(mfrow=c(2,1))
 # GAMMA RCP85
 par(mai=c(.3,.83,.20,.2))
-plot(t.proj[iproj],gsl.rcp85.gam.50[iproj],type='l',col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]),lwd=2, ann='',
+plot(t.proj[iproj],gsl.rcp85.gam.50[iproj],type='l',col=rgb(col85[1],col85[2],col85[3]),lwd=2, ann='',
 		 xlim=c(2000,2100), ylim=c(0,2), xaxt='n', yaxt='n', xaxs='i', yaxs='i');
 		 axis(1, seq(2000,2100,by=20)); axis(2, seq(0,2,by=.25), lab=c('0','','0.5','','1','','1.5','','2'));
 		 mtext(side=2, text='Total sea level [m]', line=2.2, cex=1);
      mtext(side=3, text=expression(bold(' a')), line=-1, cex=1, adj=0);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(gsl.rcp85.gam.95[iproj],rev(gsl.rcp85.gam.05[iproj])),
-          col=rgb(mycol[11,1],mycol[11,2],mycol[11,3],.6), border=NA);
+          col=rgb(col85[1],col85[2],col85[3],.5), border=NA);
 # + UNIFORM RCP45
-	lines(t.proj[iproj],gsl.rcp45.gam.50[iproj],type='l',col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]),lwd=2);
+	lines(t.proj[iproj],gsl.rcp45.gam.50[iproj],type='l',col=rgb(col45[1],col45[2],col45[3]),lwd=2);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(gsl.rcp45.gam.95[iproj],rev(gsl.rcp45.gam.05[iproj])),
-          col=rgb(mycol[2,1],mycol[2,2],mycol[2,3],.4), border=NA);
+          col=rgb(col45[1],col45[2],col45[3],.5), border=NA);
 # + UNIFORM RCP26
-	lines(t.proj[iproj],gsl.rcp26.gam.50[iproj],type='l',col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]),lwd=2);
+	lines(t.proj[iproj],gsl.rcp26.gam.50[iproj],type='l',col=rgb(col26[1],col26[2],col26[3]),lwd=2);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(gsl.rcp26.gam.95[iproj],rev(gsl.rcp26.gam.05[iproj])),
-          col=rgb(mycol[13,1],mycol[13,2],mycol[13,3],.4), border=NA);
+          col=rgb(col26[1],col26[2],col26[3],.5), border=NA);
 # + legend
   legend(t.proj[iproj[1]]+10,2,c("5-95% range,",
                                 "RCP2.6",
 																"RCP4.5",
 																"RCP8.5"),
-         lty=c(NA,1,1,1), lwd=3, col=c(NA,rgb(mycol[13,1],mycol[13,2],mycol[13,3]),rgb(mycol[2,1],mycol[2,2],mycol[2,3]),rgb(mycol[11,1],mycol[11,2],mycol[11,3])), bty='n', cex=1)
+         lty=c(NA,1,1,1), lwd=3, col=c(NA,rgb(col85[1],col85[2],col85[3]),rgb(col45[1],col45[2],col45[3]),rgb(col26[1],col26[2],col26[3])), bty='n', cex=1)
 # GAMMA RCP85, FD contribution
 par(mai=c(.65,.83,.2,.2))
-plot(t.proj[iproj],fastdyn.rcp85.gam.50[iproj],type='l',col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]),lwd=2, ann='',
+plot(t.proj[iproj],fastdyn.rcp85.gam.50[iproj],type='l',col=rgb(col85[1],col85[2],col85[3]),lwd=2, ann='',
 		 xlim=c(2000,2100), ylim=c(0,0.75), xaxt='n', yaxt='n', xaxs='i', yaxs='i');
 		 axis(1, seq(2000,2100,by=20)); axis(2, seq(0,2,by=.2)); #axis(3, seq(2000,2100,by=20)); axis(4, seq(0,2,by=.2));
 		 mtext(side=1, text='Year', line=2.1, cex=1);
 		 mtext(side=2, text='Fast dynamics sea \nlevel contribution [m]', line=2.2, cex=1);
      mtext(side=3, text=expression(bold(' b')), line=-1, cex=.9, adj=0);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(fastdyn.rcp85.gam.95[iproj],rev(fastdyn.rcp85.gam.05[iproj])),
-          col=rgb(mycol[11,1],mycol[11,2],mycol[11,3],.6), border=NA);
+          col=rgb(col85[1],col85[2],col85[3],.5), border=NA);
 # + UNIFORM RCP45, FD contribution
-	lines(t.proj[iproj],fastdyn.rcp45.gam.50[iproj],type='l',col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]),lwd=2);
+	lines(t.proj[iproj],fastdyn.rcp45.gam.50[iproj],type='l',col=rgb(col45[1],col45[2],col45[3]),lwd=2);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(fastdyn.rcp45.gam.95[iproj],rev(fastdyn.rcp45.gam.05[iproj])),
-          col=rgb(mycol[2,1],mycol[2,2],mycol[2,3],.4), border=NA);
+          col=rgb(col45[1],col45[2],col45[3],.5), border=NA);
 
 dev.off()
 
@@ -491,41 +496,41 @@ pdf(paste(plotdir,'projections_SLR_total_2200.pdf',sep=''),width=4,height=5.5,co
 par(mfrow=c(2,1))
 # GAMMA RCP85
 par(mai=c(.3,.83,.20,.2))
-plot(t.proj[iproj],gsl.rcp85.gam.50[iproj],type='l',col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]),lwd=2, ann='',
+plot(t.proj[iproj],gsl.rcp85.gam.50[iproj],type='l',col=rgb(col85[1],col85[2],col85[3]),lwd=2, ann='',
 		 xlim=c(2000,2200), ylim=c(0,8.5), xaxt='n', yaxt='n', xaxs='i', yaxs='i');
 		 		 axis(1, seq(2000,2200,by=25),label=c('2000','','2050','','2100','','2150','','2200')); axis(2, seq(0,8,by=1), lab=c('0','','2','','4','','6','','8'));
 		 mtext(side=2, text='Total sea level [m]', line=2.2, cex=1);
      mtext(side=3, text=expression(bold(' a')), line=-1, cex=1, adj=0);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(gsl.rcp85.gam.95[iproj],rev(gsl.rcp85.gam.05[iproj])),
-          col=rgb(mycol[11,1],mycol[11,2],mycol[11,3],.6), border=NA);
+          col=rgb(col85[1],col85[2],col85[3],.5), border=NA);
 # + UNIFORM RCP45
-	lines(t.proj[iproj],gsl.rcp45.gam.50[iproj],type='l',col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]),lwd=2);
+	lines(t.proj[iproj],gsl.rcp45.gam.50[iproj],type='l',col=rgb(col45[1],col45[2],col45[3]),lwd=2);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(gsl.rcp45.gam.95[iproj],rev(gsl.rcp45.gam.05[iproj])),
-          col=rgb(mycol[2,1],mycol[2,2],mycol[2,3],.4), border=NA);
+          col=rgb(col45[1],col45[2],col45[3],.5), border=NA);
 # + UNIFORM RCP26
-	lines(t.proj[iproj],gsl.rcp26.gam.50[iproj],type='l',col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]),lwd=2);
+	lines(t.proj[iproj],gsl.rcp26.gam.50[iproj],type='l',col=rgb(col26[1],col26[2],col26[3]),lwd=2);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(gsl.rcp26.gam.95[iproj],rev(gsl.rcp26.gam.05[iproj])),
-          col=rgb(mycol[13,1],mycol[13,2],mycol[13,3],.4), border=NA);
+          col=rgb(col26[1],col26[2],col26[3],.5), border=NA);
 # + legend
   legend(t.proj[iproj[1]]+10,8,c("5-95% range,",
                                 "RCP2.6",
-																"RCP4.5",
-																"RCP8.5"),
-         lty=c(NA,1,1,1), lwd=3, col=c(NA,rgb(mycol[13,1],mycol[13,2],mycol[13,3]),rgb(mycol[2,1],mycol[2,2],mycol[2,3]),rgb(mycol[11,1],mycol[11,2],mycol[11,3])), bty='n', cex=1)
+                                "RCP4.5",
+								"RCP8.5"),
+         lty=c(NA,1,1,1), lwd=3, col=c(NA,rgb(col85[1],col85[2],col85[3]),rgb(col45[1],col45[2],col45[3]),rgb(col26[1],col26[2],col26[3])), bty='n', cex=1)
 # GAMMA RCP85, FD contribution
 par(mai=c(.65,.83,.2,.2))
-plot(t.proj[iproj],fastdyn.rcp85.gam.50[iproj],type='l',col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]),lwd=2, ann='',
+plot(t.proj[iproj],fastdyn.rcp85.gam.50[iproj],type='l',col=rgb(col85[1],col85[2],col85[3]),lwd=2, ann='',
 		 xlim=c(2000,2200), ylim=c(0,2.5), xaxt='n', yaxt='n', xaxs='i', yaxs='i');
 		 axis(1, seq(2000,2200,by=25),label=c('2000','','2050','','2100','','2150','','2200')); axis(2, seq(0,2.5,by=0.5), lab=c('0','','1','','2',''));
 		 mtext(side=1, text='Year', line=2.1, cex=1);
 		 mtext(side=2, text='Fast dynamics sea \nlevel contribution [m]', line=2.2, cex=1);
      mtext(side=3, text=expression(bold(' b')), line=-1, cex=.9, adj=0);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(fastdyn.rcp85.gam.95[iproj],rev(fastdyn.rcp85.gam.05[iproj])),
-          col=rgb(mycol[11,1],mycol[11,2],mycol[11,3],.6), border=NA);
+          col=rgb(col85[1],col85[2],col85[3],.5), border=NA);
 # + UNIFORM RCP45, FD contribution
-	lines(t.proj[iproj],fastdyn.rcp45.gam.50[iproj],type='l',col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]),lwd=2);
+	lines(t.proj[iproj],fastdyn.rcp45.gam.50[iproj],type='l',col=rgb(col45[1],col45[2],col45[3]),lwd=2);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(fastdyn.rcp45.gam.95[iproj],rev(fastdyn.rcp45.gam.05[iproj])),
-          col=rgb(mycol[2,1],mycol[2,2],mycol[2,3],.4), border=NA);
+          col=rgb(col45[1],col45[2],col45[3],.5), border=NA);
 
 dev.off()
 
@@ -538,72 +543,72 @@ pdf(paste(plotdir,'projections_SLR_total_2200_bothPriors.pdf',sep=''),width=6.2,
 par(mfrow=c(2,2))
 # UNIFORM RCP85
 par(mai=c(.3,.75,.25,0))
-plot(t.proj[iproj],gsl.rcp85.uni.50[iproj],type='l',col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]),lwd=2, ann='',
+plot(t.proj[iproj],gsl.rcp85.uni.50[iproj],type='l',col=rgb(col85[1],col85[2],col85[3]),lwd=2, ann='',
 		 xlim=c(2000,2200), ylim=c(0,8.7), xaxt='n', yaxt='n', xaxs='i', yaxs='i');
 		 		 axis(1, seq(2000,2200,by=25),label=c('2000','','2050','','2100','','2150','','2200')); axis(2, seq(0,8,by=1), lab=c('0','','2','','4','','6','','8'));
 		 mtext(side=2, text='Total sea level [m]', line=2.2, cex=.9);
      mtext(side=3, text='Uniform priors', line=0.3, cex=.9);
      mtext(side=3, text=expression(bold(' a')), line=-1, cex=.9, adj=0);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(gsl.rcp85.uni.95[iproj],rev(gsl.rcp85.uni.05[iproj])),
-          col=rgb(mycol[11,1],mycol[11,2],mycol[11,3],.6), border=NA);
+          col=rgb(col85[1],col85[2],col85[3],.5), border=NA);
 # + UNIFORM RCP26
-	lines(t.proj[iproj],gsl.rcp26.uni.50[iproj],type='l',col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]),lwd=2);
+	lines(t.proj[iproj],gsl.rcp26.uni.50[iproj],type='l',col=rgb(col26[1],col26[2],col26[3]),lwd=2);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(gsl.rcp26.uni.95[iproj],rev(gsl.rcp26.uni.05[iproj])),
-          col=rgb(mycol[13,1],mycol[13,2],mycol[13,3],.4), border=NA);
+          col=rgb(col26[1],col26[2],col26[3],.5), border=NA);
 # + UNIFORM RCP45
-	lines(t.proj[iproj],gsl.rcp45.uni.50[iproj],type='l',col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]),lwd=2);
+	lines(t.proj[iproj],gsl.rcp45.uni.50[iproj],type='l',col=rgb(col45[1],col45[2],col45[3]),lwd=2);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(gsl.rcp45.uni.95[iproj],rev(gsl.rcp45.uni.05[iproj])),
-          col=rgb(mycol[2,1],mycol[2,2],mycol[2,3],.4), border=NA);
+          col=rgb(col45[1],col45[2],col45[3],.5), border=NA);
 # + legend
   legend(t.proj[iproj[1]]+10,8,c("5-95% range,",
                                 "RCP2.6",
 																"RCP4.5",
 																"RCP8.5"),
-         lty=c(NA,1,1,1), lwd=3, col=c(NA,rgb(mycol[13,1],mycol[13,2],mycol[13,3]),rgb(mycol[2,1],mycol[2,2],mycol[2,3]),rgb(mycol[11,1],mycol[11,2],mycol[11,3])), bty='n', cex=.9)
+         lty=c(NA,1,1,1), lwd=3, col=c(NA,rgb(col26[1],col26[2],col26[3]),rgb(col45[1],col45[2],col45[3]),rgb(col85[1],col85[2],col85[3])), bty='n', cex=.9)
 # GAMMA RCP85
 par(mai=c(.3,.6,.25,.2))
-plot(t.proj[iproj],gsl.rcp85.gam.50[iproj],type='l',col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]),lwd=2, ann='',
+plot(t.proj[iproj],gsl.rcp85.gam.50[iproj],type='l',col=rgb(col85[1],col85[2],col85[3]),lwd=2, ann='',
 		 xlim=c(2000,2200), ylim=c(0,8.7), xaxt='n', yaxt='n', xaxs='i', yaxs='i');
 		 		 axis(1, seq(2000,2200,by=25),label=c('2000','','2050','','2100','','2150','','2200')); axis(2, seq(0,8,by=1), lab=c('0','','2','','4','','6','','8'));
      mtext(side=3, text='Gamma priors', line=0.3, cex=.9);
      mtext(side=3, text=expression(bold(' b')), line=-1, cex=.9, adj=0);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(gsl.rcp85.gam.95[iproj],rev(gsl.rcp85.gam.05[iproj])),
-          col=rgb(mycol[11,1],mycol[11,2],mycol[11,3],.6), border=NA);
+          col=rgb(col85[1],col85[2],col85[3],.5), border=NA);
 # + GAMMA RCP26
-	lines(t.proj[iproj],gsl.rcp26.gam.50[iproj],type='l',col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]),lwd=2);
+	lines(t.proj[iproj],gsl.rcp26.gam.50[iproj],type='l',col=rgb(col26[1],col26[2],col26[3]),lwd=2);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(gsl.rcp26.gam.95[iproj],rev(gsl.rcp26.gam.05[iproj])),
-          col=rgb(mycol[13,1],mycol[13,2],mycol[13,3],.4), border=NA);
+          col=rgb(col26[1],col26[2],col26[3],.5), border=NA);
 # + GAMMA RCP45
-	lines(t.proj[iproj],gsl.rcp45.gam.50[iproj],type='l',col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]),lwd=2);
+	lines(t.proj[iproj],gsl.rcp45.gam.50[iproj],type='l',col=rgb(col45[1],col45[2],col45[3]),lwd=2);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(gsl.rcp45.gam.95[iproj],rev(gsl.rcp45.gam.05[iproj])),
-          col=rgb(mycol[2,1],mycol[2,2],mycol[2,3],.4), border=NA);
+          col=rgb(col45[1],col45[2],col45[3],.5), border=NA);
 # UNIFORM RCP85, FD contribution
 par(mai=c(.6,.75,.1,0))
-plot(t.proj[iproj],fastdyn.rcp85.uni.50[iproj],type='l',col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]),lwd=2, ann='',
+plot(t.proj[iproj],fastdyn.rcp85.uni.50[iproj],type='l',col=rgb(col85[1],col85[2],col85[3]),lwd=2, ann='',
 		 xlim=c(2000,2200), ylim=c(0,2.5), xaxt='n', yaxt='n', xaxs='i', yaxs='i');
 		 axis(1, seq(2000,2200,by=25),label=c('2000','','2050','','2100','','2150','','2200')); axis(2, seq(0,2.5,by=0.5), lab=c('0','','1','','2',''));
 		 mtext(side=1, text='Year', line=2.1, cex=.9);
 		 mtext(side=2, text='Fast dynamics sea \nlevel contribution [m]', line=2.2, cex=.9);
      mtext(side=3, text=expression(bold(' c')), line=-1, cex=.9, adj=0);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(fastdyn.rcp85.uni.95[iproj],rev(fastdyn.rcp85.uni.05[iproj])),
-          col=rgb(mycol[11,1],mycol[11,2],mycol[11,3],.6), border=NA);
+          col=rgb(col85[1],col85[2],col85[3],.5), border=NA);
 # + UNIFORM RCP45, FD contribution
-	lines(t.proj[iproj],fastdyn.rcp45.uni.50[iproj],type='l',col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]),lwd=2);
+	lines(t.proj[iproj],fastdyn.rcp45.uni.50[iproj],type='l',col=rgb(col45[1],col45[2],col45[3]),lwd=2);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(fastdyn.rcp45.uni.95[iproj],rev(fastdyn.rcp45.uni.05[iproj])),
-          col=rgb(mycol[2,1],mycol[2,2],mycol[2,3],.4), border=NA);
+          col=rgb(col45[1],col45[2],col45[3],.5), border=NA);
 # GAMMA RCP85, FD contribution
 par(mai=c(.6,.6,.1,.2))
-plot(t.proj[iproj],fastdyn.rcp85.gam.50[iproj],type='l',col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]),lwd=2, ann='',
+plot(t.proj[iproj],fastdyn.rcp85.gam.50[iproj],type='l',col=rgb(col85[1],col85[2],col85[3]),lwd=2, ann='',
 		 xlim=c(2000,2200), ylim=c(0,2.5), xaxt='n', yaxt='n', xaxs='i', yaxs='i');
 		 axis(1, seq(2000,2200,by=25),label=c('2000','','2050','','2100','','2150','','2200')); axis(2, seq(0,2.5,by=0.5), lab=c('0','','1','','2',''));
 		 mtext(side=1, text='Year', line=2.1, cex=.9);
      mtext(side=3, text=expression(bold(' d')), line=-1, cex=.9, adj=0);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(fastdyn.rcp85.gam.95[iproj],rev(fastdyn.rcp85.gam.05[iproj])),
-          col=rgb(mycol[11,1],mycol[11,2],mycol[11,3],.6), border=NA);
+          col=rgb(col85[1],col85[2],col85[3],.5), border=NA);
 # + GAMMA RCP45, FD contribution
-	lines(t.proj[iproj],fastdyn.rcp45.gam.50[iproj],type='l',col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]),lwd=2);
+	lines(t.proj[iproj],fastdyn.rcp45.gam.50[iproj],type='l',col=rgb(col45[1],col45[2],col45[3]),lwd=2);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(fastdyn.rcp45.gam.95[iproj],rev(fastdyn.rcp45.gam.05[iproj])),
-          col=rgb(mycol[2,1],mycol[2,2],mycol[2,3],.4), border=NA);
+          col=rgb(col45[1],col45[2],col45[3],.5), border=NA);
 
 dev.off()
 
@@ -715,7 +720,7 @@ pdf(paste(plotdir,'distributions_SLR2100_pdf+sf.pdf',sep=''),width=5,height=7,co
 par(mfrow=c(2,1), mai=c(.85,.74,.1,.15))
 
 plot(x,pdf.slr2100.rcp85.uni$y, type='l', xlim=c(0,3), ylim=c(0,4.7), lty=1,
-     col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]), lwd=1.5, xlab='', ylab='', xaxt='n', yaxt='n', xaxs='i', yaxs='i',axes=FALSE);
+     col=rgb(col85[1],col85[2],col85[3]), lwd=1.5, xlab='', ylab='', xaxt='n', yaxt='n', xaxs='i', yaxs='i',axes=FALSE);
   axis(1,seq(0,3,0.5),lab=c("0","0.5","1","1.5","2","2.5","3"))
   u <- par("usr")
   arrows(0, u[3],0, u[4], code = 2, xpd = TRUE)
@@ -723,19 +728,19 @@ plot(x,pdf.slr2100.rcp85.uni$y, type='l', xlim=c(0,3), ylim=c(0,4.7), lty=1,
   mtext('Projected sea level in 2100\nrelative to 1986-2005 average [m]', side=1, line=3);
   mtext(side=3, text=expression(bold('   a')), line=-1, cex=.9, adj=0);
 
-  lines(x,pdf.slr2100.rcp45.uni$y, type='l', col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lwd=1.5);
-  lines(x,pdf.slr2100.rcp26.uni$y, type='l', col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lwd=1.5);
+  lines(x,pdf.slr2100.rcp45.uni$y, type='l', col=rgb(col45[1],col45[2],col45[3]), lwd=1.5);
+  lines(x,pdf.slr2100.rcp26.uni$y, type='l', col=rgb(col26[1],col26[2],col26[3]), lwd=1.5);
 
-  lines(x,pdf.slr2100.nofd.rcp85.uni$y, type='l', col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]), lwd=1.5, lty=2);
-  lines(x,pdf.slr2100.nofd.rcp45.uni$y, type='l', col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lwd=1.5, lty=2);
-  lines(x,pdf.slr2100.nofd.rcp26.uni$y, type='l', col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lwd=1.5, lty=2);
+  lines(x,pdf.slr2100.nofd.rcp85.uni$y, type='l', col=rgb(col85[1],col85[2],col85[3]), lwd=1.5, lty=2);
+  lines(x,pdf.slr2100.nofd.rcp45.uni$y, type='l', col=rgb(col45[1],col45[2],col45[3]), lwd=1.5, lty=2);
+  lines(x,pdf.slr2100.nofd.rcp26.uni$y, type='l', col=rgb(col26[1],col26[2],col26[3]), lwd=1.5, lty=2);
 
   legend(1.1,4.7,c("RCP2.6","RCP4.5","RCP8.5","including fast dynamics","neglecting fast dynamics"),
-        lty=c(1,1,1,1,2), lwd=2, col=c(rgb(mycol[13,1],mycol[13,2],mycol[13,3]),rgb(mycol[2,1],mycol[2,2],mycol[2,3]),rgb(mycol[11,1],mycol[11,2],mycol[11,3]),'black','black'),
+        lty=c(1,1,1,1,2), lwd=2, col=c(rgb(col26[1],col26[2],col26[3]),rgb(col45[1],col45[2],col45[3]),rgb(col85[1],col85[2],col85[3]),'black','black'),
         bty='n')
 
 plot(x,log10(sur.slr2100.rcp85.uni),type='l', xlim=c(0,3), ylim=c(-3.3,0), lty=1,
-     col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]), lwd=1.5, xlab='', ylab='', xaxt='n', yaxt='n', xaxs='i', yaxs='i');
+     col=rgb(col85[1],col85[2],col85[3]), lwd=1.5, xlab='', ylab='', xaxt='n', yaxt='n', xaxs='i', yaxs='i');
   axis(1,seq(0,3,0.5),lab=c("0","0.5","1","1.5","2","2.5","3"))
   mtext('Survival function [1-CDF]', side = 2, line=2.6);
   mtext('Projected sea level in 2100\nrelative to 1986-2005 average [m]', side=1, line=3);
@@ -743,9 +748,9 @@ plot(x,log10(sur.slr2100.rcp85.uni),type='l', xlim=c(0,3), ylim=c(-3.3,0), lty=1
 
 	axis(2, at=seq(-4,0), label=parse(text=paste("10^", seq(-4,0), sep="")), las=1)
 
-  lines(x,log10(sur.slr2100.nofd.rcp85.uni),type='l',col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]), lty=2, lwd=1.5);
-  lines(x,log10(sur.slr2100.rcp45.uni),type='l',lty=1, col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lwd=1.5);    lines(x,log10(sur.slr2100.nofd.rcp45.uni),type='l',col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lty=2, lwd=1.5);
-  lines(x,log10(sur.slr2100.rcp26.uni),type='l',lty=1, col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lwd=1.5); lines(x,log10(sur.slr2100.nofd.rcp26.uni),type='l',col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lty=2, lwd=1.5);
+  lines(x,log10(sur.slr2100.nofd.rcp85.uni),type='l',col=rgb(col85[1],col85[2],col85[3]), lty=2, lwd=1.5);
+  lines(x,log10(sur.slr2100.rcp45.uni),type='l',lty=1, col=rgb(col45[1],col45[2],col45[3]), lwd=1.5);    lines(x,log10(sur.slr2100.nofd.rcp45.uni),type='l',col=rgb(col45[1],col45[2],col45[3]), lty=2, lwd=1.5);
+  lines(x,log10(sur.slr2100.rcp26.uni),type='l',lty=1, col=rgb(col26[1],col26[2],col26[3]), lwd=1.5); lines(x,log10(sur.slr2100.nofd.rcp26.uni),type='l',col=rgb(col26[1],col26[2],col26[3]), lty=2, lwd=1.5);
 
 	lines(c(-4,4),c(-2,-2),lty=2,col='black'); text(0.35,-1.85,"1:100 level");
 	lines(c(-4,4),c(-3,-3),lty=2,col='black'); text(0.35,-2.85,"1:1000 level");
@@ -895,15 +900,15 @@ conv=1e9  # convert from $ to billions or millions of $? (for nicer looking axes
 pfig=0.55
 
 par(mfrow=c(1,2), fig=c(0,pfig,0,1), mai=c(.7,.7,.06,.2))
-plot(log10(preturn.avg),cost.avg/conv, col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]),
+plot(log10(preturn.avg),cost.avg/conv, col=rgb(col85[1],col85[2],col85[3]),
 			type='l',xlim=c(1.5,7),ylim=c(0,8e9)/conv,xaxt='n', xlab='', ylab='');
       mtext('Return period [years]',side = 1,line = 2.1)
       mtext('Expected costs [billion US $]',side=2,line=2.2);
 			axis(1, at=seq(1,7), label=parse(text=paste("10^", seq(1,7), sep="")), las=1)
-  lines(log10(preturn.avg)      , cost.avg/conv      , type='l', col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]), lwd=2);
-  lines(log10(preturn.nofd.avg) , cost.nofd.avg/conv , type='l', col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lwd=2);
-  lines(log10(preturn.avg)      , investment.avg/conv      , type='l', col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]), lwd=2, lty=6);
-  lines(log10(preturn.nofd.avg) , investment.nofd.avg/conv , type='l', col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lwd=2, lty=6);
+  lines(log10(preturn.avg)      , cost.avg/conv      , type='l', col=rgb(col85[1],col85[2],col85[3]), lwd=2);
+  lines(log10(preturn.nofd.avg) , cost.nofd.avg/conv , type='l', col=rgb(col45[1],col45[2],col45[3]), lwd=2);
+  lines(log10(preturn.avg)      , investment.avg/conv      , type='l', col=rgb(col85[1],col85[2],col85[3]), lwd=2, lty=6);
+  lines(log10(preturn.nofd.avg) , investment.nofd.avg/conv , type='l', col=rgb(col45[1],col45[2],col45[3]), lwd=2, lty=6);
   mtext(side=3, text=expression(bold(' a')), line=-2, cex=1, adj=0);
   points(log10(preturn.pre),cost.nofd.avg[iopt.nofd.avg]/conv,type='p',pch=16,cex=1.4)
 
@@ -928,13 +933,13 @@ v <- c( (v[1]+v[2])*px, v[2], (v[4]+v[3])*py, v[4] )
 rect(u[2], u[4], (u[1]+u[2])*px, (u[4]-u[3])*py, col="white")
 par( fig=v, new=TRUE, mar=c(0,0,0,0) )
 
-plot(log10(preturn.avg),cost.avg/conv, col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]),
+plot(log10(preturn.avg),cost.avg/conv, col=rgb(col85[1],col85[2],col85[3]),
 			type='l',xlim=inset.x,ylim=inset.y/conv, xlab='', ylab='', xaxt='n', yaxt='n');
       axis(1, at=seq(3.8,4.0,by=.2), label=parse(text=paste("10^", seq(3.8,4.0,by=.2), sep="")), las=1)
-  lines(log10(preturn.avg)      , cost.avg/conv      , type='l', col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]), lwd=2);
-  lines(log10(preturn.nofd.avg) , cost.nofd.avg/conv , type='l', col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lwd=2);
-  lines(log10(preturn.avg)      , investment.avg/conv      , type='l', col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]), lwd=2, lty=6);
-  lines(log10(preturn.nofd.avg) , investment.nofd.avg/conv , type='l', col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lwd=2, lty=6);
+  lines(log10(preturn.avg)      , cost.avg/conv      , type='l', col=rgb(col85[1],col85[2],col85[3]), lwd=2);
+  lines(log10(preturn.nofd.avg) , cost.nofd.avg/conv , type='l', col=rgb(col45[1],col45[2],col45[3]), lwd=2);
+  lines(log10(preturn.avg)      , investment.avg/conv      , type='l', col=rgb(col85[1],col85[2],col85[3]), lwd=2, lty=6);
+  lines(log10(preturn.nofd.avg) , investment.nofd.avg/conv , type='l', col=rgb(col45[1],col45[2],col45[3]), lwd=2, lty=6);
 
   #lines( c(log10(preturn.pre),log10(preturn.pre)), c(0,(log10(preturn.pre)*slope.nofd+inter.nofd))/conv, lty=2, lwd=2);
   lines( c(log10(preturn.pre),log10(preturn.pre)), c(0,cost.nofd.avg[iopt.nofd.avg])/conv, lty=2, lwd=2);
@@ -962,19 +967,19 @@ inset.y = c(2.22e9,2.38e9)
 conv=1e9  # convert from $ to billions or millions of $? (for nicer looking axes)
 
 par(fig=c(pfig,1,0,1), new=TRUE, mai=c(.7,.1,.06,.06))
-plot(heightening,cost.avg/conv,col=rgb(mycol[11,1],mycol[11,2],mycol[11,3],.2),type='l',xlim=c(0,3),ylim=c(0,8e9)/conv,
+plot(heightening,cost.avg/conv,col=rgb(col85[1],col85[2],col85[3],.2),type='l',xlim=c(0,3),ylim=c(0,8e9)/conv,
   xlab='', ylab='', xaxt='n', yaxt='n');
   mtext('Heightening [m]',side = 1,line = 2.1)
   axis(1, at=seq(0,3,by=0.5), label=c('0','','1','','2','','3'))
   axis(2, at=seq(0,8,by=2), label=rep("",5), las=1)
-  lines(heightening,cost.avg/conv,type='l',col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]),lwd=3);
-  lines(heightening,cost.nofd.avg/conv,type='l',col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]),lwd=3);
+  lines(heightening,cost.avg/conv,type='l',col=rgb(col85[1],col85[2],col85[3]),lwd=3);
+  lines(heightening,cost.nofd.avg/conv,type='l',col=rgb(col45[1],col45[2],col45[3]),lwd=3);
   points(heightening[iopt.nofd.avg],cost.nofd.avg[iopt.nofd.avg]/conv,type='p',pch=16,cex=1.)
 #  points(heightening[iopt.nofd.avg],cost.avg[iopt.nofd.avg]/conv,type='p',pch=17,cex=1.)
   points(heightening[iopt.avg],cost.avg[iopt.avg]/conv,type='p',pch=15,cex=1.)
   polygon(c(inset.x,rev(inset.x)),c(inset.y[1]-.15e9,inset.y[1]-.15e9,inset.y[2]+.15e9,inset.y[2]+.15e9)/conv,col=rgb(0,0,0,0),border=TRUE,lwd=1.5)
   legend(.35,1.2,c("fast dynamics included", "fast dynamics neglected"),
-         lty=c(1,1), lwd=2, col=c(rgb(mycol[11,1],mycol[11,2],mycol[11,3]),rgb(mycol[2,1],mycol[2,2],mycol[2,3])), cex=1.1, bty='n')
+         lty=c(1,1), lwd=2, col=c(rgb(col85[1],col85[2],col85[3]),rgb(col45[1],col45[2],col45[3])), cex=1.1, bty='n')
   mtext(side=3, text=expression(bold(' b')), line=-2, cex=1, adj=0);
 
 u <- par("usr")
@@ -992,10 +997,10 @@ v <- c( (v[1]+v[2])*px, v[2], (v[4]+v[3])*py, v[4] )
 rect(u[2], u[4], (u[1]+u[2])*px-px, (u[4]-u[3])*py+u[3]*(1-py), col="white")
 par( fig=v, new=TRUE, mar=c(0,0,0,0) )
 
-plot(heightening,cost.avg/conv,type='l',col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]),lwd=3, xlim=inset.x, ylim=inset.y/conv,
+plot(heightening,cost.avg/conv,type='l',col=rgb(col85[1],col85[2],col85[3]),lwd=3, xlim=inset.x, ylim=inset.y/conv,
   xlab='', ylab='', yaxt='n', xaxt='n');
-  lines(heightening,cost.nofd.avg/conv,type='l',col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]),lwd=3);
-  lines(heightening,cost.avg/conv,type='l',col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]),lwd=3);
+  lines(heightening,cost.nofd.avg/conv,type='l',col=rgb(col45[1],col45[2],col45[3]),lwd=3);
+  lines(heightening,cost.avg/conv,type='l',col=rgb(col85[1],col85[2],col85[3]),lwd=3);
 
   lines(c(heightening[iopt.nofd.avg],heightening[iopt.nofd.avg]),c(0,cost.avg[iopt.nofd.avg])/conv,type='l',lty=2,lwd=2,col='black')
   lines(c(heightening[iopt.nofd.avg],heightening[iopt.avg]),c(cost.avg[iopt.nofd.avg],cost.avg[iopt.nofd.avg])/conv,type='l',lty=2,lwd=2,col='black')
@@ -1040,17 +1045,17 @@ conv=1e9  # convert from $ to billions or millions of $? (for nicer looking axes
 pfig=0.55
 
 par(mfrow=c(1,2), fig=c(0,pfig,0,1), mai=c(.7,.7,.06,.2))
-plot(log10(preturn.avg),cost.avg/conv, col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]),
+plot(log10(preturn.avg),cost.avg/conv, col=rgb(col85[1],col85[2],col85[3]),
 			type='l',xlim=c(1.5,7),ylim=c(0,8e9)/conv,xaxt='n', xlab='', ylab='');
       mtext('Return period [years]',side = 1,line = 2.1)
       mtext('Expected costs [billion US $]',side=2,line=2.2);
 			axis(1, at=seq(1,7), label=parse(text=paste("10^", seq(1,7), sep="")), las=1)
-  polygon(c(rp.bin,rev(rp.bin)), c(cost.rp[,3],rev(cost.rp[,1]))/conv, col=rgb(mycol[11,1],mycol[11,2],mycol[11,3],.3), border=NA);
-  polygon(c(rp.bin,rev(rp.bin)), c(cost.nofd.rp[,3],rev(cost.nofd.rp[,1]))/conv, col=rgb(mycol[2,1],mycol[2,2],mycol[2,3],.3), border=NA);
-  lines(log10(preturn.avg)      , cost.avg/conv      , type='l', col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]), lwd=2);
-  lines(log10(preturn.nofd.avg) , cost.nofd.avg/conv , type='l', col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lwd=2);
-  lines(log10(preturn.avg)      , investment.avg/conv      , type='l', col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]), lwd=2, lty=6);
-  lines(log10(preturn.nofd.avg) , investment.nofd.avg/conv , type='l', col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lwd=2, lty=6);
+  polygon(c(rp.bin,rev(rp.bin)), c(cost.rp[,3],rev(cost.rp[,1]))/conv, col=rgb(col85[1],col85[2],col85[3],.3), border=NA);
+  polygon(c(rp.bin,rev(rp.bin)), c(cost.nofd.rp[,3],rev(cost.nofd.rp[,1]))/conv, col=rgb(col45[1],col45[2],col45[3],.3), border=NA);
+  lines(log10(preturn.avg)      , cost.avg/conv      , type='l', col=rgb(col85[1],col85[2],col85[3]), lwd=2);
+  lines(log10(preturn.nofd.avg) , cost.nofd.avg/conv , type='l', col=rgb(col45[1],col45[2],col45[3]), lwd=2);
+  lines(log10(preturn.avg)      , investment.avg/conv      , type='l', col=rgb(col85[1],col85[2],col85[3]), lwd=2, lty=6);
+  lines(log10(preturn.nofd.avg) , investment.nofd.avg/conv , type='l', col=rgb(col45[1],col45[2],col45[3]), lwd=2, lty=6);
   mtext(side=3, text=expression(bold(' a')), line=-2, cex=1, adj=0);
   points(log10(preturn.pre),cost.nofd.avg[iopt.nofd.avg]/conv,type='p',pch=16,cex=1.4)
 
@@ -1075,15 +1080,15 @@ v <- c( (v[1]+v[2])*px, v[2], (v[4]+v[3])*py, v[4] )
 rect(u[2], u[4], (u[1]+u[2])*px, (u[4]-u[3])*py, col="white")
 par( fig=v, new=TRUE, mar=c(0,0,0,0) )
 
-plot(log10(preturn.avg),cost.avg/conv, col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]),
+plot(log10(preturn.avg),cost.avg/conv, col=rgb(col85[1],col85[2],col85[3]),
 			type='l',xlim=inset.x,ylim=inset.y/conv, xlab='', ylab='', xaxt='n', yaxt='n');
       axis(1, at=seq(3.8,4.0,by=.2), label=parse(text=paste("10^", seq(3.8,4.0,by=.2), sep="")), las=1)
-  polygon(c(rp.bin,rev(rp.bin)), c(cost.rp[,3],rev(cost.rp[,1]))/conv, col=rgb(mycol[11,1],mycol[11,2],mycol[11,3],.3), border=NA);
-  polygon(c(rp.bin,rev(rp.bin)), c(cost.nofd.rp[,3],rev(cost.nofd.rp[,1]))/conv, col=rgb(mycol[2,1],mycol[2,2],mycol[2,3],.3), border=NA);
-  lines(log10(preturn.avg)      , cost.avg/conv      , type='l', col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]), lwd=2);
-  lines(log10(preturn.nofd.avg) , cost.nofd.avg/conv , type='l', col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lwd=2);
-  lines(log10(preturn.avg)      , investment.avg/conv      , type='l', col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]), lwd=2, lty=6);
-  lines(log10(preturn.nofd.avg) , investment.nofd.avg/conv , type='l', col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lwd=2, lty=6);
+  polygon(c(rp.bin,rev(rp.bin)), c(cost.rp[,3],rev(cost.rp[,1]))/conv, col=rgb(col85[1],col85[2],col85[3],.3), border=NA);
+  polygon(c(rp.bin,rev(rp.bin)), c(cost.nofd.rp[,3],rev(cost.nofd.rp[,1]))/conv, col=rgb(col45[1],col45[2],col45[3],.3), border=NA);
+  lines(log10(preturn.avg)      , cost.avg/conv      , type='l', col=rgb(col85[1],col85[2],col85[3]), lwd=2);
+  lines(log10(preturn.nofd.avg) , cost.nofd.avg/conv , type='l', col=rgb(col45[1],col45[2],col45[3]), lwd=2);
+  lines(log10(preturn.avg)      , investment.avg/conv      , type='l', col=rgb(col85[1],col85[2],col85[3]), lwd=2, lty=6);
+  lines(log10(preturn.nofd.avg) , investment.nofd.avg/conv , type='l', col=rgb(col45[1],col45[2],col45[3]), lwd=2, lty=6);
 
   #lines( c(log10(preturn.pre),log10(preturn.pre)), c(0,(log10(preturn.pre)*slope.nofd+inter.nofd))/conv, lty=2, lwd=2);
   lines( c(log10(preturn.pre),log10(preturn.pre)), c(0,cost.nofd.avg[iopt.nofd.avg])/conv, lty=2, lwd=2);
@@ -1111,21 +1116,21 @@ inset.y = c(2.22e9,2.38e9)
 conv=1e9  # convert from $ to billions or millions of $? (for nicer looking axes)
 
 par(fig=c(pfig,1,0,1), new=TRUE, mai=c(.7,.1,.06,.06))
-plot(heightening,cost.avg/conv,col=rgb(mycol[11,1],mycol[11,2],mycol[11,3],.2),type='l',xlim=c(0,3),ylim=c(0,8e9)/conv,
+plot(heightening,cost.avg/conv,col=rgb(col85[1],col85[2],col85[3],.2),type='l',xlim=c(0,3),ylim=c(0,8e9)/conv,
   xlab='', ylab='', xaxt='n', yaxt='n');
   mtext('Heightening [m]',side = 1,line = 2.1)
   axis(1, at=seq(0,3,by=0.5), label=c('0','','1','','2','','3'))
   axis(2, at=seq(0,8,by=2), label=rep("",5), las=1)
-  polygon(c(heightening,rev(heightening)), c(cost.h[,3],rev(cost.h[,1]))/conv, col=rgb(mycol[11,1],mycol[11,2],mycol[11,3],.3), border=NA);
-  polygon(c(heightening,rev(heightening)), c(cost.nofd.h[,3],rev(cost.nofd.h[,1]))/conv, col=rgb(mycol[2,1],mycol[2,2],mycol[2,3],.3), border=NA);
-  lines(heightening,cost.avg/conv,type='l',col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]),lwd=3);
-  lines(heightening,cost.nofd.avg/conv,type='l',col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]),lwd=3);
+  polygon(c(heightening,rev(heightening)), c(cost.h[,3],rev(cost.h[,1]))/conv, col=rgb(col85[1],col85[2],col85[3],.3), border=NA);
+  polygon(c(heightening,rev(heightening)), c(cost.nofd.h[,3],rev(cost.nofd.h[,1]))/conv, col=rgb(col45[1],col45[2],col45[3],.3), border=NA);
+  lines(heightening,cost.avg/conv,type='l',col=rgb(col85[1],col85[2],col85[3]),lwd=3);
+  lines(heightening,cost.nofd.avg/conv,type='l',col=rgb(col45[1],col45[2],col45[3]),lwd=3);
   points(heightening[iopt.nofd.avg],cost.nofd.avg[iopt.nofd.avg]/conv,type='p',pch=16,cex=1.)
 #  points(heightening[iopt.nofd.avg],cost.avg[iopt.nofd.avg]/conv,type='p',pch=17,cex=1.)
   points(heightening[iopt.avg],cost.avg[iopt.avg]/conv,type='p',pch=15,cex=1.)
   polygon(c(inset.x,rev(inset.x)),c(inset.y[1]-.15e9,inset.y[1]-.15e9,inset.y[2]+.15e9,inset.y[2]+.15e9)/conv,col=rgb(0,0,0,0),border=TRUE,lwd=1.5)
   legend(.35,1.2,c("fast dynamics included", "fast dynamics neglected"),
-         lty=c(1,1), lwd=2, col=c(rgb(mycol[11,1],mycol[11,2],mycol[11,3]),rgb(mycol[2,1],mycol[2,2],mycol[2,3])), cex=1.1, bty='n')
+         lty=c(1,1), lwd=2, col=c(rgb(col85[1],col85[2],col85[3]),rgb(col45[1],col45[2],col45[3])), cex=1.1, bty='n')
   mtext(side=3, text=expression(bold(' b')), line=-2, cex=1, adj=0);
 
 u <- par("usr")
@@ -1143,12 +1148,12 @@ v <- c( (v[1]+v[2])*px, v[2], (v[4]+v[3])*py, v[4] )
 rect(u[2], u[4], (u[1]+u[2])*px-px, (u[4]-u[3])*py+u[3]*(1-py), col="white")
 par( fig=v, new=TRUE, mar=c(0,0,0,0) )
 
-plot(heightening,cost.avg/conv,type='l',col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]),lwd=3, xlim=inset.x, ylim=inset.y/conv,
+plot(heightening,cost.avg/conv,type='l',col=rgb(col85[1],col85[2],col85[3]),lwd=3, xlim=inset.x, ylim=inset.y/conv,
   xlab='', ylab='', yaxt='n', xaxt='n');
-  polygon(c(heightening,rev(heightening)), c(cost.h[,3],rev(cost.h[,1]))/conv, col=rgb(mycol[11,1],mycol[11,2],mycol[11,3],.3), border=NA);
-  polygon(c(heightening,rev(heightening)), c(cost.nofd.h[,3],rev(cost.nofd.h[,1]))/conv, col=rgb(mycol[2,1],mycol[2,2],mycol[2,3],.3), border=NA);
-  lines(heightening,cost.nofd.avg/conv,type='l',col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]),lwd=3);
-  lines(heightening,cost.avg/conv,type='l',col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]),lwd=3);
+  polygon(c(heightening,rev(heightening)), c(cost.h[,3],rev(cost.h[,1]))/conv, col=rgb(col85[1],col85[2],col85[3],.3), border=NA);
+  polygon(c(heightening,rev(heightening)), c(cost.nofd.h[,3],rev(cost.nofd.h[,1]))/conv, col=rgb(col45[1],col45[2],col45[3],.3), border=NA);
+  lines(heightening,cost.nofd.avg/conv,type='l',col=rgb(col45[1],col45[2],col45[3]),lwd=3);
+  lines(heightening,cost.avg/conv,type='l',col=rgb(col85[1],col85[2],col85[3]),lwd=3);
 
   lines(c(heightening[iopt.nofd.avg],heightening[iopt.nofd.avg]),c(0,cost.avg[iopt.nofd.avg])/conv,type='l',lty=2,lwd=2,col='black')
   lines(c(heightening[iopt.nofd.avg],heightening[iopt.avg]),c(cost.avg[iopt.nofd.avg],cost.avg[iopt.nofd.avg])/conv,type='l',lty=2,lwd=2,col='black')
@@ -1382,72 +1387,72 @@ pdf(paste(plotdir,'projections_SLR_total_bothPriors.pdf',sep=''),width=6.2,heigh
 par(mfrow=c(2,2))
 # UNIFORM RCP85
 par(mai=c(.3,.75,.25,0))
-plot(t.proj[iproj],gsl.rcp85.uni.50[iproj],type='l',col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]),lwd=2, ann='',
+plot(t.proj[iproj],gsl.rcp85.uni.50[iproj],type='l',col=rgb(col85[1],col85[2],col85[3]),lwd=2, ann='',
 		 xlim=c(2000,2100), ylim=c(0,2), xaxt='n', yaxt='n', xaxs='i', yaxs='i');
 		 axis(1, seq(2000,2100,by=20)); axis(2, seq(0,2,by=.25)); #axis(3, seq(2000,2100,by=20)); axis(4, seq(0,2,by=.25));
 		 mtext(side=2, text='Total sea level [m]', line=2.2, cex=.9);
      mtext(side=3, text='Uniform priors', line=0.3, cex=.9);
      mtext(side=3, text=expression(bold(' a')), line=-1, cex=.9, adj=0);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(gsl.rcp85.uni.95[iproj],rev(gsl.rcp85.uni.05[iproj])),
-          col=rgb(mycol[11,1],mycol[11,2],mycol[11,3],.5), border=NA);
+          col=rgb(col85[1],col85[2],col85[3],.5), border=NA);
 # + UNIFORM RCP26
-	lines(t.proj[iproj],gsl.rcp26.uni.50[iproj],type='l',col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]),lwd=2);
+	lines(t.proj[iproj],gsl.rcp26.uni.50[iproj],type='l',col=rgb(col26[1],col26[2],col26[3]),lwd=2);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(gsl.rcp26.uni.95[iproj],rev(gsl.rcp26.uni.05[iproj])),
-          col=rgb(mycol[13,1],mycol[13,2],mycol[13,3],.5), border=NA);
+          col=rgb(col26[1],col26[2],col26[3],.5), border=NA);
 # + UNIFORM RCP45
-	lines(t.proj[iproj],gsl.rcp45.uni.50[iproj],type='l',col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]),lwd=2);
+	lines(t.proj[iproj],gsl.rcp45.uni.50[iproj],type='l',col=rgb(col45[1],col45[2],col45[3]),lwd=2);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(gsl.rcp45.uni.95[iproj],rev(gsl.rcp45.uni.05[iproj])),
-          col=rgb(mycol[2,1],mycol[2,2],mycol[2,3],.5), border=NA);
+          col=rgb(col45[1],col45[2],col45[3],.5), border=NA);
 # + legend
   legend(t.proj[iproj[1]]+10,2,c("5-95% range,",
                                 "RCP2.6",
 																"RCP4.5",
 																"RCP8.5"),
-         lty=c(NA,1,1,1), lwd=3, col=c(NA,rgb(mycol[13,1],mycol[13,2],mycol[13,3]),rgb(mycol[2,1],mycol[2,2],mycol[2,3]),rgb(mycol[11,1],mycol[11,2],mycol[11,3])), bty='n', cex=.9)
+         lty=c(NA,1,1,1), lwd=3, col=c(NA,rgb(col26[1],col26[2],col26[3]),rgb(col45[1],col45[2],col45[3]),rgb(col85[1],col85[2],col85[3])), bty='n', cex=.9)
 # GAMMA RCP85
 par(mai=c(.3,.6,.25,.2))
-plot(t.proj[iproj],gsl.rcp85.gam.50[iproj],type='l',col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]),lwd=2, ann='',
+plot(t.proj[iproj],gsl.rcp85.gam.50[iproj],type='l',col=rgb(col85[1],col85[2],col85[3]),lwd=2, ann='',
 		 xlim=c(2000,2100), ylim=c(0,2), xaxt='n', yaxt='n', xaxs='i', yaxs='i');
 		 axis(1, seq(2000,2100,by=20)); axis(2, seq(0,2,by=.25)); #axis(3, seq(2000,2100,by=20)); axis(4, seq(0,2,by=.25));
      mtext(side=3, text='Gamma priors', line=0.3, cex=.9);
      mtext(side=3, text=expression(bold(' b')), line=-1, cex=.9, adj=0);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(gsl.rcp85.gam.95[iproj],rev(gsl.rcp85.gam.05[iproj])),
-          col=rgb(mycol[11,1],mycol[11,2],mycol[11,3],.5), border=NA);
+          col=rgb(col85[1],col85[2],col85[3],.5), border=NA);
 # + GAMMA RCP26
-	lines(t.proj[iproj],gsl.rcp26.gam.50[iproj],type='l',col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]),lwd=2);
+	lines(t.proj[iproj],gsl.rcp26.gam.50[iproj],type='l',col=rgb(col26[1],col26[2],col26[3]),lwd=2);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(gsl.rcp26.gam.95[iproj],rev(gsl.rcp26.gam.05[iproj])),
-          col=rgb(mycol[13,1],mycol[13,2],mycol[13,3],0.5), border=NA);
+          col=rgb(col26[1],col26[2],col26[3],0.5), border=NA);
 # + GAMMA RCP45
-	lines(t.proj[iproj],gsl.rcp45.gam.50[iproj],type='l',col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]),lwd=2);
+	lines(t.proj[iproj],gsl.rcp45.gam.50[iproj],type='l',col=rgb(col45[1],col45[2],col45[3]),lwd=2);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(gsl.rcp45.gam.95[iproj],rev(gsl.rcp45.gam.05[iproj])),
-          col=rgb(mycol[2,1],mycol[2,2],mycol[2,3],.5), border=NA);
+          col=rgb(col45[1],col45[2],col45[3],.5), border=NA);
 # UNIFORM RCP85, FD contribution
 par(mai=c(.6,.75,.1,0))
-plot(t.proj[iproj],fastdyn.rcp85.uni.50[iproj],type='l',col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]),lwd=2, ann='',
+plot(t.proj[iproj],fastdyn.rcp85.uni.50[iproj],type='l',col=rgb(col85[1],col85[2],col85[3]),lwd=2, ann='',
 		 xlim=c(2000,2100), ylim=c(0,0.75), xaxt='n', yaxt='n', xaxs='i', yaxs='i');
 		 axis(1, seq(2000,2100,by=20)); axis(2, seq(0,2,by=.2)); #axis(3, seq(2000,2100,by=20)); axis(4, seq(0,2,by=.2));
 		 mtext(side=1, text='Year', line=2.1, cex=.9);
 		 mtext(side=2, text='Fast dynamics sea \nlevel contribution [m]', line=2.2, cex=.9);
      mtext(side=3, text=expression(bold(' c')), line=-1, cex=.9, adj=0);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(fastdyn.rcp85.uni.95[iproj],rev(fastdyn.rcp85.uni.05[iproj])),
-          col=rgb(mycol[11,1],mycol[11,2],mycol[11,3],0.5), border=NA);
+          col=rgb(col85[1],col85[2],col85[3],0.5), border=NA);
 # + UNIFORM RCP45, FD contribution
-	lines(t.proj[iproj],fastdyn.rcp45.uni.50[iproj],type='l',col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]),lwd=2);
+	lines(t.proj[iproj],fastdyn.rcp45.uni.50[iproj],type='l',col=rgb(col45[1],col45[2],col45[3]),lwd=2);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(fastdyn.rcp45.uni.95[iproj],rev(fastdyn.rcp45.uni.05[iproj])),
-          col=rgb(mycol[2,1],mycol[2,2],mycol[2,3],0.5), border=NA);
+          col=rgb(col45[1],col45[2],col45[3],0.5), border=NA);
 # GAMMA RCP85, FD contribution
 par(mai=c(.6,.6,.1,.2))
-plot(t.proj[iproj],fastdyn.rcp85.gam.50[iproj],type='l',col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]),lwd=2, ann='',
+plot(t.proj[iproj],fastdyn.rcp85.gam.50[iproj],type='l',col=rgb(col85[1],col85[2],col85[3]),lwd=2, ann='',
 		 xlim=c(2000,2100), ylim=c(0,0.75), xaxt='n', yaxt='n', xaxs='i', yaxs='i');
 		 axis(1, seq(2000,2100,by=20)); axis(2, seq(0,2,by=.2)); #axis(3, seq(2000,2100,by=20)); axis(4, seq(0,2,by=.2));
 		 mtext(side=1, text='Year', line=2.1, cex=.9);
      mtext(side=3, text=expression(bold(' d')), line=-1, cex=.9, adj=0);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(fastdyn.rcp85.gam.95[iproj],rev(fastdyn.rcp85.gam.05[iproj])),
-          col=rgb(mycol[11,1],mycol[11,2],mycol[11,3],0.5), border=NA);
+          col=rgb(col85[1],col85[2],col85[3],0.5), border=NA);
 # + GAMMA RCP45, FD contribution
-	lines(t.proj[iproj],fastdyn.rcp45.gam.50[iproj],type='l',col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]),lwd=2);
+	lines(t.proj[iproj],fastdyn.rcp45.gam.50[iproj],type='l',col=rgb(col45[1],col45[2],col45[3]),lwd=2);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(fastdyn.rcp45.gam.95[iproj],rev(fastdyn.rcp45.gam.05[iproj])),
-          col=rgb(mycol[2,1],mycol[2,2],mycol[2,3],.5), border=NA);
+          col=rgb(col45[1],col45[2],col45[3],.5), border=NA);
 
 dev.off()
 
@@ -1517,7 +1522,7 @@ pdf(paste(plotdir,'distributions_Tgcrit.pdf',sep=''),width=5,height=3.5,colormod
 par(mfrow=c(1,1), mai=c(.9,.74,.05,.35))
 
 plot(x,pdf.Tgcrit.gam$y, type='l', xlim=c(-.2,4.1), ylim=c(0,1.5),lty=1,
-     col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lwd=1.5, xlab='', ylab='', yaxt='n', axes=FALSE,yaxs='i');
+     col=rgb(col45[1],col45[2],col45[3]), lwd=1.5, xlab='', ylab='', yaxt='n', axes=FALSE,yaxs='i');
   axis(1,seq(-0.5,4.5,0.5),lab=c("","0","","1","","2","","3","","4",""))
   u <- par("usr")
   arrows(u[1], u[3], u[1], u[4], code = 2, xpd = TRUE)
@@ -1535,7 +1540,7 @@ plot(x,pdf.Tgcrit.gam$y, type='l', xlim=c(-.2,4.1), ylim=c(0,1.5),lty=1,
 
   itmp=which(pdf.Tgcrit.gam$x<2); xtmp=pdf.Tgcrit.gam$x[itmp]; ytmp=pdf.Tgcrit.gam$y[itmp]
   polygon(c(xtmp,rev(xtmp)), c(ytmp,rep(0,length(ytmp))),
-          col=rgb(mycol[11,1],mycol[11,2],mycol[11,3],0.5), border=NA);
+          col=rgb(col85[1],col85[2],col85[3],0.5), border=NA);
 
 dev.off()
 
