@@ -179,6 +179,11 @@ brickF <- function(
     n.gsic = 0.82,
     Gs0.gsic = 0,
     Teq.gsic = -0.15,
+    a.simple = -0.827,
+    b.simple = 7.242,
+    alpha.simple = 1.630e-4,
+    beta.simple = 2.845e-05,
+    V0.simple = 7.242,
     a.te = 0.5,
     b.te = 0,
     invtau.te = 0.005,
@@ -213,43 +218,27 @@ brickF <- function(
   ns <- length(forcing.total)
 
   # wrap up the DAIS parameters
-  parameters <- c(  b0.dais,
-                    slope.dais,
-                    mu.dais,
-                    h0.dais,
-                    c.dais,
-                    P0.dais,
-                    kappa.dais,
-                    nu.dais,
-                    f0.dais,
-                    gamma.dais,
-                    alpha.dais,
-                    Tf.dais,
-                    rho_w.dais,
-                    rho_i,
-                    rho_m,
-                    Toc_0,
-                    Rad0,
-                    Aoc,
-                    lf,
-                    includes_dSLais)
-
-  # Sampling 1/tau.te (timescale of exponentially distributed has nice conjugate prior)
-  tau.te = 1/invtau.te
-
-  # call fortran
-  f.output <- .Fortran("run_brick",
-        ns = ns,
-        tstep = as.double(tstep),
-        forcing_in = as.double(forcing.total),
-        t2co_in = as.double(S.doeclim),
-        kappa_in = as.double(kappa.doeclim),
-
-        gsic_magicc_beta0 = as.double(beta0.gsic),
-        gsic_magicc_V0 = as.double(V0.gsic),
-        gsic_magicc_n = as.double(n.gsic),
-        gsic_magicc_Gs0 = as.double(Gs0.gsic),
-        gsic_magicc_Teq = as.double(Teq.gsic),
+  # TODO - bundle the other models' parameter like this?
+  parameters.dais <- c( b0.dais,
+                        slope.dais,
+                        mu.dais,
+                        h0.dais,
+                        c.dais,
+                        P0.dais,
+                        kappa.dais,
+                        nu.dais,
+                        f0.dais,
+                        gamma.dais,
+                        alpha.dais,
+                        Tf.dais,
+                        rho_w.dais,
+                        rho_i,
+                        rho_m,
+                        Toc_0,
+                        Rad0,
+                        Aoc,
+                        lf,
+                        includes_dSLais)
 
 # TODO - HERE NOW
 # putting in the parameters - need to do DAIS
@@ -257,21 +246,48 @@ brickF <- function(
 # is easier to swap them in and out
 # TODO - HERE NOW
 
+  # call fortran
+  f.output <- .Fortran("run_brick",
+        ns = ns,
+        tstep = as.double(tstep),
+        forcing_in = as.double(forcing.total),
+        doeclim_t2co = as.double(S.doeclim),
+        doeclim_kappa = as.double(kappa.doeclim),
+        gsic_magicc_beta0 = as.double(beta0.gsic),
+        gsic_magicc_V0 = as.double(V0.gsic),
+        gsic_magicc_n = as.double(n.gsic),
+        gsic_magicc_Gs0 = as.double(Gs0.gsic),
+        gsic_magicc_Teq = as.double(Teq.gsic),
+        simple_a = as.double(a.simple),
+        simple_b = as.double(b.simple),
+        simple_alpha = as.double(alpha.simple),
+        simple_beta = as.double(beta.simple),
+        simple_V0 = as.double(V0.simple),
         brick_te_a = as.double(a.te),
         brick_te_b = as.double(b.te),
-        brick_te_tau  = as.double(tau.te),
-        brick_te_TE_0 = as.double(V0.te),
+        brick_te_invtau = as.double(invtau.te),
+        brick_te_V0 = as.double(V0.te),
+        dais_parameters = as.double(parameters.dais),
         time_out = as.double(mod.time),
         temp_out = as.double(rep(0,n)),
         heatflux_mixed_out = as.double(rep(0,n)),
-        heatflux_interior_out = as.double(rep(0,n))
+        heatflux_interior_out = as.double(rep(0,n)),
         sl_te_out = as.double(rep(-999.99,ns)),
+        sl_gsic_out = as.double(rep(-999.99,ns)),
         sl_gis_out = as.double(rep(-999.99,ns)),
         sl_ais_out = as.double(rep(-999.99,ns)),
-        sl_gsic_out = as.double(rep(-999.99,ns))
+        AIS_Radius_out = as.double(rep(-999.99,ns)),
+        AIS_Volume_out = as.double(rep(-999.99,ns))
+
     )
 
+# TODO - HERE NOW
+# calculate the right outputs internally (in the fortran routines)
+# and externally (here)
+# TODO - HERE NOW
+
     ocheat = flux.to.heat(f.output$heatflux_mixed, f.output$heatflux_interior)
+    Vsle = 57*(1-f.output$AIS_Volume_out/f.output$AIS_Volume_out[1]) #Takes steady state present day volume to correspond to 57m SLE
 
 	model.output = list(time=mod.time, temp=f.output$temp_out, ocheat=ocheat$ocean.heat,
                         ocheat.mixed=ocheat$heat.mixed, ocheat.interior=ocheat$heat.interior,

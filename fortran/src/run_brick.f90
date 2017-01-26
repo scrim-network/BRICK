@@ -29,13 +29,13 @@ subroutine run_brick(ns, tstep, &
                      forcing_in, doeclim_t2co, doeclim_kappa, &                                             ! doeclim inputs
                      gsic_magicc_beta0, gsic_magicc_V0, gsic_magicc_n, gsic_magicc_Gs0,  gsic_magicc_Teq, & ! gsic-magicc inputs
                      simple_a, simple_b, simple_alpha, simple_beta, simple_V0, &                            ! gis-simple inputs
+                     brick_te_a, brick_te_b, brick_te_invtau, brick_te_V0, &                               ! te inputs
                      dais_parameters, &                                                                     ! ais-dais inputs
-                     brick_te_a, brick_te_b, brick_te_invtau, brick_te_TE0, &                               ! te inputs
-                     temp_out, heatflux_mixed_out, heatflux_interior_out, &                                 ! doeclim outputs
+                     time_out, temp_out, heatflux_mixed_out, heatflux_interior_out, &                       ! doeclim outputs
+                     sl_te_out)                                                                             ! te outputs
                      sl_gsic_out, &                                                                         ! gsic-magicc outputs
                      sl_gis_out, GIS_Volume_out, &                                                          ! gis-simple outputs
                      sl_ais_out, AIS_Radius_out, AIS_Volume_out, &                                          ! ais-dais outputs
-                     sl_te_out)                                                                             ! te outputs
 
 ! these need to be incorporated as couplings within the model structure
 !                               Ant_Temp,           Ant_Sea_Level, &
@@ -65,7 +65,7 @@ subroutine run_brick(ns, tstep, &
 !   brick_te_a         	sensitivity of equilibrium TE [m/degC]
 !   brick_te_b         	equilibrium TE [m] for temperature Tg = 0
 !   brick_te_invtau     1/timescale (efolding time) [1/y]
-!   brick_te_TE0        initial thermal expansion [m SLE]
+!   brick_te_V0        initial thermal expansion [m SLE]
 !   dais_parameters     13 parameters for DAIS-ANTO model (details within the DAIS model structure)
 ! 
 ! Outputs:
@@ -78,15 +78,11 @@ subroutine run_brick(ns, tstep, &
 !===============================================================================
 
     USE global
-    USE brick_te
-    USE dais
-    USE doeclim
-    USE gsic_magicc
-    USE simple
 
     implicit none
 
     integer(i4b), intent(IN) :: ns ! time series length
+    real(DP), dimension(ns), intent(IN) :: forcing_in
 
 ! parameters
     real(DP),     intent(IN) :: tstep
@@ -109,16 +105,13 @@ subroutine run_brick(ns, tstep, &
     real(DP),     intent(IN) :: gsic_magicc_V0
     real(DP),     intent(IN) :: gsic_magicc_Gs0
     real(DP),     intent(IN) :: simple_V0
-    real(DP),     intent(IN) :: brick_te_TE_0
-
-    real(DP),     intent(IN) :: brick_te_i0
-
-! input variables
-    real(DP), dimension(ns), intent(IN)  :: Gl_Temp
+    real(DP),     intent(IN) :: brick_te_V0
 
 ! output variables
     real(DP), dimension(ns), intent(OUT) :: temp_out
     real(DP), dimension(ns), intent(OUT) :: ocheat_out
+    real(DP), dimension(ns), intent(OUT) :: heatflux_mixed_out
+    real(DP), dimension(ns), intent(OUT) :: heatflux_interior_out
     real(DP), dimension(ns), intent(OUT) :: sl_te_out
     real(DP), dimension(ns), intent(OUT) :: sl_gis_out
     real(DP), dimension(ns), intent(OUT) :: sl_ais_out
@@ -130,15 +123,12 @@ subroutine run_brick(ns, tstep, &
 ! Initialize brick (parameters and initial variable values)
     i=1
     call init_brick(tstep, doeclim_t2co, doeclim_kappa, &
-                    gsic_magicc_beta0, gsic_magicc_n, gsic_magicc_Teq, &
-                    simple_a, simple_b, simple_alpha, simple_beta, &
-                    brick_te_a, brick_te_b, brick_te_invtau, &
+                    gsic_magicc_beta0, gsic_magicc_n, gsic_magicc_Teq, gsic_magicc_V0, gsic_magicc_Gs0, &
+                    brick_te_a, brick_te_b, brick_te_invtau, brick_te_V0, &
+                    simple_a, simple_b, simple_alpha, simple_beta, simple_V0, &
                     dais_parameters, &
-                    gsic_magicc_V0, gsic_magicc_Gs0, &
-                    simple_V0, &
-                    brick_te_TE_0, &
                     temp_out(i), ocheat_out(i), &
-                    sl_te_out(i), sl_gis_out(i), sl_ais_out(i), sl_gsic_out(i) )
+                    sl_gsic_out(i), sl_te_out(i), sl_gis_out(i), sl_ais_out(i) )
 
 ! estimate outputs
 
