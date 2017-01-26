@@ -32,7 +32,7 @@ filename.BRICKcalibration = "../output_calibration/BRICK_calibratedParameters_12
 #filename.BRICKcalibration = "../output_calibration/BRICK_calibratedParameters_12Aug2016.csv"
 filename.rho_simple_fixed = "../output_calibration/rho_simple_fixed_06Sep2016.csv"
 
-priors='u'	## Which priors? u=uniform, g=gamma
+priors='g'	## Which priors? u=uniform, g=gamma
 appen=''		## Append file name? In case you process multiple files in one day
 today=Sys.Date(); today=format(today,format="%d%b%Y")
 
@@ -358,6 +358,12 @@ ibeg=which(obs.sl.time==mod.time[ind.norm.data[which(ind.norm.data[,1]=='sl'),2]
 iend=which(obs.sl.time==mod.time[ind.norm.data[which(ind.norm.data[,1]=='sl'),3]])
 obs.sl = obs.sl - mean(obs.sl[ibeg:iend])
 
+
+if(FALSE) {
+
+	# calibrate to the Church and White data with an assumed closed sea level
+	# budget (TE+AIS+GIS+GSIC = GMSL)
+
 # maximum likelihood of sea-level rise data would occur if you saw the exact
 # same data out in the wild
 resid = obs.sl-obs.sl
@@ -381,35 +387,71 @@ slr.out.good = slr.norm.stat[ind.survive,]
 parameters.good = parameters[ind.survive,]
 colnames(parameters.good) = parnames
 
+} else {
 
-if(FALSE){
-## Post-calibrate using Church and White (2011) data
-## filter through a tunnel around the SLR data
+	# calibrate to the Church and White data with land water subtracted out
+	# and uncertainties added in quadrature
+	# assumed budget: TE+AIS+GIS+GSIC+LWS = GMSL
+	#1901-1990: –0.11 [–0.16 to –0.06] (5-95% range)
+	lw.time.1900 <- 1900:1989
+	i1900 <- which(mod.time==lw.time.1900[1]):which(mod.time==lw.time.1900[length(lw.time.1900)])
+	lw.1900 <- (-0.11/1000)*(lw.time.1900 - 1900)
+	lw.err.1900 <- (0.25*(-0.06--0.16)/1000)*sqrt(lw.time.1900 - lw.time.1900[1])
+	#1971-2010: 0.12 [0.03 to 0.22]
+	lw.time.1970 <- 1970:2009
+	i1970 <- which(mod.time==lw.time.1970[1]):which(mod.time==lw.time.1970[length(lw.time.1970)])
+	lw.1970 <- (0.12/1000)*(lw.time.1970 - lw.time.1970[1])
+	lw.err.1970 <- (0.25*(0.2-0.03)/1000)*sqrt(lw.time.1970 - lw.time.1970[1])
+	#1993-2010: 0.38 [0.26 to 0.49]
+	lw.time.1992 <- 1992:2009
+	i1992 <- which(mod.time==lw.time.1992[1]):which(mod.time==lw.time.1992[length(lw.time.1992)])
+	lw.1992 <- (0.38/1000)*(lw.time.1992 - lw.time.1992[1])
+	lw.err.1992 <- (0.25*(0.49-0.26)/1000)*sqrt(lw.time.1992 - lw.time.1992[1])
 
-## Make sure SLR data are also normalized
-ibeg=which(obs.sl.time==mod.time[ind.norm.data[which(ind.norm.data[,1]=='sl'),2]])
-iend=which(obs.sl.time==mod.time[ind.norm.data[which(ind.norm.data[,1]=='sl'),3]])
-obs.sl = obs.sl - mean(obs.sl[ibeg:iend])
+	# normalize, subtract and add error in quadrature
+	obs.sl.lw.1900 <- obs.sl[which(obs.sl.time==lw.time.1900[1]):which(obs.sl.time==lw.time.1900[length(lw.time.1900)])] - obs.sl[which(obs.sl.time==lw.time.1900[1])]
+	obs.sl.lw.1970 <- obs.sl[which(obs.sl.time==lw.time.1970[1]):which(obs.sl.time==lw.time.1970[length(lw.time.1970)])] - obs.sl[which(obs.sl.time==lw.time.1970[1])]
+	obs.sl.lw.1992 <- obs.sl[which(obs.sl.time==lw.time.1992[1]):which(obs.sl.time==lw.time.1992[length(lw.time.1992)])] - obs.sl[which(obs.sl.time==lw.time.1992[1])]
 
-ind.window.mod = midx.sl
-ind.window.obs = oidx.sl
+	obs.sl.lw.1900 <- obs.sl.lw.1900 - lw.1900
+	obs.sl.lw.1970 <- obs.sl.lw.1970 - lw.1970
+	obs.sl.lw.1992 <- obs.sl.lw.1992 - lw.1992
 
-n.sigma=4	# use 4 to reproduce the spread in Church and White data well (nice envelope in hindcast)
-window.obs = mat.or.vec(2, length(ind.window.obs))
-window.obs[1,] = obs.sl[ind.window.obs]-n.sigma*obs.sl.err[ind.window.obs]
-window.obs[2,] = obs.sl[ind.window.obs]+n.sigma*obs.sl.err[ind.window.obs]
+	obs.sl.lw.err.1900 <- sqrt(obs.sl.err[which(obs.sl.time==lw.time.1900[1]):which(obs.sl.time==lw.time.1900[length(lw.time.1900)])]^2 + lw.err.1900^2)
+	obs.sl.lw.err.1970 <- sqrt(obs.sl.err[which(obs.sl.time==lw.time.1970[1]):which(obs.sl.time==lw.time.1970[length(lw.time.1970)])]^2 + lw.err.1970^2)
+	obs.sl.lw.err.1992 <- sqrt(obs.sl.err[which(obs.sl.time==lw.time.1992[1]):which(obs.sl.time==lw.time.1992[length(lw.time.1992)])]^2 + lw.err.1992^2)
 
-window.mod = slr.norm.stat[,ind.window.mod]
+	# calculate likelihood as the product of the three independent likelihoods
+	resid.1900 <- obs.sl.lw.1900 - obs.sl.lw.1900
+	llik.1900 <- sum(dnorm(resid.1900, sd=obs.sl.lw.err.1900, log=TRUE))
+	resid.1970 <- obs.sl.lw.1970 - obs.sl.lw.1970
+	llik.1970 <- sum(dnorm(resid.1970, sd=obs.sl.lw.err.1970, log=TRUE))
+	resid.1992 <- obs.sl.lw.1992 - obs.sl.lw.1992
+	llik.1992 <- sum(dnorm(resid.1992, sd=obs.sl.lw.err.1992, log=TRUE))
+	lik.max <- (llik.1900 + llik.1970 + llik.1992)/n.ensemble
 
-survive = rep(0, nrow(window.mod))
-for (i in 1:nrow(window.mod)) {
-  survive[i] = all( (window.mod[i,] > window.obs[1,]) & (window.mod[i,] < window.obs[2,]) )
-  if(is.na(survive[i])){survive[i]=0}
-}
-ind.survive = which( as.logical(survive))
-slr.out.good = slr.norm.stat[ind.survive,]
-parameters.good = parameters[ind.survive,]
-colnames(parameters.good) = parnames
+	imod.1900 <- which(mod.time==lw.time.1900[1]):which(mod.time==lw.time.1900[length(lw.time.1900)])
+	imod.1970 <- which(mod.time==lw.time.1970[1]):which(mod.time==lw.time.1970[length(lw.time.1970)])
+	imod.1992 <- which(mod.time==lw.time.1992[1]):which(mod.time==lw.time.1992[length(lw.time.1992)])
+
+	uni.rnd = log(runif(n.ensemble))
+	for (i in 1:n.ensemble) {
+		resid.1900 <- obs.sl.lw.1900 - (slr.norm.stat[i,imod.1900]-slr.norm.stat[i,imod.1900[1]])
+		resid.1970 <- obs.sl.lw.1970 - (slr.norm.stat[i,imod.1970]-slr.norm.stat[i,imod.1970[1]])
+		resid.1992 <- obs.sl.lw.1992 - (slr.norm.stat[i,imod.1992]-slr.norm.stat[i,imod.1992[1]])
+		llik.1900 <- sum(dnorm(resid.1900, sd=obs.sl.lw.err.1900, log=TRUE))
+		llik.1970 <- sum(dnorm(resid.1970, sd=obs.sl.lw.err.1970, log=TRUE))
+		llik.1992 <- sum(dnorm(resid.1992, sd=obs.sl.lw.err.1992, log=TRUE))
+		lik.mem <- llik.1900 + llik.1970 + llik.1992
+		if( uni.rnd[i] <= lik.mem-lik.max) {survive[i]=1}
+	}
+	ind.survive = which( as.logical(survive))
+	print(paste('Calibration to sea level data by rejection sampling leaves ',length(ind.survive),' full calibrated ensemble members',sep=''))
+
+	slr.out.good = slr.norm.stat[ind.survive,]
+	parameters.good = parameters[ind.survive,]
+	colnames(parameters.good) = parnames
+
 }
 
 
@@ -977,10 +1019,10 @@ gsl.rcp26 <- ncvar_def('GlobalSeaLevel_RCP26', 'meters', list(dim.tproj, dim.ens
                   longname = 'Global sea level accounting for fast dynamics (RCP26)')
 gsl.nofd.rcp26 <- ncvar_def('GlobalSeaLevel_nofd_RCP26', 'meters', list(dim.tproj, dim.ensemble), -999,
                   		longname = 'Global sea level without accounting for fast dynamics (RCP26)')
-lsl.rcp26 <- ncvar_def('LocalSeaLevel', 'meters', list(dim.tproj, dim.ensemble), -999,
-                  longname = 'Local sea level accounting for fast dynamics')
-lsl.nofd.rcp26 <- ncvar_def('LocalSeaLevel_nofd', 'meters', list(dim.tproj, dim.ensemble), -999,
-                  		longname = 'Local sea level without accounting for fast dynamics')
+lsl.rcp26 <- ncvar_def('LocalSeaLevel_RCP26', 'meters', list(dim.tproj, dim.ensemble), -999,
+                  longname = 'Local sea level accounting for fast dynamics (RCP26)')
+lsl.nofd.rcp26 <- ncvar_def('LocalSeaLevel_nofd_RCP26', 'meters', list(dim.tproj, dim.ensemble), -999,
+                  		longname = 'Local sea level without accounting for fast dynamics (RCP26)')
 gsic.rcp26 <- ncvar_def('GSIC_RCP26', 'meters', list(dim.tproj, dim.ensemble), -999,
                   longname = 'GSIC contribution to sea level (RCP26)')
 te.rcp26 <- ncvar_def('TE_RCP26', 'meters', list(dim.tproj, dim.ensemble), -999,
@@ -1114,13 +1156,20 @@ nc_close(outnc)
 ##==============================================================================
 ##==============================================================================
 ## Pick up here?
+## To run RCP2.6 or 4.5 ensembles through Van Dantzig analysis, change "RCP85"
+## in the "sea_level" and "sea_level_nofd" lines below to your RCP of choice.
+## (Due to a bug, RCP26 is unlabeled)
 if(FALSE){
-	filename.in = "../output_model/BRICK-fastdyn_SLR1850-2100_24Aug2016a.nc"
+	setwd('~/codes/BRICK/calibration')
+	library(ncdf4)
+	filename.in = "../output_model/BRICK-fastdyn_physical_uniform_26Jan2017.nc"
 	ncdata <- nc_open(filename.in)
-	sea_level = ncvar_get(ncdata, 'GlobalSeaLevel_RCP85')
-	sea_level_nofd = ncvar_get(ncdata, 'GlobalSeaLevel_nofd_RCP85')
+	sea_level = ncvar_get(ncdata, 'LocalSeaLevel_RCP85')
+	sea_level_nofd = ncvar_get(ncdata, 'LocalSeaLevel_nofd_RCP85')
 	mod.time =ncvar_get(ncdata, 'time_proj')
 	nc_close(ncdata)
+	today=Sys.Date(); today=format(today,format="%d%b%Y")
+	filename.vdout = paste('../output_model/vanDantzig_RCP85_uniform_',today,'.nc',sep="")
 } else {
 	sea_level=t(proj.rcp85$slr.nola)
 	sea_level_nofd=t(proj.rcp85$slr.nola.nofd)
@@ -1129,11 +1178,11 @@ if(FALSE){
 ## Evaluate van Dantzig model for each of these realizations
 
 ## Set up
-currentyear			= 2015		# start year
-endyear					= 2100		# reevaluation year
-lowleveeheight	= 0				# lowest levee heightening considered (m)
-highleveeheight	= 10			# largest levee heightening considered (m)
-increment				= 0.05		# increment of levee heightening range (m)
+currentyear		= 2015		# start year
+endyear			= 2100		# reevaluation year
+lowleveeheight	= 0			# lowest levee heightening considered (m)
+highleveeheight	= 10		# largest levee heightening considered (m)
+increment		= 0.05		# increment of levee heightening range (m)
 
 ## Time horizon until next evaluation of levees (years)
 T = endyear - currentyear

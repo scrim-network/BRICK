@@ -10,16 +10,16 @@
 library(ncdf4)
 
 ## File name for the BRICK physical model output (netCDF4)
-filename.brick.uniform  = '../output_model/BRICK-fastdyn_physical_uniform_10Nov2016.nc'
-filename.brick.gamma    = '../output_model/BRICK-fastdyn_physical_gamma_10Nov2016.nc'
+filename.brick.uniform  = '../output_model/BRICK-fastdyn_physical_uniform_26Jan2017.nc'
+filename.brick.gamma    = '../output_model/BRICK-fastdyn_physical_gamma_26Jan2017.nc'
 
 ## File name for the Van Dantzig model output (netCDF4)
 filename.vandantzig.uniform = '../output_model/vanDantzig_RCP85_uniform_10Nov2016.nc'
-filename.vandantzig.gamma   = '../output_model/vanDantzig_RCP85_gamma_10Nov2016.nc'
+filename.vandantzig.gamma   = '../output_model/vanDantzig_RCP85_gamma_26Jan2017.nc'
 
 ## File name for the BRICK post-calibrated parameters (csv) (the BRICK and van Dantzig output came from these guys)
-filename.parameters.uniform = '../output_calibration/BRICK-fastdyn_postcalibratedParameters_uniform_10Nov2016.csv'
-filename.parameters.gamma   = '../output_calibration/BRICK-fastdyn_postcalibratedParameters_gamma_10Nov2016.csv'
+filename.parameters.uniform = '../output_calibration/BRICK-fastdyn_postcalibratedParameters_uniform_26Jan2017.csv'
+filename.parameters.gamma   = '../output_calibration/BRICK-fastdyn_postcalibratedParameters_gamma_26Jan2017.csv'
 
 ## Other files
 filename.rho_simple_fixed = "../output_calibration/rho_simple_fixed_06Sep2016.csv"
@@ -196,7 +196,7 @@ obs.years = c(120000, 220000, 234000, 240002)
 ## 5-95% CI of hindcasts, with obs in there
 ##
 
-pdf(paste(plotdir,'hindcasts.pdf',sep=''),width=7,height=6,colormodel='cmyk')
+pdf(paste(plotdir,'hindcasts_tmp.pdf',sep=''),width=7,height=6,colormodel='cmyk')
 n.sig = 2         # how many sigma to plot around the obs?
 layout(cbind(c(1,4,7),c(2,5,7),c(3,6,7)))
 par(mai=c(.5,.7,.2,.08))
@@ -297,7 +297,7 @@ plot(t.paleo[ipaleo], ais.paleo.50[ipaleo], type='l', col=rgb(col45[1],col45[2],
   mtext(side=2, text='Antarctic Ice Sheet\n[m SLE]', line=2.3, cex=.9);
   mtext(side=3, text=expression(bold(' g')), line=-1.5, cex=.9, adj=0);
   lines(t.paleo[ipaleo], ais.nofd.50[ipaleo], type='l', col=rgb(mycol[12,1],mycol[12,2],mycol[12,3]), lwd=2);
-  polygon(c(t.paleo[ipaleo],rev(t.paleo[ipaleo])), c(ais.nofd.max[ipaleo],rev(ais.nofd.min[ipaleo])), col=rgb(col26[1],col26[2],col26[3],.5), border=NA);
+  polygon(c(t.paleo[ipaleo],rev(t.paleo[ipaleo])), c(ais.nofd.max[ipaleo],rev(ais.nofd.min[ipaleo])), col=rgb(mycol[13,1],mycol[13,2],mycol[13,3],.5), border=NA);
   polygon(c(t.paleo[ipaleo],rev(t.paleo[ipaleo])), c(ais.paleo.95[ipaleo],rev(ais.paleo.05[ipaleo])), col=rgb(col45[1],col45[2],col45[3],.5), border=NA);
 	for (i in 1:3) {
   	polygon(c( date[c(obs.years[i]-1000,obs.years[i]+1000)], rev(date[c(obs.years[i]-1000,obs.years[i]+1000)]) ),
@@ -771,6 +771,11 @@ dev.off()
 ##=========
 
 ## Grab the van Dantzig output
+## (switch to RCP26 or 45 if you want to evaluate those, but not the focus
+## of the main paper)
+#filename.vandantzig.gamma   = '../output_model/vanDantzig_RCP26_gamma_26Jan2017.nc'
+#filename.vandantzig.gamma   = '../output_model/vanDantzig_RCP45_gamma_26Jan2017.nc'
+
 ncdata <- nc_open(filename.vandantzig.gamma)
   heightening     = ncvar_get(ncdata, 'H')
   cost            = ncvar_get(ncdata, 'ExpectedCost')
@@ -788,25 +793,25 @@ n.height = nrow(cost)
 
 ## What is the optimal heightening (minimum expected costs) for each ensemble
 ## member? (and the index, so we can grab the return period)
-iopt=rep(NA,n.ensemble)						# index of optimal heightening, return period
-iopt.nofd=rep(NA,n.ensemble)			# index of optimal heightening, return period
-rp.opt=rep(NA,n.ensemble)		      # return period of optimal heightening (including fast dynamics)
-rp.nofd.opt=rep(NA,n.ensemble)		# return period of optimal heightening (without considering fast dynamics)
-rp.nofd.act=rep(NA,n.ensemble)		# actual return period (when you consider fast dynamics)
-Hopt=rep(NA,n.ensemble)           # optimal heightening, accounting for fast dynamics
-Hopt.nofd=rep(NA,n.ensemble)      # what you *think* is the optimal heightening, neglecting fast dynamics
-waste = rep(NA,n.ensemble)        # difference between expected costs if you had built optimally (accounting
-                                  # for fast dynamics) and if you built ignorant of the fast dynamics
+iopt=rep(NA,n.ensemble)			# index of optimal heightening, return period
+iopt.nofd=rep(NA,n.ensemble)	# index of optimal heightening, return period
+rp.opt=rep(NA,n.ensemble)		# return period of optimal heightening (including fast dynamics)
+rp.nofd.opt=rep(NA,n.ensemble)	# return period of optimal heightening (without considering fast dynamics)
+rp.nofd.act=rep(NA,n.ensemble)	# actual return period (when you consider fast dynamics)
+Hopt=rep(NA,n.ensemble)         # optimal heightening, accounting for fast dynamics
+Hopt.nofd=rep(NA,n.ensemble)    # what you *think* is the optimal heightening, neglecting fast dynamics
+waste = rep(NA,n.ensemble)      # difference between expected costs if you had built optimally (accounting
+                                # for fast dynamics) and if you built ignorant of the fast dynamics
 
 for (i in 1:n.ensemble) {
-	iopt[i] = which(cost[,i]==min(cost[,i]))
+    iopt[i] = which(cost[,i]==min(cost[,i]))
 	iopt.nofd[i] = which(cost.nofd[,i]==min(cost.nofd[,i]))
-  Hopt[i] = heightening[iopt[i]]
+    Hopt[i] = heightening[iopt[i]]
 	Hopt.nofd[i] = heightening[iopt.nofd[i]]
-  rp.nofd.opt[i] = preturn.nofd[iopt.nofd[i],i]
+    rp.nofd.opt[i] = preturn.nofd[iopt.nofd[i],i]
 	rp.nofd.act[i] = preturn[iopt.nofd[i],i]
-  rp.opt[i] = preturn[iopt[i],i]
-  waste[i] = cost[iopt.nofd[i],i] - cost[iopt[i],i]
+    rp.opt[i] = preturn[iopt[i],i]
+    waste[i] = cost[iopt.nofd[i],i] - cost[iopt[i],i]
 }
 
 quan.nofd.opt = c(quantile(rp.nofd.opt, 0.05) , quantile(rp.nofd.opt, 0.50) , quantile(rp.nofd.opt, 0.95) )
