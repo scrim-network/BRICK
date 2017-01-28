@@ -88,30 +88,32 @@ end subroutine init_brick_te
 
 
 !------------------------------------------------------------------------------
-subroutine brick_te_step_forward(Tg, thermal)
+subroutine brick_te_step_forward(Tg, thermal_previous, thermal_current)
 !  ==========================================================================
 ! | Calculate current state from previous state
 ! |
 ! | Input:
 ! |       Tg:     Greenland/Global mean surface temperature (degC)
+! |       thermal_previous:  previous time step thermal expansion [m]
 ! |
 ! | Output:
-! |       thermal:    thermal expansion [m]
+! |       thermal_current:   current time step thermal expansion [m]
 !  ==========================================================================
 
     implicit none
 
     real(DP), intent(IN)  :: Tg
+    real(DP), intent(IN) :: thermal_previous
 
-    real(DP), intent(OUT) :: thermal
+    real(DP), intent(OUT) :: thermal_current
 
     real(DP) :: TEeq
 
 ! Start model
     TEeq  = a * Tg + b                   ! equilibrium TE
 
-    thermal = TE + tstep * ((TEeq - TE) / tau)
-    TE           = thermal
+    thermal_current = thermal_previous + tstep * ((TEeq - thermal_previous) / tau)
+    TE           = thermal_current
 
 
 end subroutine brick_te_step_forward

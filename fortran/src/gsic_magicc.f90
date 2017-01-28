@@ -93,27 +93,29 @@ end subroutine init_gsic_magicc
 
 
 !------------------------------------------------------------------------------
-subroutine gsic_magicc_step_forward(Tg, SeaLevel)
+subroutine gsic_magicc_step_forward(Tg, SeaLevel_Previous, SeaLevel_Current)
 !  ==========================================================================
 ! | Calculate current state from previous state
 ! | This is standard "forward Euler", first order explicit integration.
 ! |
 ! | Input:
 ! |       Tg:     Greenland/Global mean surface temperature (degC)
+! |       SeaLevel_Previous: previous time step GSIC contribution to sea levle
 ! |
 ! | Output:
-! |       SeaLevel:  Sea level contribution [m]
+! |       SeaLevel_Current:  current time step Sea level contribution [m]
 !  ==========================================================================
 
     implicit none
 
     real(DP), intent(IN)  :: Tg
+    real(DP), intent(IN) :: SeaLevel_Previous
 
-    real(DP), intent(OUT) :: SeaLevel
+    real(DP), intent(OUT) :: SeaLevel_Current
 
 ! Start model
-    SeaLevel = Gs + tstep * (beta0 * (Tg - Teq) * (1.-(Gs/V0))**n)
-    Gs       = SeaLevel
+    SeaLevel_Current = SeaLevel_Previous + tstep * (beta0 * (Tg - Teq) * (1.-(SeaLevel_Previous/V0))**n)
+    Gs       = SeaLevel_Current
 
 end subroutine gsic_magicc_step_forward
 !------------------------------------------------------------------------------

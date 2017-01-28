@@ -90,31 +90,33 @@ end subroutine init_simple
 
 
 !------------------------------------------------------------------------------
-subroutine simple_step_forward(Tg, Vol)
+subroutine simple_step_forward(Tg, Vol_previous, Vol_current)
 !  ==========================================================================
 ! | Calculate current state from previous state
 ! |
 ! | Input:
 ! |       Tg:     Greenland/Global mean surface temperature (degC)
+! |       Vol_previous:  previous time step Ice sheet's volume [m3]
 ! |
 ! | Output:
-! |       Vol:    Ice sheet's volume [m3]
+! |       Vol_current:   current time step Ice sheet's volume [m3]
 !  ==========================================================================
 
     implicit none
 
     real(DP), intent(IN)  :: Tg
+    real(DP), intent(IN)  :: Vol_previous
 
-    real(DP), intent(OUT) :: Vol
+    real(DP), intent(OUT) :: Vol_current
 
     real(DP) :: Veq, tau
 
 ! Start model
     Veq  = a * Tg + b                   ! 'virtual' equilibrium volume (equation 2)
-    tau  = 1. / (alpha * Tg + beta)      ! timescale                    (equation 3)
+    tau  = 1. / (alpha * Tg + beta)     ! timescale                    (equation 3)
 
-    Vol  = max(0., V + tstep * ((Veq - V) / tau)  )
-    V    = Vol
+    Vol_current  = max(0., Vol_previous + tstep * ((Veq - Vol_previous) / tau)  )
+    V    = Vol_current
 
 
 end subroutine simple_step_forward

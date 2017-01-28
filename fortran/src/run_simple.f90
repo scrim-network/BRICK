@@ -83,7 +83,7 @@ subroutine run_simple(ns, tstep, simple_a, simple_b, simple_alpha, simple_beta, 
     do i=(i0+1),ns
 
         ! global sea level rise
-        call simple_step_forward(Grl_Temp(i-1), GIS_Volume_out(i) )
+        call simple_step_forward(Grl_Temp(i-1), GIS_Volume_out(i-1), GIS_Volume_out(i) )
 
     end do
 

@@ -1,8 +1,8 @@
-!=================================================================================
+!===============================================================================
 !  Subroutines to run BRICK
-!=================================================================================
+!===============================================================================
 !   Description to come...
-!================================================================================
+!===============================================================================
 ! Copyright 2016 Tony Wong, Alexander Bakker
 ! This file is part of BRICK (Building blocks for Relevant Ice and Climate
 ! Knowledge). BRICK is free software: you can redistribute it and/or modify
@@ -17,7 +17,7 @@
 !
 ! You should have received a copy of the GNU General Public License
 ! along with BRICK.  If not, see <http://www.gnu.org/licenses/>.
-!================================================================================
+!===============================================================================
 
 module brick
 
@@ -36,15 +36,15 @@ module brick
 !!          they are all "private" so should not have problems stepping on toes
 !!TODO
 ! parameters:
-    real(DP) :: tstep
-    real(DP) :: S_doeclim, kappa_doeclim
-    real(DP) :: beta0_gsic, n_gsic, Teq_gsic, V0_gsic, Gs0_gsic
-    real(DP) :: a_te, b_te, invtau_te, V0_te
-    real(DP) :: a_simple, b_simple, alpha_simple, beta_simple, V0_simple
-    real(DP) :: b0_dais, slope_dais, mu_dais, h0_dais, c_dais, &
-                P0_dais, kappa_dais, nu_dais, f0_dais, gamma_dais, &
-                alpha_dais, Tf_dais, rho_w_dais, rho_i_dais, rho_m_dais, &
-                Toc0_dais, Rad0_dais, Aoc_dais, lf_dais
+!    real(DP) :: tstep
+!    real(DP) :: S_doeclim, kappa_doeclim
+!    real(DP) :: beta0_gsic, n_gsic, Teq_gsic, V0_gsic, Gs0_gsic
+!    real(DP) :: a_te, b_te, invtau_te, V0_te
+!    real(DP) :: a_simple, b_simple, alpha_simple, beta_simple, V0_simple
+!    real(DP) :: b0_dais, slope_dais, mu_dais, h0_dais, c_dais, &
+!                P0_dais, kappa_dais, nu_dais, f0_dais, gamma_dais, &
+!                alpha_dais, Tf_dais, rho_w_dais, rho_i_dais, rho_m_dais, &
+!                Toc0_dais, Rad0_dais, Aoc_dais, lf_dais
 
 ! variables
     real(DP) :: V_te        ! thermal expansion
@@ -60,7 +60,7 @@ module brick
 contains
 
 
-!------------------------------------------------------------------------------
+!===============================================================================
 subroutine init_brick(  tstep_in,
                         S_doeclim_in, kappa_doeclim_in, &
                         beta0_gsic_in, n_gsic_in, Teq_gsic_in, V0_gsic_in, Gs0_gsic_in, &
@@ -69,7 +69,8 @@ subroutine init_brick(  tstep_in,
                         parameters_dais_in, &
                         temp_init_out, ocheat_init_out, &
                         sl_gsic_init_out, sl_te_init_out, sl_gis_init_out, sl_ais_init_out, &
-                        rad_ais_init_out, vol_ais_init_out)
+                        vol_gis_init_out, &
+                        rad_ais_init_out, vol_ais_init_out, sl_init_out)
 !  =========================================================================
 !   Initialize the BRICK parameters and initial variables
 !  =========================================================================
@@ -91,7 +92,7 @@ subroutine init_brick(  tstep_in,
     real(DP), intent(IN) :: alpha_simple_in
     real(DP), intent(IN) :: beta_simple_in
     real(DP), intent(IN) :: V0_simple_in
-    real(DP), dimension(20), intent(IN) :: parameters
+    real(DP), dimension(20), intent(IN) :: parameters_dais_in
 
     real(DP), intent(OUT) :: temp_init_out
     real(DP), intent(OUT) :: ocheat_init_out
@@ -99,128 +100,155 @@ subroutine init_brick(  tstep_in,
     real(DP), intent(OUT) :: sl_te_init_out
     real(DP), intent(OUT) :: sl_gis_init_out
     real(DP), intent(OUT) :: sl_ais_init_out
+    real(DP), intent(OUT) :: vol_gis_init_out
     real(DP), intent(OUT) :: rad_ais_init_out
     real(DP), intent(OUT) :: vol_ais_init_out
+    real(DP), intent(OUT) :: sl_init_out
 
+    real(DP) :: tau_te
+    real(DP) :: sea_level_noAIS
 
-! Assign values to model parameters
+! Assign values to model parameters, and initialize values
     tstep = time_step
 
-    S_doeclim       = S_doeclim_in
-    kappa_doeclim   = kappa_doeclim_in
-
-    beta0_gsic  = beta0_gsic_in
-    n_gsic      = n_gsic_in
-    Teq_gsic    = Teq_gsic_in
-    V0_gsic     = V0_gsic_in
-    Gs0_gsic    = Gs0_gsic_in
-
-    a_te        = a_te_in
-    b_te        = b_te_in
-    invtau_te   = invtau_te_in
-    V0_te       = V0_te_in
-
-    a_simple    = a_simple_in
-    b_simple    = b_simple_in
-    alpha_simple= alpha_simple_in
-    beta_simple = beta_simple_in
-    V0_simple   = V0_simple_in
-
-    b0_dais     = parameters(1)
-    slope_dais  = parameters(2)
-    mu_dais     = parameters(3)
-    h0_dais     = parameters(4)
-    c_dais      = parameters(5)
-    P0_dais     = parameters(6)
-    kappa_dais  = parameters(7)
-    nu_dais     = parameters(8)
-    f0_dais     = parameters(9)
-    gamma_dais  = parameters(10)
-    alpha_dais  = parameters(11)
-    Tf_dais     = parameters(12)
-    rho_w_dais  = parameters(13)
-    rho_i_dais  = parameters(14)
-    rho_m_dais  = parameters(15)
-    Toc0_dais   = parameters(16)
-    Rad0_dais   = parameters(17)
-    Aoc_dais    = parameters(18)
-    lf_dais     = parameters(19)
-
-! Initial values
+! DOECLIM
+    call init_doeclim_arrays()
+    call init_doeclim_parameters(S_doeclim_in, kappa_doeclim_in)
     temp_init_out   = 0.
     ocheat_init_out = 0.
-    sl_gsic_init_out= Gs0_gsic
-    sl_te_init_out  = V0_te
-    sl_gis_init_out =
-    sl_ais_init_out =
 
-   ! TODO
-   !TODO
-    !TODO here now 
+! GSIC-MAGICC
+    call init_gsic_magicc(  tstep, beta0_gsic_in, V0_gsic_in, n_gsic_in, &
+                            Teq_gsic_in, Gs0_gsic_in, sl_gsic_init_out)
+
+! TE
+    tau_te = 1/invtau_te_in
+    call init_brick_te( tstep, a_te_in, b_te_in, tau_te, V0_te_in, &
+                        sl_te_init_out)
+
+! GIS-SIMPLE
+    call init_simple(   tstep, a_simple_in, b_simple_in, alpha_simple_in, &
+                        beta_simple_in, V0_simple_in, vol_gis_init_out)
+    sl_gis_init_out = 0.
+
+! AIS-DAIS
+    sea_level_noAIS = sl_gsic_init_out + sl_te_init_out + sl_gis_init_out
+    call init_dais( tstep, parameters_dais_in, sea_level_noAIS, &
+                    rad_ais_init_out, vol_ais_init_out)
+    sl_ais_init_out = 0.
+
+! Add up total inital sea level
+    sl_init_out = sl_gsic_init_out + sl_te_init_out + &
+                  sl_gis_init_out  + sl_ais_init_out
+
+    RETURN
 
 end subroutine init_brick
 !------------------------------------------------------------------------------
 
 
 !------------------------------------------------------------------------------
-subroutine brick_te_step_forward(Tg, thermal)
-!  ==========================================================================
-! | Calculate current state from previous state
-! |
-! | Input:
-! |       Tg:     Greenland/Global mean surface temperature (degC)
-! |
-! | Output:
-! |       thermal:    thermal expansion [m]
-!  ==========================================================================
+subroutine brick_step_forward(  nstep, forcing_current, Tg_current, &
+                                sl_gsic_previous, sl_gsic_current, &
+                                sl_te_previous, sl_te_current, &
+                                vol_gis_previous, vol_gis_current, &
+                                sl_gis_previous, sl_gis_current, &
+                                a_anto, b_anto, Tfrz, &
+                                slope_Ta2Tg, intercept_Ta2Tg, &
+                                rad_ais_current, vol_ais_previous, vol_ais_current, sl_ais_current, &
+                                sl_previous, sl_current)
+!------------------------------------------------------------------------------
+! Calculate current state from previous state
+! 
+! Input:
+!  nstep                current time step
+!  forcing_current      current time step radiative forcing
+!  sl_gsic_previous     previous time step cumulative GSIC contribution to SL [m]
+!  sl_te_previous       previous time step cumulative TE contribution to SL [m]
+!  vol_gis_previous     previous time step Greenland ice sheet volume [m SLE]
+!  sl_gis_previous      previous time step cumulative GIS contribution to SL [m]
+!  a_anto               sensitivity of Toc to Tg
+!  b_anto               Toc for Tg=0 deg C
+!  Tfrz                 freezing temperature of ocean water (deg C)
+!  slope_Ta2Tg          slope of the regression of Tg as linear function of Ta
+!  intercept_Ta2Tg      intercept of the regression of Tg as linear function of Ta
+!  vol_ais_previous     previous time step Antarctice ice sheet volume [m^3]
+!  sl_ais_previous      previous time step cumulative AIS contribution to SL [m]
+!
+! Output:
+!  Tg_current           current time step surface temperature
+!  sl_gsic_current      current time step cumulative GSIC contribution to SL [m]
+!  sl_te_current        current time step cumulative TE contribution to SL [m]
+!  vol_gis_current      current time step Greenland ice sheet volume [m SLE]
+!  sl_gis_current       current time step cumulative GIS contribution to SL [m]
+!  rad_ais_current      current time step Antarctic ice sheet radius [m]
+!  vol_ais_current      current time step Antarctic ice sheet volume [m^3]
+!  sl_ais_current       current time step cumulative AIS contribution to SL [m]
+!  sl_current           current time step total sea level [m]
+!
+!------------------------------------------------------------------------------
 
     implicit none
 
-    real(DP), intent(IN)  :: Tg
+    integer(i4b), intent(IN)  :: nstep
+    real(DP), intent(IN)  :: forcing_current
+    real(DP), intent(IN)  :: sl_gsic_previous
+    real(DP), intent(IN)  :: sl_te_previous
+    real(DP), intent(IN)  :: vol_gis_previous
+    real(DP), intent(IN)  :: sl_gis_previous
+    real(DP), intent(IN)  :: vol_ais_previous
+    real(DP), intent(IN)  :: sl_ais_previous
 
-    real(DP), intent(OUT) :: thermal
+    real(DP), intent(OUT) :: Tg_current
+    real(DP), intent(OUT) :: sl_gsic_current
+    real(DP), intent(OUT) :: sl_te_current
+    real(DP), intent(OUT) :: vol_gis_current
+    real(DP), intent(OUT) :: sl_gis_current
+    real(DP), intent(OUT) :: rad_ais_current
+    real(DP), intent(OUT) :: vol_ais_current
+    real(DP), intent(OUT) :: sl_ais_current
+    real(DP), intent(OUT) :: sl_current
 
-    real(DP) :: TEeq
+    real(DP) :: sea_level_noAIS, change_sea_level_noAIS
+    real(DP) :: Ta_current, Toc_current, ctmp, Tfrz
 
-! Start model
-    TEeq  = a * Tg + b                   ! equilibrium TE
+    ! Start the show.
 
-    thermal = TE + tstep * ((TEeq - TE) / tau)
-    TE           = thermal
+    ! DOECLIM
+    call doeclimtimestep_simple(nstep, forcing_current, Tg_current)
 
+    ! GSIC-MAGICC
+    call gsic_magicc_step_forward(Tg_current, sl_gsic_previous, sl_gsic_current)
 
-end subroutine brick_te_step_forward
+    ! TE
+    call brick_te_step_forward(Tg_current, sl_te_previous, sl_te_current)
+
+    ! GIS-SIMPLE
+    call simple_step_forward(Tg_current, vol_gis_previous, vol_gis_current)
+    sl_gis_current = sl_gis_previous + (vol_gis_previous - vol_gis_current)
+
+    ! AIS-DAIS
+    change_sea_level_noAIS =    (sl_gsic_current - sl_gsic_previous) + &
+                                (sl_te_current   - sl_te_previous)   + &
+                                (sl_gis_current  - sl_gis_previous)
+    sea_level_noAIS = sl_previous + change_sea_level_noAIS
+
+    ! scale temperatures, accounting for relative to 1850 (or whenever iniital point is)
+    ctmp = (Tfrz-b_anto)/a_anto
+    Toc_current = Tfrz + ((a_anto*Tg_current + b_anto - Tfrz)/(1. + exp(-Tg_current + ctmp)))
+    Ta_current = (Tg_current - intercept_Ta2Tg)/slope_Ta2Tg
+
+    ! run DAIS
+    call dais_step( Ta_current, sea_level_noAIS, Toc_current, &
+                    change_sea_level_noAIS, rad_ais_current, vol_ais_current)
+    sl_ais_current = sl_ais_previous + &
+                     (57. - sl_ais_previous)*(1. - (vol_ais_current/vol_ais_previous))
+
+    ! add up total sea level
+    sl_current = sl_gsic_current + sl_te_current + sl_gis_current + sl_ais_current
+    
+
+end subroutine brick_step_forward
 !------------------------------------------------------------------------------
 
-
-!------------------------------------------------------------------------------
-subroutine brick_te_step_backward(Tg, thermal_current, thermal_previous)
-!  ==========================================================================
-! | Calculate current state from previous state
-! |
-! | Input:
-! |       Tg:               Greenland/Global mean surface temperature (degC)
-! |       thermal_current:  current thermal expansion sea-level rise [m]
-! |
-! | Output:
-! |       thermal_previous: previous iteration's thermal expansion [m]
-!  ==========================================================================
-
-    implicit none
-
-    real(DP), intent(IN)  :: Tg
-    real(DP), intent(IN)  :: thermal_current
-
-    real(DP), intent(OUT) :: thermal_previous
-
-    real(DP) :: TEeq
-
-! Start model
-    TEeq  = a * Tg + b                   ! equilibrium TE
-
-    thermal_previous = thermal_current - tstep * ((TEeq - thermal_current) / tau)
-
-end subroutine brick_te_step_backward
-!------------------------------------------------------------------------------
-
-END MODULE brick_te
+END MODULE brick

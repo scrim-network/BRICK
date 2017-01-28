@@ -35,6 +35,7 @@
 #===============================================================================
 # Input parameters:
 #
+#	tstep		model time step in years
 # -- DOECLIM --
 #   S           climate sensitivity (inc temp from 2xCO2) [deg C]
 #   kappa       ocean vertical heat diffusivity [cm2/s]
@@ -170,6 +171,7 @@ if(.Platform$OS.type == "unix") {
 }
 
 brickF <- function(
+	tstep,
     mod.time,
     forcing.total,
     S.doeclim = 3.1,
@@ -190,6 +192,8 @@ brickF <- function(
     V0.te = 0,
     a.anto = 0.26,
     b.anto = 0.62,
+    slope.Ta2Tg = 1,
+    intercept.Ta2Tg = 0,
     b0.dais = 775,
     slope.dais = 6 * 10^(-4),
     mu.dais = 8.7,
@@ -209,9 +213,7 @@ brickF <- function(
     Rad0.dais = 1.864 * 10^6,
     Aoc.dais = 3.619e14,
     lf = -1.18,
-    includes_dSLais = 1,
-    slope.Ta2Tg = 1,
-    intercept.Ta2Tg = 0
+    includes_dSLais = 0
 ){
 
   # determine series length
@@ -232,11 +234,11 @@ brickF <- function(
                         alpha.dais,
                         Tf.dais,
                         rho_w.dais,
-                        rho_i,
-                        rho_m,
-                        Toc_0,
-                        Rad0,
-                        Aoc,
+                        rho_i.dais,
+                        rho_m.dais,
+                        Toc_0.dais,
+                        Rad0.dais,
+                        Aoc.dais,
                         lf,
                         includes_dSLais)
 
@@ -267,17 +269,23 @@ brickF <- function(
         brick_te_b = as.double(b.te),
         brick_te_invtau = as.double(invtau.te),
         brick_te_V0 = as.double(V0.te),
+        anto_a = as.double(a.anto),
+        anto_b = as.double(b.anto),
+        slope_Ta2Tg = as.double(slope.Ta2Tg),
+        intercept_Ta2Tg = as.double(intercept.Ta2Tg),
         dais_parameters = as.double(parameters.dais),
         time_out = as.double(mod.time),
-        temp_out = as.double(rep(0,n)),
-        heatflux_mixed_out = as.double(rep(0,n)),
-        heatflux_interior_out = as.double(rep(0,n)),
+        temp_out = as.double(rep(0,ns)),
+        heatflux_mixed_out = as.double(rep(0,ns)),
+        heatflux_interior_out = as.double(rep(0,ns)),
         sl_te_out = as.double(rep(-999.99,ns)),
         sl_gsic_out = as.double(rep(-999.99,ns)),
         sl_gis_out = as.double(rep(-999.99,ns)),
+        GIS_Volume_out = as.double(rep(-999.99,ns)),
         sl_ais_out = as.double(rep(-999.99,ns)),
         AIS_Radius_out = as.double(rep(-999.99,ns)),
-        AIS_Volume_out = as.double(rep(-999.99,ns))
+        AIS_Volume_out = as.double(rep(-999.99,ns)),
+		sl_out = as.double(rep(-999.99,ns))
 
     )
 
@@ -287,7 +295,6 @@ brickF <- function(
 # TODO - HERE NOW
 
     ocheat = flux.to.heat(f.output$heatflux_mixed, f.output$heatflux_interior)
-    Vsle = 57*(1-f.output$AIS_Volume_out/f.output$AIS_Volume_out[1]) #Takes steady state present day volume to correspond to 57m SLE
 
 	model.output = list(time=mod.time, temp=f.output$temp_out, ocheat=ocheat$ocean.heat,
                         ocheat.mixed=ocheat$heat.mixed, ocheat.interior=ocheat$heat.interior,

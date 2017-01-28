@@ -173,8 +173,62 @@ points(obs.gis.time, obs.gis, pch=16, col='red')
 ## the "old" mode. Trouble-shooting time.
 ##==============================================================================
 
+# Step 1:   want to be able to run the model in "old" mode, with the original
+#           i0 for each submodel, then use as initial conditions the 1850 values
+#           (which might be tricky for GIS and AIS, since they are in terms of
+#           ice sheet volume), and hopefully get the same result with i0=1.
 
 
+# Step 2:   get the same result with the "fully-forward"/"step-together" version
+#...
+
+source('../fortran/R/brickF.R')
+
+tstep <- 1
+parameters.in <- parameters[1,]
+parnames.in <- parnames
+alpha.doeclim <- parameters.in[match("alpha.doeclim",parnames.in)]
+forcing.total <- forcing_total(forcing=forcing,
+							  alpha.doeclim=alpha.doeclim,
+                              l.project=l.project,
+							  begyear=mod.time[1],
+							  endyear=mod.time[length(mod.time)]
+							  )
+
+tmp.out <- brickF(  tstep=tstep,
+                    mod.time=mod.time,
+                    forcing.total = forcing.total,
+                    S.doeclim = parameters.in[match("S",parnames.in)],
+                    kappa.doeclim = parameters.in[match("kappa.doeclim",parnames.in)],
+                    beta0.gsic = parameters.in[match("beta0",parnames.in)],
+                    V0.gsic = parameters.in[match("V0.gsic",parnames.in)],
+                    n.gsic = parameters.in[match("n",parnames.in)],
+                    Gs0.gsic = parameters.in[match("Gs0",parnames.in)],
+                    a.simple = parameters.in[match("a.simple",parnames.in)],
+                    b.simple = parameters.in[match("b.simple",parnames.in)],
+                    alpha.simple = parameters.in[match("alpha.simple",parnames.in)],
+                    beta.simple = parameters.in[match("beta.simple",parnames.in)],
+                    V0.simple = parameters.in[match("V0",parnames.in)],
+                    a.te = parameters.in[match("a.te",parnames.in)],
+                    b.te = parameters.in[match("b.te",parnames.in)],
+                    invtau.te = parameters.in[match("invtau.te",parnames.in)],
+                    V0.te = parameters.in[match("TE0",parnames.in)],
+                    a.anto = parameters.in[match("anto.a",parnames.in)],
+                    b.anto = parameters.in[match("anto.b",parnames.in)],
+                    slope.Ta2Tg = slope.Ta2Tg,
+                    intercept.Ta2Tg = intercept.Ta2Tg,
+                    b0.dais = parameters.in[match("b0",parnames.in)],
+                    slope.dais = parameters.in[match("slope",parnames.in)],
+                    mu.dais = parameters.in[match("mu",parnames.in)],
+                    h0.dais = parameters.in[match("h0",parnames.in)],
+                    c.dais = parameters.in[match("c",parnames.in)],
+                    P0.dais = parameters.in[match("P0",parnames.in)],
+                    kappa.dais = parameters.in[match("kappa.dais",parnames.in)],
+                    nu.dais = parameters.in[match("nu",parnames.in)],
+                    f0.dais = parameters.in[match("f0",parnames.in)],
+                    gamma.dais = parameters.in[match("gamma",parnames.in)],
+                    alpha.dais = parameters.in[match("alpha.dais",parnames.in)]
+                    )
 
 
 

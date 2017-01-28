@@ -1,5 +1,5 @@
 # Define "all"
-all: dais.so simple.so brick_te.so gsic_magicc.so doeclim.so
+all: dais.so simple.so brick_te.so gsic_magicc.so doeclim.so brick.so
 
 # Fortran compiler:
 F90 = /usr/local/bin/gfortran # g95
@@ -38,9 +38,19 @@ gsic_magicc.so: $(OP)/global.o $(OP)/gsic_magicc.o $(OP)/run_gsic_magicc.o
 doeclim.so: $(OP)/global.o $(OP)/doeclim.o $(OP)/run_doeclim.o
 	$(F90) -o $@ $(Flags) -shared $(Incl) $^
 
+brick.so: $(OP)/global.o $(OP)/doeclim.o $(OP)/gsic_magicc.o $(OP)/brick_te.o $(OP)/simple.o $(OP)/dais.o
+	$(F90) -o $@ $(Flags) -shared $(Incl) $^
+
 # ==============================================================
 ## Main Object files ##
 # ==============================================================
+
+## BRICK ##
+$(OP)/run_brick.o: $(OP)/global.o $(SP)/run_brick.f90
+	$(F90) -c $(Flags) $(Incl) $(SP)/run_brick.f90 -o $@
+
+$(OP)/brick.o: $(OP)/global.o $(SP)/brick.f90
+	$(F90) -c $(Flags) $(Incl) $(SP)/brick.f90 -o $@
 
 ## DOECLIM ##
 $(OP)/run_doeclim.o: $(OP)/global.o $(SP)/run_doeclim.f90

@@ -228,9 +228,9 @@ brick_model = function(
 			dSL.te	= diff(te.out)
 			for (i in 2:length(mod.time)) {
 				SL.couple[i] = SL.couple[i-1] + timestep*(	1.1*dSL.gis[i] +
-																										1.1*dSL.gsic[i] +
-																										1.0*dSL.te[i]
-																										)
+								1.1*dSL.gsic[i] +
+								1.0*dSL.te[i]
+								)
 			}
 		}
 
@@ -239,7 +239,7 @@ brick_model = function(
 
 		itmp = ind.norm.data[match("sl",ind.norm.data[,1]),2]:ind.norm.data[match("sl",ind.norm.data[,1]),3]
 		SL.couple = slr.out
-  	SL.couple = SL.couple - mean(SL.couple[itmp])
+		SL.couple = SL.couple - mean(SL.couple[itmp])
 		dSL.couple = c(-999,diff(slr.out))
 		include_dSLais = 0		# in coupled model, feeding AIS dSL without AIS contribution
 
@@ -258,9 +258,9 @@ brick_model = function(
                        		f0=f0         , h0=h0        ,
                        		c=c           , b0=b0        ,
                        		slope=slope   ,
-											 		slope.Ta2Tg=slope.Ta2Tg.in, intercept.Ta2Tg=intercept.Ta2Tg.in,
+							slope.Ta2Tg=slope.Ta2Tg.in, intercept.Ta2Tg=intercept.Ta2Tg.in,
                        		Tg=temp.couple, SL=SL.couple, dSL=dSL.couple ,
-													includes_dSLais = include_dSLais)
+							includes_dSLais = include_dSLais)
 
 		  ## Subtract off normalization period
 		  itmp = ind.norm.data[match("ais",ind.norm.data[,1]),2]:ind.norm.data[match("ais",ind.norm.data[,1]),3]

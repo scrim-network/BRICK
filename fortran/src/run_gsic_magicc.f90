@@ -85,7 +85,7 @@ subroutine run_gsic_magicc(ns, tstep, gsic_magicc_beta0, gsic_magicc_V0, &
     do i=(i0+1),ns
 
         ! global sea level rise
-        call gsic_magicc_step_forward(Gl_Temp(i-1), SL_contribution_out(i) )
+        call gsic_magicc_step_forward(Gl_Temp(i-1), SL_contribution_out(i-1), SL_contribution_out(i) )
 
     end do
 
