@@ -32,21 +32,19 @@ filename.BRICKcalibration = "../output_calibration/BRICK_calibratedParameters_12
 #filename.BRICKcalibration = "../output_calibration/BRICK_calibratedParameters_12Aug2016.csv"
 filename.rho_simple_fixed = "../output_calibration/rho_simple_fixed_06Sep2016.csv"
 
-priors='g'	## Which priors? u=uniform, g=gamma
+priors='u'	## Which priors? u=uniform, g=gamma
 appen=''		## Append file name? In case you process multiple files in one day
 today=Sys.Date(); today=format(today,format="%d%b%Y")
 
 ## Define the files you want to read/create
 if(priors=='u'){
-	filename.DAIScalibration = "../output_calibration/DAISfastdyn_calibratedParameters_uniform_19Aug2016.nc"
-	#filename.DAIScalibration = "../output_calibration/DAISfastdyn_calibratedParameters_uniform_19Aug2016.csv"
+	filename.DAIScalibration = "../output_calibration/DAISfastdyn_calibratedParameters_uniform_29Jan2017.nc"
 	filename.parameters = paste('../output_calibration/BRICK-fastdyn_postcalibratedParameters_uniform_',today,appen,'.csv', sep="")
 	filename.brickout = paste('../output_model/BRICK-fastdyn_physical_uniform_',today,appen,'.nc',sep="")
 	filename.vdout = paste('../output_model/vanDantzig_RCP85_uniform_',today,appen,'.nc',sep="")
 }
 if(priors=='g'){
-	filename.DAIScalibration = "../output_calibration/DAISfastdyn_calibratedParameters_gamma_21Aug2016.nc"
-	#filename.DAIScalibration = "../output_calibration/DAISfastdyn_calibratedParameters_gamma_21Aug2016.csv"
+	filename.DAIScalibration = "../output_calibration/DAISfastdyn_calibratedParameters_gamma_29Jan2017.nc"
 	filename.parameters = paste('../output_calibration/BRICK-fastdyn_postcalibratedParameters_gamma_',today,appen,'.csv', sep="")
 	filename.brickout = paste('../output_model/BRICK-fastdyn_physical_gamma_',today,appen,'.nc',sep="")
 	filename.vdout = paste('../output_model/vanDantzig_RCP85_gamma_',today,appen,'.nc',sep="")
@@ -1158,18 +1156,17 @@ nc_close(outnc)
 ## Pick up here?
 ## To run RCP2.6 or 4.5 ensembles through Van Dantzig analysis, change "RCP85"
 ## in the "sea_level" and "sea_level_nofd" lines below to your RCP of choice.
-## (Due to a bug, RCP26 is unlabeled)
 if(FALSE){
 	setwd('~/codes/BRICK/calibration')
 	library(ncdf4)
-	filename.in = "../output_model/BRICK-fastdyn_physical_uniform_26Jan2017.nc"
+	filename.in = "../output_model/BRICK-fastdyn_physical_gamma_29Jan2017.nc"
 	ncdata <- nc_open(filename.in)
-	sea_level = ncvar_get(ncdata, 'LocalSeaLevel_RCP85')
-	sea_level_nofd = ncvar_get(ncdata, 'LocalSeaLevel_nofd_RCP85')
+	sea_level = ncvar_get(ncdata, 'LocalSeaLevel_RCP45')
+	sea_level_nofd = ncvar_get(ncdata, 'LocalSeaLevel_nofd_RCP45')
 	mod.time =ncvar_get(ncdata, 'time_proj')
 	nc_close(ncdata)
 	today=Sys.Date(); today=format(today,format="%d%b%Y")
-	filename.vdout = paste('../output_model/vanDantzig_RCP85_uniform_',today,'.nc',sep="")
+	filename.vdout = paste('../output_model/vanDantzig_RCP45_gamma_',today,'.nc',sep="")
 } else {
 	sea_level=t(proj.rcp85$slr.nola)
 	sea_level_nofd=t(proj.rcp85$slr.nola.nofd)

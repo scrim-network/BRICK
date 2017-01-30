@@ -234,8 +234,8 @@ subroutine dais_step(Ta, SL, Toc, dSL, Rad, Vol, disint)
 
 !print *, Tcrit, lambda, V, Vmin
 
-!!    if((Ta > Tcrit) .and. (V > 18.0e15)) then
-    if(Ta > Tcrit) then
+    if((Ta > Tcrit) .and. (V > 18.0e15)) then
+!!    if(Ta > Tcrit) then
       disint_rate = -lambda*(24.78e15)/57.
     else
       disint_rate = 0.

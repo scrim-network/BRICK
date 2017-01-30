@@ -10,16 +10,16 @@
 library(ncdf4)
 
 ## File name for the BRICK physical model output (netCDF4)
-filename.brick.uniform  = '../output_model/BRICK-fastdyn_physical_uniform_26Jan2017.nc'
-filename.brick.gamma    = '../output_model/BRICK-fastdyn_physical_gamma_26Jan2017.nc'
+filename.brick.uniform  = '../output_model/BRICK-fastdyn_physical_uniform_29Jan2017.nc'
+filename.brick.gamma    = '../output_model/BRICK-fastdyn_physical_gamma_29Jan2017.nc'
 
 ## File name for the Van Dantzig model output (netCDF4)
-filename.vandantzig.uniform = '../output_model/vanDantzig_RCP85_uniform_10Nov2016.nc'
-filename.vandantzig.gamma   = '../output_model/vanDantzig_RCP85_gamma_26Jan2017.nc'
+filename.vandantzig.uniform = '../output_model/vanDantzig_RCP85_uniform_29Jan2017.nc'
+filename.vandantzig.gamma   = '../output_model/vanDantzig_RCP85_gamma_29Jan2017.nc'
 
 ## File name for the BRICK post-calibrated parameters (csv) (the BRICK and van Dantzig output came from these guys)
-filename.parameters.uniform = '../output_calibration/BRICK-fastdyn_postcalibratedParameters_uniform_26Jan2017.csv'
-filename.parameters.gamma   = '../output_calibration/BRICK-fastdyn_postcalibratedParameters_gamma_26Jan2017.csv'
+filename.parameters.uniform = '../output_calibration/BRICK-fastdyn_postcalibratedParameters_uniform_29Jan2017.csv'
+filename.parameters.gamma   = '../output_calibration/BRICK-fastdyn_postcalibratedParameters_gamma_29Jan2017.csv'
 
 ## Other files
 filename.rho_simple_fixed = "../output_calibration/rho_simple_fixed_06Sep2016.csv"
@@ -773,8 +773,8 @@ dev.off()
 ## Grab the van Dantzig output
 ## (switch to RCP26 or 45 if you want to evaluate those, but not the focus
 ## of the main paper)
-#filename.vandantzig.gamma   = '../output_model/vanDantzig_RCP26_gamma_26Jan2017.nc'
-#filename.vandantzig.gamma   = '../output_model/vanDantzig_RCP45_gamma_26Jan2017.nc'
+#filename.vandantzig.gamma   = '../output_model/vanDantzig_RCP26_gamma_29Jan2017.nc'
+#filename.vandantzig.gamma   = '../output_model/vanDantzig_RCP45_gamma_29Jan2017.nc'
 
 ncdata <- nc_open(filename.vandantzig.gamma)
   heightening     = ncvar_get(ncdata, 'H')

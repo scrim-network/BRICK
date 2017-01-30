@@ -36,7 +36,7 @@ enableJIT(3)
 set.seed(1234)
 
 ## Use uniform or gamma priors for the fast dynamics parameters?
-fd.priors = 'g'
+fd.priors = 'u'
 
 ## Read the data forcing for hindcasts and projections. Yields:
 ##  Ta (Antarctic temperature reduced to sea-level)
@@ -321,8 +321,8 @@ step.mcmc = (bound.upper-bound.lower)*.05
 if(FALSE){
 t.beg=proc.time()											# save timing (running millions of iterations so best to have SOME idea...)
 amcmc.out1 = MCMC(log.post, n=niter.mcmc, init=parameters0.lhs, scale=step.mcmc, adapt=TRUE, acc.rate=accept.mcmc,
-									gamma=gamma.mcmc, list=TRUE, n.start=round(0.01*niter.mcmc),
-									parnames.in=parnames    , bound.lower.in=bound.lower, bound.upper.in=bound.upper,
+				  gamma=gamma.mcmc, list=TRUE, n.start=round(0.01*niter.mcmc),
+				  parnames.in=parnames    , bound.lower.in=bound.lower, bound.upper.in=bound.upper,
                   obs.in=obs.targets      , obs.err.in=obs.err        , obs.step.in=obs.years     ,
                   trends.ais.in=trends.ais, trends.err.in=trends.err  , ind.trends.in=ind.trends  ,
                   ind.norm.in=ind.relative   , alpha.var=alpha.var       , beta.var=beta.var         ,
@@ -338,7 +338,7 @@ chain1 = amcmc.out1$samples
 if(FALSE){
 t.beg=proc.time()
 amcmc.extend1 = MCMC.add.samples(amcmc.out1, niter.mcmc,
-									parnames.in=parnames    , bound.lower.in=bound.lower, bound.upper.in=bound.upper,
+				  parnames.in=parnames    , bound.lower.in=bound.lower, bound.upper.in=bound.upper,
                   obs.in=obs.targets      , obs.err.in=obs.err        , obs.step.in=obs.years     ,
                   trends.ais.in=trends.ais, trends.err.in=trends.err  , ind.trends.in=ind.trends  ,
                   ind.norm.in=ind.relative   , alpha.var=alpha.var       , beta.var=beta.var         ,
@@ -360,8 +360,8 @@ if(TRUE){
 t.beg=proc.time()										# save timing (running millions of iterations so best to have SOME idea...)
 amcmc.par1 = MCMC.parallel(log.post, n=niter.mcmc, init=parameters0.lhs, n.chain=4, n.cpu=4,
                   dyn.libs='../fortran/dais_fastdyn.so', scale=step.mcmc, adapt=TRUE, acc.rate=accept.mcmc,
-									gamma=gamma.mcmc, list=TRUE, n.start=round(0.01*niter.mcmc),
-									parnames.in=parnames    , bound.lower.in=bound.lower, bound.upper.in=bound.upper,
+				  gamma=gamma.mcmc, list=TRUE, n.start=round(0.01*niter.mcmc),
+				  parnames.in=parnames    , bound.lower.in=bound.lower, bound.upper.in=bound.upper,
                   obs.in=obs.targets      , obs.err.in=obs.err        , obs.step.in=obs.years     ,
                   trends.ais.in=trends.ais, trends.err.in=trends.err  , ind.trends.in=ind.trends  ,
                   ind.norm.in=ind.relative   , alpha.var=alpha.var       , beta.var=beta.var         ,
@@ -434,7 +434,7 @@ plot(niter.test,gr.stat)
 ## chain1 and chain2 are of the same length, and both converged after "n.sample"
 ## iterations.
 ## For now though, use more because you will filter out the ridiculous values for slope.
-n.sample=3e5
+n.sample=2e5
 parameters1=chain1[(dim(chain1)[1]-n.sample+1):dim(chain1)[1],]
 parameters2=chain2[(dim(chain1)[1]-n.sample+1):dim(chain2)[1],]
 parameters3=chain3[(dim(chain1)[1]-n.sample+1):dim(chain2)[1],]
