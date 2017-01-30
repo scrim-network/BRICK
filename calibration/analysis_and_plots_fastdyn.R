@@ -906,62 +906,62 @@ pfig=0.55
 
 par(mfrow=c(1,2), fig=c(0,pfig,0,1), mai=c(.7,.7,.06,.2))
 plot(log10(preturn.avg),cost.avg/conv, col=rgb(col85[1],col85[2],col85[3]),
-			type='l',xlim=c(1.5,7),ylim=c(0,8e9)/conv,xaxt='n', xlab='', ylab='');
-      mtext('Return period [years]',side = 1,line = 2.1)
-      mtext('Expected costs [billion US $]',side=2,line=2.2);
-			axis(1, at=seq(1,7), label=parse(text=paste("10^", seq(1,7), sep="")), las=1)
-  lines(log10(preturn.avg)      , cost.avg/conv      , type='l', col=rgb(col85[1],col85[2],col85[3]), lwd=2);
-  lines(log10(preturn.nofd.avg) , cost.nofd.avg/conv , type='l', col=rgb(col45[1],col45[2],col45[3]), lwd=2);
-  lines(log10(preturn.avg)      , investment.avg/conv      , type='l', col=rgb(col85[1],col85[2],col85[3]), lwd=2, lty=6);
-  lines(log10(preturn.nofd.avg) , investment.nofd.avg/conv , type='l', col=rgb(col45[1],col45[2],col45[3]), lwd=2, lty=6);
-  mtext(side=3, text=expression(bold(' a')), line=-2, cex=1, adj=0);
-  points(log10(preturn.pre),cost.nofd.avg[iopt.nofd.avg]/conv,type='p',pch=16,cex=1.4)
+     type='l',xlim=c(1.5,7),ylim=c(0,8e9)/conv,xaxt='n', xlab='', ylab='');
+mtext('Return period [years]',side = 1,line = 2.1)
+mtext('Expected costs [billion US $]',side=2,line=2.2);
+axis(1, at=seq(1,7), label=parse(text=paste("10^", seq(1,7), sep="")), las=1)
+lines(log10(preturn.avg)      , cost.avg/conv      , type='l', col=rgb(col85[1],col85[2],col85[3]), lwd=2);
+lines(log10(preturn.nofd.avg) , cost.nofd.avg/conv , type='l', col=rgb(col45[1],col45[2],col45[3]), lwd=2);
+lines(log10(preturn.avg)      , investment.avg/conv      , type='l', col=rgb(col85[1],col85[2],col85[3]), lwd=2, lty=6);
+lines(log10(preturn.nofd.avg) , investment.nofd.avg/conv , type='l', col=rgb(col45[1],col45[2],col45[3]), lwd=2, lty=6);
+mtext(side=3, text=expression(bold(' a')), line=-2, cex=1, adj=0);
+points(log10(preturn.pre),cost.nofd.avg[iopt.nofd.avg]/conv,type='p',pch=16,cex=1.4)
 
-  polygon(c(inset.x,rev(inset.x)),c(inset.y[1],inset.y[1],inset.y[2],inset.y[2])/conv,col=rgb(0,0,0,0),border=TRUE,lwd=1.5)
-  legend(4.15,1.2,c("Total cost","Investment"), col=c('black','black'), lty=c(1,6), lwd=2, bty='n', cex=1.1)
+polygon(c(inset.x,rev(inset.x)),c(inset.y[1],inset.y[1],inset.y[2],inset.y[2])/conv,col=rgb(0,0,0,0),border=TRUE,lwd=1.5)
+legend(4.15,1.2,c("Total cost","Investment"), col=c('black','black'), lty=c(1,6), lwd=2, bty='n', cex=1.1)
 
 u <- par("usr")
 v <- c(
-  grconvertX(u[1:2], "user", "ndc"),
-  grconvertY(u[3:4], "user", "ndc")
+    grconvertX(u[1:2], "user", "ndc"),
+    grconvertY(u[3:4], "user", "ndc")
 )
 py=.58
 px=.28
 v <- c( (v[1]+v[2])*px, v[2], (v[4]+v[3])*py, v[4] )
 
-  lines( c(inset.x[2],u[2]), c(inset.y[1]/conv,v[3]*u[4]+2*u[3]), lty=1, lwd=1);
-  lines( c(inset.x[1]-.05,v[1]*(u[2]-u[1])+u[1])+.05, c(inset.y[1]/conv,v[3]*u[4]+2*u[3]), lty=1, lwd=1);
-  lines( c(log10(preturn.pre),log10(preturn.pre)), c(-9,investment.avg[ipre.nofd.avg]/conv), lty=2, lwd=2);
-  lines( c(log10(preturn.avg[ipre.nofd.avg]), log10(preturn.avg[ipre.nofd.avg])),
-         c(investment.avg[ipre.nofd.avg]/conv, -9), lty=2, lwd=2);
+lines( c(inset.x[2],u[2]*.995), c(inset.y[1]/conv,v[3]*u[4]+2*u[3]), lty=1, lwd=1);
+lines( c(inset.x[1]-.05,v[1]*(u[2]-u[1])+u[1])+.05, c(inset.y[1]/conv,v[3]*u[4]+2*u[3]), lty=1, lwd=1);
+lines( c(log10(preturn.pre),log10(preturn.pre)), c(-9,investment.avg[ipre.nofd.avg]/conv), lty=2, lwd=2);
+lines( c(log10(preturn.avg[ipre.nofd.avg]), log10(preturn.avg[ipre.nofd.avg])),
+       c(investment.avg[ipre.nofd.avg]/conv, -9), lty=2, lwd=2);
 
-rect(u[2], u[4], (u[1]+u[2])*px, (u[4]-u[3])*py, col="white")
+rect(u[2], u[4], (u[1]+u[2])*px*.99, (u[4]-u[3])*py, col="white")
 par( fig=v, new=TRUE, mar=c(0,0,0,0) )
 
 plot(log10(preturn.avg),cost.avg/conv, col=rgb(col85[1],col85[2],col85[3]),
-			type='l',xlim=inset.x,ylim=inset.y/conv, xlab='', ylab='', xaxt='n', yaxt='n');
-      axis(1, at=seq(3.8,4.0,by=.2), label=parse(text=paste("10^", seq(3.8,4.0,by=.2), sep="")), las=1)
-  lines(log10(preturn.avg)      , cost.avg/conv      , type='l', col=rgb(col85[1],col85[2],col85[3]), lwd=2);
-  lines(log10(preturn.nofd.avg) , cost.nofd.avg/conv , type='l', col=rgb(col45[1],col45[2],col45[3]), lwd=2);
-  lines(log10(preturn.avg)      , investment.avg/conv      , type='l', col=rgb(col85[1],col85[2],col85[3]), lwd=2, lty=6);
-  lines(log10(preturn.nofd.avg) , investment.nofd.avg/conv , type='l', col=rgb(col45[1],col45[2],col45[3]), lwd=2, lty=6);
+     type='l',xlim=inset.x,ylim=inset.y/conv, xlab='', ylab='', xaxt='n', yaxt='n');
+axis(1, at=seq(3.8,4.0,by=.2), label=parse(text=paste("10^", seq(3.8,4.0,by=.2), sep="")), las=1)
+lines(log10(preturn.avg)      , cost.avg/conv      , type='l', col=rgb(col85[1],col85[2],col85[3]), lwd=2);
+lines(log10(preturn.nofd.avg) , cost.nofd.avg/conv , type='l', col=rgb(col45[1],col45[2],col45[3]), lwd=2);
+lines(log10(preturn.avg)      , investment.avg/conv      , type='l', col=rgb(col85[1],col85[2],col85[3]), lwd=2, lty=6);
+lines(log10(preturn.nofd.avg) , investment.nofd.avg/conv , type='l', col=rgb(col45[1],col45[2],col45[3]), lwd=2, lty=6);
 
-  #lines( c(log10(preturn.pre),log10(preturn.pre)), c(0,(log10(preturn.pre)*slope.nofd+inter.nofd))/conv, lty=2, lwd=2);
-  lines( c(log10(preturn.pre),log10(preturn.pre)), c(0,cost.nofd.avg[iopt.nofd.avg])/conv, lty=2, lwd=2);
+#lines( c(log10(preturn.pre),log10(preturn.pre)), c(0,(log10(preturn.pre)*slope.nofd+inter.nofd))/conv, lty=2, lwd=2);
+lines( c(log10(preturn.pre),log10(preturn.pre)), c(0,cost.nofd.avg[iopt.nofd.avg])/conv, lty=2, lwd=2);
 
-  xtmp = (log10(preturn.pre)*slope.nofd+inter.nofd-inter)/slope
+xtmp = (log10(preturn.pre)*slope.nofd+inter.nofd-inter)/slope
 
-  arrows( log10(preturn.pre), (log10(preturn.pre)*slope.nofd+inter.nofd)/conv,
-          xtmp, (log10(preturn.pre)*slope.nofd+inter.nofd)/conv,
-          code=2, length=.11, angle=45, lty=1, lwd=2);
-  lines( c(xtmp, xtmp), c((log10(preturn.pre)*slope.nofd+inter.nofd)/conv, 0), lty=2, lwd=2);
-  #points(log10(preturn.pre), (log10(preturn.pre)*slope.nofd+inter.nofd)/conv,type='p',pch=18,cex=2)
-  points(log10(preturn.pre),cost.nofd.avg[iopt.nofd.avg]/conv,type='p',pch=16,cex=1.4)
+arrows( log10(preturn.pre), (log10(preturn.pre)*slope.nofd+inter.nofd)/conv,
+        xtmp, (log10(preturn.pre)*slope.nofd+inter.nofd)/conv,
+        code=2, length=.11, angle=45, lty=1, lwd=2);
+lines( c(xtmp, xtmp), c((log10(preturn.pre)*slope.nofd+inter.nofd)/conv, 0), lty=2, lwd=2);
+#points(log10(preturn.pre), (log10(preturn.pre)*slope.nofd+inter.nofd)/conv,type='p',pch=18,cex=2)
+points(log10(preturn.pre),cost.nofd.avg[iopt.nofd.avg]/conv,type='p',pch=16,cex=1.4)
 
-  text(0.998*log10(preturn.pre), 0.985*mean(c(inset.y[1],investment.avg[ipre.nofd.avg]))/conv,
-       bquote(atop("Goal:",paste("1:",.(prettyNum(preturn.pre,big.mark=',')),"y"))), pos = 4, cex = 1.1, srt = 0)
-  text(0.95*log10(preturn.avg[ipre.nofd.avg]), .97*investment.avg[ipre.nofd.avg]/conv,
-       bquote(atop("  Actual:",paste("1:",.(prettyNum(round(preturn.avg[ipre.nofd.avg]),big.mark=',')),"y"))), pos = 3, cex = 1.1, srt = 0)
+text(0.998*log10(preturn.pre), 0.985*mean(c(inset.y[1],investment.avg[ipre.nofd.avg]))/conv,
+     bquote(atop("Goal:",paste("1:",.(prettyNum(preturn.pre,big.mark=',')),"y"))), pos = 4, cex = 1.1, srt = 0)
+text(0.95*log10(preturn.avg[ipre.nofd.avg]), .97*investment.avg[ipre.nofd.avg]/conv,
+     bquote(atop("  Actual:",paste("1:",.(prettyNum(round(preturn.avg[ipre.nofd.avg]),big.mark=',')),"y"))), pos = 3, cex = 1.1, srt = 0)
 #  text(0.997*xtmp, 0.968*mean(c(inset.y[1],investment.avg[ipre.nofd.avg]))/conv,
 #        paste("Actual: 1:",round(preturn.avg[ipre.nofd.avg]),"y",sep=""), pos=4, cex=1.1, srt=0)
 
@@ -973,55 +973,55 @@ conv=1e9  # convert from $ to billions or millions of $? (for nicer looking axes
 
 par(fig=c(pfig,1,0,1), new=TRUE, mai=c(.7,.1,.06,.06))
 plot(heightening,cost.avg/conv,col=rgb(col85[1],col85[2],col85[3],.2),type='l',xlim=c(0,3),ylim=c(0,8e9)/conv,
-  xlab='', ylab='', xaxt='n', yaxt='n');
-  mtext('Heightening [m]',side = 1,line = 2.1)
-  axis(1, at=seq(0,3,by=0.5), label=c('0','','1','','2','','3'))
-  axis(2, at=seq(0,8,by=2), label=rep("",5), las=1)
-  lines(heightening,cost.avg/conv,type='l',col=rgb(col85[1],col85[2],col85[3]),lwd=3);
-  lines(heightening,cost.nofd.avg/conv,type='l',col=rgb(col45[1],col45[2],col45[3]),lwd=3);
-  points(heightening[iopt.nofd.avg],cost.nofd.avg[iopt.nofd.avg]/conv,type='p',pch=16,cex=1.)
+     xlab='', ylab='', xaxt='n', yaxt='n');
+mtext('Heightening [m]',side = 1,line = 2.1)
+axis(1, at=seq(0,3,by=0.5), label=c('0','','1','','2','','3'))
+axis(2, at=seq(0,8,by=2), label=rep("",5), las=1)
+lines(heightening,cost.avg/conv,type='l',col=rgb(col85[1],col85[2],col85[3]),lwd=3);
+lines(heightening,cost.nofd.avg/conv,type='l',col=rgb(col45[1],col45[2],col45[3]),lwd=3);
+points(heightening[iopt.nofd.avg],cost.nofd.avg[iopt.nofd.avg]/conv,type='p',pch=16,cex=1.)
 #  points(heightening[iopt.nofd.avg],cost.avg[iopt.nofd.avg]/conv,type='p',pch=17,cex=1.)
-  points(heightening[iopt.avg],cost.avg[iopt.avg]/conv,type='p',pch=15,cex=1.)
-  polygon(c(inset.x,rev(inset.x)),c(inset.y[1]-.15e9,inset.y[1]-.15e9,inset.y[2]+.15e9,inset.y[2]+.15e9)/conv,col=rgb(0,0,0,0),border=TRUE,lwd=1.5)
-  legend(.35,1.2,c("fast dynamics included", "fast dynamics neglected"),
-         lty=c(1,1), lwd=2, col=c(rgb(col85[1],col85[2],col85[3]),rgb(col45[1],col45[2],col45[3])), cex=1.1, bty='n')
-  mtext(side=3, text=expression(bold(' b')), line=-2, cex=1, adj=0);
+points(heightening[iopt.avg],cost.avg[iopt.avg]/conv,type='p',pch=15,cex=1.)
+polygon(c(inset.x,rev(inset.x)),c(inset.y[1]-.15e9,inset.y[1]-.15e9,inset.y[2]+.15e9,inset.y[2]+.15e9)/conv,col=rgb(0,0,0,0),border=TRUE,lwd=1.5)
+legend(.35,1.2,c("fast dynamics included", "fast dynamics neglected"),
+       lty=c(1,1), lwd=2, col=c(rgb(col85[1],col85[2],col85[3]),rgb(col45[1],col45[2],col45[3])), cex=1.1, bty='n')
+mtext(side=3, text=expression(bold(' b')), line=-2, cex=1, adj=0);
 
 u <- par("usr")
 v <- c(
-  grconvertX(u[1:2], "user", "ndc"),
-  grconvertY(u[3:4], "user", "ndc")
+    grconvertX(u[1:2], "user", "ndc"),
+    grconvertY(u[3:4], "user", "ndc")
 )
 py=1.1/2
 px=.9/2
 v <- c( (v[1]+v[2])*px, v[2], (v[4]+v[3])*py, v[4] )
 
-  lines( c(inset.x[2],u[2]), c(inset.y[1]/conv+.5*u[3],v[3]*u[4]+2*u[3]), lty=1, lwd=1);
-  lines( c(inset.x[1],(u[2]-u[1])*v[1]*(1-pfig)+u[1]), c(inset.y[1]/conv+.5*u[3],v[3]*u[4]+2*u[3]), lty=1, lwd=1);
+lines( c(inset.x[2],u[2]*1.01), c(inset.y[1]/conv+.5*u[3],v[3]*u[4]+2*u[3]), lty=1, lwd=1);
+lines( c(inset.x[1],(u[2]-u[1])*v[1]*(1-pfig)+u[1]), c(inset.y[1]/conv+.5*u[3],v[3]*u[4]+2*u[3]), lty=1, lwd=1);
 
-rect(u[2], u[4], (u[1]+u[2])*px-px, (u[4]-u[3])*py+u[3]*(1-py), col="white")
+rect(u[2], u[4], (u[1]+u[2])*px-px*.99, (u[4]-u[3])*py+u[3]*(1-py), col="white")
 par( fig=v, new=TRUE, mar=c(0,0,0,0) )
 
 plot(heightening,cost.avg/conv,type='l',col=rgb(col85[1],col85[2],col85[3]),lwd=3, xlim=inset.x, ylim=inset.y/conv,
-  xlab='', ylab='', yaxt='n', xaxt='n');
-  lines(heightening,cost.nofd.avg/conv,type='l',col=rgb(col45[1],col45[2],col45[3]),lwd=3);
-  lines(heightening,cost.avg/conv,type='l',col=rgb(col85[1],col85[2],col85[3]),lwd=3);
+     xlab='', ylab='', yaxt='n', xaxt='n');
+lines(heightening,cost.nofd.avg/conv,type='l',col=rgb(col45[1],col45[2],col45[3]),lwd=3);
+lines(heightening,cost.avg/conv,type='l',col=rgb(col85[1],col85[2],col85[3]),lwd=3);
 
-  lines(c(heightening[iopt.nofd.avg],heightening[iopt.nofd.avg]),c(0,cost.avg[iopt.nofd.avg])/conv,type='l',lty=2,lwd=2,col='black')
-  lines(c(heightening[iopt.nofd.avg],heightening[iopt.avg]),c(cost.avg[iopt.nofd.avg],cost.avg[iopt.nofd.avg])/conv,type='l',lty=2,lwd=2,col='black')
-  arrows(heightening[iopt.nofd.avg], cost.avg[iopt.avg]/conv, .995*heightening[iopt.avg], cost.avg[iopt.avg]/conv,
-         length=.12, angle=40, lty=1, lwd=1.5, code=2, col='black')
-  arrows(heightening[iopt.avg], cost.avg[iopt.nofd.avg]/conv, heightening[iopt.avg], cost.avg[iopt.avg]/conv,
-         length=.11, angle=40, lty=1, lwd=1.5, code=1, col='black')
+lines(c(heightening[iopt.nofd.avg],heightening[iopt.nofd.avg]),c(0,cost.avg[iopt.nofd.avg])/conv,type='l',lty=2,lwd=2,col='black')
+lines(c(heightening[iopt.nofd.avg],heightening[iopt.avg]),c(cost.avg[iopt.nofd.avg],cost.avg[iopt.nofd.avg])/conv,type='l',lty=2,lwd=2,col='black')
+arrows(heightening[iopt.nofd.avg], cost.avg[iopt.avg]/conv, .995*heightening[iopt.avg], cost.avg[iopt.avg]/conv,
+       length=.12, angle=40, lty=1, lwd=1.5, code=2, col='black')
+arrows(heightening[iopt.avg], cost.avg[iopt.nofd.avg]/conv, heightening[iopt.avg], cost.avg[iopt.avg]/conv,
+       length=.11, angle=40, lty=1, lwd=1.5, code=1, col='black')
 
-  points(heightening[iopt.nofd.avg],cost.nofd.avg[iopt.nofd.avg]/conv,type='p',pch=16,cex=1.4)
-  points(heightening[iopt.nofd.avg],cost.avg[iopt.nofd.avg]/conv,type='p',pch=17,cex=1.4)
-  points(heightening[iopt.avg],cost.avg[iopt.avg]/conv,type='p',pch=15,cex=1.4)
+points(heightening[iopt.nofd.avg],cost.nofd.avg[iopt.nofd.avg]/conv,type='p',pch=16,cex=1.4)
+points(heightening[iopt.nofd.avg],cost.avg[iopt.nofd.avg]/conv,type='p',pch=17,cex=1.4)
+points(heightening[iopt.avg],cost.avg[iopt.avg]/conv,type='p',pch=15,cex=1.4)
 
-  text(0.91*heightening[iopt.avg], 1.006*cost.avg[iopt.nofd.avg]/conv,
-       paste("+$",waste.avg," million",sep=""), pos = 4, cex = 1.1, srt = 0)
-  text(heightening[iopt.nofd.avg], .992*cost.avg[iopt.avg]/conv,
-       paste("+",incheight.avg," m",sep=""), pos = 4, cex = 1.1, srt = 0)
+text(0.91*heightening[iopt.avg], 1.006*cost.avg[iopt.nofd.avg]/conv,
+     paste("+$",waste.avg," million",sep=""), pos = 4, cex = 1.1, srt = 0)
+text(heightening[iopt.nofd.avg], .992*cost.avg[iopt.avg]/conv,
+     paste("+",incheight.avg," m",sep=""), pos = 4, cex = 1.1, srt = 0)
 
 #  text(1.0*heightening[iopt.nofd.avg], .99*mean(c(cost.avg[iopt.nofd.avg],cost.nofd.avg[iopt.nofd.avg]))/conv,
 #       paste("+$",overspending.avg," million",sep=""), pos = 4, cex = 1.1, srt = 0)
