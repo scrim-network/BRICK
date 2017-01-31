@@ -26,6 +26,8 @@
 ## along with BRICK.  If not, see <http://www.gnu.org/licenses/>.
 ##==============================================================================
 
+rm(list=ls())
+
 setwd('~/codes/BRICK/calibration')
 
 library(ncdf4)
@@ -118,6 +120,18 @@ i0$gsic = which(mod.time==1990)
 
 ## GIS initial conditions are relative to 1961-1990
 i0$gis = which(mod.time==1961)
+
+
+
+#debug?
+parameters.in <- as.numeric(parameters[1,])
+parnames.in <- parnames
+forcing.in <- forcing
+slope.Ta2Tg.in <- slope.Ta2Tg
+intercept.Ta2Tg.in <- intercept.Ta2Tg
+ind.norm.sl <- ind.norm
+
+
 
 ## Run the sample, and enjoy a nice progress bar
 pb <- txtProgressBar(min=0,max=n.ensemble,initial=0,style=3)

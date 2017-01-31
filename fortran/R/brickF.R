@@ -153,16 +153,15 @@ flux.to.heat = function(heatflux.mixed, heatflux.interior)
 #===============================================================================
 # load fortran subroutine
 # to check if library is loaded: is.loaded("run_brick") (for example)
-# dyn.load("../fortran/brick_te.so")
 if(.Platform$OS.type == "unix") {
-    #dyn.load("../fortran/brick.so")
+    dyn.load("../fortran/brick.so")
     dyn.load("../fortran/dais.so")
     dyn.load("../fortran/doeclim.so")
     dyn.load("../fortran/gsic_magicc.so")
     dyn.load("../fortran/simple.so")
     dyn.load("../fortran/brick_te.so")
 } else {
-    #dyn.load("../fortran/brick")
+    dyn.load("../fortran/brick")
     dyn.load("../fortran/dais")
     dyn.load("../fortran/doeclim")
     dyn.load("../fortran/gsic_magicc")

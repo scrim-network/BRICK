@@ -33,7 +33,7 @@ subroutine run_brick(ns, tstep, &
                      anto_a, anto_b, slope_Ta2Tg, intercept_Ta2Tg, &                                        ! ais-dais inputs
                      dais_parameters, &                                                                     ! ais-dais inputs
                      time_out, temp_out, heatflux_mixed_out, heatflux_interior_out, &                       ! doeclim outputs
-                     sl_te_out,                                                                             ! te outputs
+                     sl_te_out, &                                                                           ! te outputs
                      sl_gsic_out, &                                                                         ! gsic-magicc outputs
                      sl_gis_out, GIS_Volume_out, &                                                          ! gis-simple outputs
                      sl_ais_out, AIS_Radius_out, AIS_Volume_out, &                                          ! ais-dais outputs
@@ -76,7 +76,8 @@ subroutine run_brick(ns, tstep, &
 ! 
 ! Outputs:
 !   temp_out  	        Global mean surface temperature [degC]
-!   ocheat_out  	    ocean heat uptake [10^22 J]
+!   heatflux_mixed_out      heat flux into ocean mixed layer 
+!   heatflux_interior_out  	heat flux into deep ocean
 !   sl_te_out           sea-level rise relative to 1850 (or beg. of run) from thermal expansion [m SLE]
 !   sl_gis_out          sea-level rise relative to 1850 (or beg. of run) from Greenland ice sheet [m SLE]
 !   sl_ais_out          sea-level rise relative to 1850 (or beg. of run) from Antarctic ice sheet [m SLE]
@@ -85,6 +86,7 @@ subroutine run_brick(ns, tstep, &
 !===============================================================================
 
     USE global
+    USE brick
 
     implicit none
 
@@ -107,6 +109,10 @@ subroutine run_brick(ns, tstep, &
     real(DP),     intent(IN) :: brick_te_b
     real(DP),     intent(IN) :: brick_te_invtau
     real(DP), dimension(20), intent(IN) :: dais_parameters
+    real(DP),     intent(IN) :: anto_a
+    real(DP),     intent(IN) :: anto_b
+    real(DP),     intent(IN) :: slope_Ta2Tg
+    real(DP),     intent(IN) :: intercept_Ta2Tg
 
 ! intial conditions (may be viewed as parameters)
     real(DP),     intent(IN) :: gsic_magicc_V0
@@ -115,13 +121,16 @@ subroutine run_brick(ns, tstep, &
     real(DP),     intent(IN) :: brick_te_V0
 
 ! output variables
+    real(DP), dimension(ns), intent(OUT) :: time_out
     real(DP), dimension(ns), intent(OUT) :: temp_out
-    real(DP), dimension(ns), intent(OUT) :: ocheat_out
     real(DP), dimension(ns), intent(OUT) :: heatflux_mixed_out
     real(DP), dimension(ns), intent(OUT) :: heatflux_interior_out
     real(DP), dimension(ns), intent(OUT) :: sl_te_out
     real(DP), dimension(ns), intent(OUT) :: sl_gis_out
+    real(DP), dimension(ns), intent(OUT) :: GIS_Volume_out
     real(DP), dimension(ns), intent(OUT) :: sl_ais_out
+    real(DP), dimension(ns), intent(OUT) :: AIS_Radius_out
+    real(DP), dimension(ns), intent(OUT) :: AIS_Volume_out
     real(DP), dimension(ns), intent(OUT) :: sl_gsic_out
     real(DP), dimension(ns), intent(OUT) :: sl_out
 
@@ -131,15 +140,15 @@ subroutine run_brick(ns, tstep, &
 
 ! Initialize brick (parameters and initial variable values)
     i=1
-    call init_brick(tstep, 
+    call init_brick(tstep, &
                     doeclim_t2co, doeclim_kappa, &
                     gsic_magicc_beta0, gsic_magicc_n, gsic_magicc_Teq, gsic_magicc_V0, gsic_magicc_Gs0, &
                     brick_te_a, brick_te_b, brick_te_invtau, brick_te_V0, &
                     simple_a, simple_b, simple_alpha, simple_beta, simple_V0, &
                     dais_parameters, &
-                    temp_out(i), ocheat_out(i), &
+                    temp_out(i), heatflux_mixed_out(i), heatflux_interior_out(i), &
                     sl_gsic_out(i), sl_te_out(i), sl_gis_out(i), sl_ais_out(i), &
-                    vol_gis_out(i), rad_ais_out(i), vol_ais_out(i), sl_out(i) )
+                    GIS_Volume_out(i), AIS_Radius_out(i), AIS_Volume_out(i), sl_out(i) )
 
     Tfrz = dais_parameters(12)
 
@@ -149,16 +158,19 @@ subroutine run_brick(ns, tstep, &
     do i=1,(ns-1)
 
         ! step the model forward
-        call brick_step_forward(i, forcing_in(i), temp_out(i), &
+        call brick_step_forward(i, forcing_in(i), temp_out(i), heatflux_mixed_out(i), heatflux_interior_out(i), &
                                 sl_gsic_out(i), sl_gsic_out(i+1), &
                                 sl_te_out(i), sl_te_out(i+1), &
-                                vol_gis_out(i), vol_gis_out(i+1), &
+                                GIS_Volume_out(i), GIS_Volume_out(i+1), &
                                 sl_gis_out(i), sl_gis_out(i+1), &
-                                a_anto, b_anto, Tfrz, &
+                                anto_a, anto_b, Tfrz, &
                                 slope_Ta2Tg, intercept_Ta2Tg, &
-                                rad_ais_out(i+1), vol_ais_out(i), &
-                                vol_ais_out(i+1), sl_ais_out(i+1), &
+                                AIS_Radius_out(i+1), AIS_Volume_out(i), &
+                                AIS_Volume_out(i+1), sl_ais_out(i+1), &
                                 sl_out(i), sl_out(i+1) )
+
+!        heatflux_mixed_out(i) = heatflux_mixed(i)
+!        heatflux_interior_out(i) = heatflux_interior(i)
 
     end do
 

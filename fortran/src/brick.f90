@@ -67,7 +67,7 @@ subroutine init_brick(  tstep_in,
                         a_te_in, b_te_in, invtau_te_in, V0_te_in, &
                         a_simple_in, b_simple_in, alpha_simple_in, beta_simple_in, V0_simple_in, &
                         parameters_dais_in, &
-                        temp_init_out, ocheat_init_out, &
+                        temp_init_out, heatflux_mixed_init_out, heatflux_interior_init_out, &
                         sl_gsic_init_out, sl_te_init_out, sl_gis_init_out, sl_ais_init_out, &
                         vol_gis_init_out, &
                         rad_ais_init_out, vol_ais_init_out, sl_init_out)
@@ -95,7 +95,8 @@ subroutine init_brick(  tstep_in,
     real(DP), dimension(20), intent(IN) :: parameters_dais_in
 
     real(DP), intent(OUT) :: temp_init_out
-    real(DP), intent(OUT) :: ocheat_init_out
+    real(DP), intent(OUT) :: heatflux_mixed_init_out
+    real(DP), intent(OUT) :: heatflux_interior_init_out
     real(DP), intent(OUT) :: sl_gsic_init_out
     real(DP), intent(OUT) :: sl_te_init_out
     real(DP), intent(OUT) :: sl_gis_init_out
@@ -115,7 +116,8 @@ subroutine init_brick(  tstep_in,
     call init_doeclim_arrays()
     call init_doeclim_parameters(S_doeclim_in, kappa_doeclim_in)
     temp_init_out   = 0.
-    ocheat_init_out = 0.
+    heatflux_mixed_init_out = 0.
+    heatflux_interior_init_out = 0.
 
 ! GSIC-MAGICC
     call init_gsic_magicc(  tstep, beta0_gsic_in, V0_gsic_in, n_gsic_in, &
@@ -148,7 +150,7 @@ end subroutine init_brick
 
 
 !------------------------------------------------------------------------------
-subroutine brick_step_forward(  nstep, forcing_current, Tg_current, &
+subroutine brick_step_forward(  nstep, forcing_current, Tg_current, heatflux_mixed_current, heatflux_interior_current, &
                                 sl_gsic_previous, sl_gsic_current, &
                                 sl_te_previous, sl_te_current, &
                                 vol_gis_previous, vol_gis_current, &
@@ -177,6 +179,8 @@ subroutine brick_step_forward(  nstep, forcing_current, Tg_current, &
 !
 ! Output:
 !  Tg_current           current time step surface temperature
+!  heatflux_mixed_current       current time step heat flux into ocean mixed layer
+!  heatflux_interior_current    current time step heat flux into ocean interior
 !  sl_gsic_current      current time step cumulative GSIC contribution to SL [m]
 !  sl_te_current        current time step cumulative TE contribution to SL [m]
 !  vol_gis_current      current time step Greenland ice sheet volume [m SLE]
