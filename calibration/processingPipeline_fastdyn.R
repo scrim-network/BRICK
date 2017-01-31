@@ -485,7 +485,8 @@ t.paleo = date
 
 ## Post-calibrate also on the minimum LIG AIS volume?
 ind.vmin = rep(0,n.ensemble)
-Vmin = 18e15	# minimum AIS volume in LIG (m^3)
+#Vmin = 18e15	# minimum AIS volume in LIG (m^3)
+Vmin = 0	# minimum AIS volume in LIG (m^3)
 
 pb <- txtProgressBar(min=0,max=n.sample,initial=0,style=3);
 for (i in 1:n.sample) {

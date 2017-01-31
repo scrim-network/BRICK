@@ -10,16 +10,16 @@
 library(ncdf4)
 
 ## File name for the BRICK physical model output (netCDF4)
-filename.brick.uniform  = '../output_model/BRICK-fastdyn_physical_uniform_29Jan2017.nc'
-filename.brick.gamma    = '../output_model/BRICK-fastdyn_physical_gamma_29Jan2017.nc'
+filename.brick.uniform  = '../output_model/BRICK-fastdyn_physical_uniform_31Jan2017.nc'
+filename.brick.gamma    = '../output_model/BRICK-fastdyn_physical_gamma_31Jan2017.nc'
 
 ## File name for the Van Dantzig model output (netCDF4)
 filename.vandantzig.uniform = '../output_model/vanDantzig_RCP85_uniform_29Jan2017.nc'
-filename.vandantzig.gamma   = '../output_model/vanDantzig_RCP85_gamma_29Jan2017.nc'
+filename.vandantzig.gamma   = '../output_model/vanDantzig_RCP85_gamma_31Jan2017.nc'
 
 ## File name for the BRICK post-calibrated parameters (csv) (the BRICK and van Dantzig output came from these guys)
-filename.parameters.uniform = '../output_calibration/BRICK-fastdyn_postcalibratedParameters_uniform_29Jan2017.csv'
-filename.parameters.gamma   = '../output_calibration/BRICK-fastdyn_postcalibratedParameters_gamma_29Jan2017.csv'
+filename.parameters.uniform = '../output_calibration/BRICK-fastdyn_postcalibratedParameters_uniform_31Jan2017.csv'
+filename.parameters.gamma   = '../output_calibration/BRICK-fastdyn_postcalibratedParameters_gamma_31Jan2017.csv'
 
 ## Other files
 filename.rho_simple_fixed = "../output_calibration/rho_simple_fixed_06Sep2016.csv"
@@ -421,7 +421,7 @@ par(mfrow=c(2,1))
 # GAMMA RCP85
 par(mai=c(.3,.83,.20,.2))
 plot(t.proj[iproj],gsl.rcp85.gam.50[iproj],type='l',col=rgb(col85[1],col85[2],col85[3]),lwd=2, ann='',
-		 xlim=c(2000,2100), ylim=c(0,2), xaxt='n', yaxt='n', xaxs='i', yaxs='i');
+		 xlim=c(2000,2100), ylim=c(0,2.1), xaxt='n', yaxt='n', xaxs='i', yaxs='i');
 		 axis(1, seq(2000,2100,by=20)); axis(2, seq(0,2,by=.25), lab=c('0','','0.5','','1','','1.5','','2'));
 		 mtext(side=2, text='Total sea level [m]', line=2.2, cex=1);
      mtext(side=3, text=expression(bold(' a')), line=-1, cex=1, adj=0);
@@ -492,59 +492,12 @@ print(paste('RCP8.5: ',quantile(gsl.rcp85.gam[iend,]-gsl.nofd.rcp85.gam[iend,],c
 print('==============================================================')
 
 
-pdf(paste(plotdir,'projections_SLR_total_2200.pdf',sep=''),width=4,height=5.5,colormodel='cmyk')
-par(mfrow=c(2,1))
-# GAMMA RCP85
-par(mai=c(.3,.83,.20,.2))
-plot(t.proj[iproj],gsl.rcp85.gam.50[iproj],type='l',col=rgb(col85[1],col85[2],col85[3]),lwd=2, ann='',
-		 xlim=c(2000,2200), ylim=c(0,8.5), xaxt='n', yaxt='n', xaxs='i', yaxs='i');
-		 		 axis(1, seq(2000,2200,by=25),label=c('2000','','2050','','2100','','2150','','2200')); axis(2, seq(0,8,by=1), lab=c('0','','2','','4','','6','','8'));
-		 mtext(side=2, text='Total sea level [m]', line=2.2, cex=1);
-     mtext(side=3, text=expression(bold(' a')), line=-1, cex=1, adj=0);
-  polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(gsl.rcp85.gam.95[iproj],rev(gsl.rcp85.gam.05[iproj])),
-          col=rgb(col85[1],col85[2],col85[3],.5), border=NA);
-# + UNIFORM RCP45
-	lines(t.proj[iproj],gsl.rcp45.gam.50[iproj],type='l',col=rgb(col45[1],col45[2],col45[3]),lwd=2);
-  polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(gsl.rcp45.gam.95[iproj],rev(gsl.rcp45.gam.05[iproj])),
-          col=rgb(col45[1],col45[2],col45[3],.5), border=NA);
-# + UNIFORM RCP26
-	lines(t.proj[iproj],gsl.rcp26.gam.50[iproj],type='l',col=rgb(col26[1],col26[2],col26[3]),lwd=2);
-  polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(gsl.rcp26.gam.95[iproj],rev(gsl.rcp26.gam.05[iproj])),
-          col=rgb(col26[1],col26[2],col26[3],.5), border=NA);
-# + legend
-  legend(t.proj[iproj[1]]+10,8,c("5-95% range,",
-                                "RCP2.6",
-                                "RCP4.5",
-								"RCP8.5"),
-         lty=c(NA,1,1,1), lwd=3, col=c(NA,rgb(col85[1],col85[2],col85[3]),rgb(col45[1],col45[2],col45[3]),rgb(col26[1],col26[2],col26[3])), bty='n', cex=1)
-# GAMMA RCP85, FD contribution
-par(mai=c(.65,.83,.2,.2))
-plot(t.proj[iproj],fastdyn.rcp85.gam.50[iproj],type='l',col=rgb(col85[1],col85[2],col85[3]),lwd=2, ann='',
-		 xlim=c(2000,2200), ylim=c(0,2.5), xaxt='n', yaxt='n', xaxs='i', yaxs='i');
-		 axis(1, seq(2000,2200,by=25),label=c('2000','','2050','','2100','','2150','','2200')); axis(2, seq(0,2.5,by=0.5), lab=c('0','','1','','2',''));
-		 mtext(side=1, text='Year', line=2.1, cex=1);
-		 mtext(side=2, text='Fast dynamics sea \nlevel contribution [m]', line=2.2, cex=1);
-     mtext(side=3, text=expression(bold(' b')), line=-1, cex=.9, adj=0);
-  polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(fastdyn.rcp85.gam.95[iproj],rev(fastdyn.rcp85.gam.05[iproj])),
-          col=rgb(col85[1],col85[2],col85[3],.5), border=NA);
-# + UNIFORM RCP45, FD contribution
-	lines(t.proj[iproj],fastdyn.rcp45.gam.50[iproj],type='l',col=rgb(col45[1],col45[2],col45[3]),lwd=2);
-  polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(fastdyn.rcp45.gam.95[iproj],rev(fastdyn.rcp45.gam.05[iproj])),
-          col=rgb(col45[1],col45[2],col45[3],.5), border=NA);
-
-dev.off()
-
-##
-## OR DO WE WANT THE ONE WITH BOTH PRIORS?
-##
-
-
 pdf(paste(plotdir,'projections_SLR_total_2200_bothPriors.pdf',sep=''),width=6.2,height=5.5,colormodel='cmyk')
 par(mfrow=c(2,2))
 # UNIFORM RCP85
 par(mai=c(.3,.75,.25,0))
 plot(t.proj[iproj],gsl.rcp85.uni.50[iproj],type='l',col=rgb(col85[1],col85[2],col85[3]),lwd=2, ann='',
-		 xlim=c(2000,2200), ylim=c(0,8.7), xaxt='n', yaxt='n', xaxs='i', yaxs='i');
+		 xlim=c(2000,2200), ylim=c(0,9), xaxt='n', yaxt='n', xaxs='i', yaxs='i');
 		 		 axis(1, seq(2000,2200,by=25),label=c('2000','','2050','','2100','','2150','','2200')); axis(2, seq(0,8,by=1), lab=c('0','','2','','4','','6','','8'));
 		 mtext(side=2, text='Total sea level [m]', line=2.2, cex=.9);
      mtext(side=3, text='Uniform priors', line=0.3, cex=.9);
@@ -568,7 +521,7 @@ plot(t.proj[iproj],gsl.rcp85.uni.50[iproj],type='l',col=rgb(col85[1],col85[2],co
 # GAMMA RCP85
 par(mai=c(.3,.6,.25,.2))
 plot(t.proj[iproj],gsl.rcp85.gam.50[iproj],type='l',col=rgb(col85[1],col85[2],col85[3]),lwd=2, ann='',
-		 xlim=c(2000,2200), ylim=c(0,8.7), xaxt='n', yaxt='n', xaxs='i', yaxs='i');
+		 xlim=c(2000,2200), ylim=c(0,9), xaxt='n', yaxt='n', xaxs='i', yaxs='i');
 		 		 axis(1, seq(2000,2200,by=25),label=c('2000','','2050','','2100','','2150','','2200')); axis(2, seq(0,8,by=1), lab=c('0','','2','','4','','6','','8'));
      mtext(side=3, text='Gamma priors', line=0.3, cex=.9);
      mtext(side=3, text=expression(bold(' b')), line=-1, cex=.9, adj=0);
@@ -773,8 +726,8 @@ dev.off()
 ## Grab the van Dantzig output
 ## (switch to RCP26 or 45 if you want to evaluate those, but not the focus
 ## of the main paper)
-#filename.vandantzig.gamma   = '../output_model/vanDantzig_RCP26_gamma_29Jan2017.nc'
-#filename.vandantzig.gamma   = '../output_model/vanDantzig_RCP45_gamma_29Jan2017.nc'
+#filename.vandantzig.gamma   = '../output_model/vanDantzig_RCP26_gamma_31Jan2017.nc'
+#filename.vandantzig.gamma   = '../output_model/vanDantzig_RCP45_gamma_31Jan2017.nc'
 
 ncdata <- nc_open(filename.vandantzig.gamma)
   heightening     = ncvar_get(ncdata, 'H')
@@ -889,6 +842,10 @@ print(paste('no-FD rec. heightening =',heightening[iopt.nofd.avg],'m'))
 print(paste('w/-FD rec. heightening =',heightening[iopt.avg],'m'))
 print('====================================================================')
 
+#mean reduction in expected costs: (in millions US$)
+#mean(waste)/1e6
+#mean extra heightening from FD included:
+#mean(heightening[iopt]-heightening[iopt.nofd])
 
 # this version does not have the shaded uncertainty regions on it
 
@@ -968,7 +925,7 @@ text(0.95*log10(preturn.avg[ipre.nofd.avg]), .97*investment.avg[ipre.nofd.avg]/c
 ## HEIGHTENING
 
 inset.x = c(1.34,1.61)
-inset.y = c(2.22e9,2.38e9)
+inset.y = c(2.22e9,2.405e9)
 conv=1e9  # convert from $ to billions or millions of $? (for nicer looking axes)
 
 par(fig=c(pfig,1,0,1), new=TRUE, mai=c(.7,.1,.06,.06))
@@ -1393,7 +1350,7 @@ par(mfrow=c(2,2))
 # UNIFORM RCP85
 par(mai=c(.3,.75,.25,0))
 plot(t.proj[iproj],gsl.rcp85.uni.50[iproj],type='l',col=rgb(col85[1],col85[2],col85[3]),lwd=2, ann='',
-		 xlim=c(2000,2100), ylim=c(0,2), xaxt='n', yaxt='n', xaxs='i', yaxs='i');
+		 xlim=c(2000,2100), ylim=c(0,2.1), xaxt='n', yaxt='n', xaxs='i', yaxs='i');
 		 axis(1, seq(2000,2100,by=20)); axis(2, seq(0,2,by=.25)); #axis(3, seq(2000,2100,by=20)); axis(4, seq(0,2,by=.25));
 		 mtext(side=2, text='Total sea level [m]', line=2.2, cex=.9);
      mtext(side=3, text='Uniform priors', line=0.3, cex=.9);
@@ -1417,7 +1374,7 @@ plot(t.proj[iproj],gsl.rcp85.uni.50[iproj],type='l',col=rgb(col85[1],col85[2],co
 # GAMMA RCP85
 par(mai=c(.3,.6,.25,.2))
 plot(t.proj[iproj],gsl.rcp85.gam.50[iproj],type='l',col=rgb(col85[1],col85[2],col85[3]),lwd=2, ann='',
-		 xlim=c(2000,2100), ylim=c(0,2), xaxt='n', yaxt='n', xaxs='i', yaxs='i');
+		 xlim=c(2000,2100), ylim=c(0,2.1), xaxt='n', yaxt='n', xaxs='i', yaxs='i');
 		 axis(1, seq(2000,2100,by=20)); axis(2, seq(0,2,by=.25)); #axis(3, seq(2000,2100,by=20)); axis(4, seq(0,2,by=.25));
      mtext(side=3, text='Gamma priors', line=0.3, cex=.9);
      mtext(side=3, text=expression(bold(' b')), line=-1, cex=.9, adj=0);
