@@ -11,6 +11,7 @@ SP = ./src
 # Compiler flags:
 Optimization = -O3
 SOFlags = -fPIC
+#SOFlags = -fPIC -fbacktrace -fdump-core -fdump-parse-tree
 #Modpath = -module $(OP)
 #Flags = ${SOFlags} ${Optimization} -fno-range-check #$(Modpath)
 Flags = ${SOFlags} -fno-range-check #$(Modpath)
@@ -38,7 +39,7 @@ gsic_magicc.so: $(OP)/global.o $(OP)/gsic_magicc.o $(OP)/run_gsic_magicc.o
 doeclim.so: $(OP)/global.o $(OP)/doeclim.o $(OP)/run_doeclim.o
 	$(F90) -o $@ $(Flags) -shared $(Incl) $^
 
-brick.so: $(OP)/global.o $(OP)/doeclim.o $(OP)/gsic_magicc.o $(OP)/brick_te.o $(OP)/simple.o $(OP)/dais.o $(OP)/run_brick.o
+brick.so: $(OP)/global.o $(OP)/doeclim.o $(OP)/gsic_magicc.o $(OP)/brick_te.o $(OP)/simple.o $(OP)/dais.o $(OP)/brick.o $(OP)/run_brick.o
 	$(F90) -o $@ $(Flags) -shared $(Incl) $^
 
 # ==============================================================

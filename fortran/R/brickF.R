@@ -169,6 +169,49 @@ if(.Platform$OS.type == "unix") {
     dyn.load("../fortran/brick_te")
 }
 
+if(FALSE){		# DEBUGGING
+S.doeclim = 3.1;
+    kappa.doeclim = 3.5;
+    beta0.gsic = 0.000577;
+    V0.gsic = 0.4;
+    n.gsic = 0.82;
+    Gs0.gsic = 0;
+    Teq.gsic = -0.15;
+    a.simple = -0.827;
+    b.simple = 7.242;
+    alpha.simple = 1.630e-4;
+    beta.simple = 2.845e-05;
+    V0.simple = 7.242;
+    a.te = 0.5;
+    b.te = 0;
+    invtau.te = 0.005;
+    V0.te = 0;
+    a.anto = 0.26;
+    b.anto = 0.62;
+    slope.Ta2Tg = 1;
+    intercept.Ta2Tg = 0;
+    b0.dais = 775;
+    slope.dais = 6 * 10^(-4);
+    mu.dais = 8.7;
+    h0.dais = 1471;
+    c.dais = 95;
+    P0.dais = 0.35;
+    kappa.dais = 4 * 10^(-2);
+    nu.dais = 1.2 * 10^(-2);
+    f0.dais = 1.2;
+    gamma.dais = 2.5;
+    alpha.dais = 0.5;
+    Tf.dais = -1.8;
+    rho_w.dais = 1030;
+    rho_i.dais = 917;
+    rho_m.dais = 4000;
+    Toc_0.dais = 0.72;
+    Rad0.dais = 1.864 * 10^6;
+    Aoc.dais = 3.619e14;
+    lf = -1.18;
+    includes_dSLais = 0
+}
+
 brickF <- function(
 	tstep,
     mod.time,
@@ -299,7 +342,7 @@ brickF <- function(
                         ocheat.mixed=ocheat$heat.mixed, ocheat.interior=ocheat$heat.interior,
 						ocheatflux.mixed = f.output$heatflux_mixed, ocheatflux.interior = f.output$heatflux_interior)
 
-    return(f.output$brick_out)
+    return(f.output)
 
 }
 #===============================================================================

@@ -36,7 +36,6 @@ module brick
 !!          they are all "private" so should not have problems stepping on toes
 !!TODO
 ! parameters:
-!    real(DP) :: tstep
 !    real(DP) :: S_doeclim, kappa_doeclim
 !    real(DP) :: beta0_gsic, n_gsic, Teq_gsic, V0_gsic, Gs0_gsic
 !    real(DP) :: a_te, b_te, invtau_te, V0_te
@@ -47,11 +46,12 @@ module brick
 !                Toc0_dais, Rad0_dais, Aoc_dais, lf_dais
 
 ! variables
-    real(DP) :: V_te        ! thermal expansion
-    real(DP) :: V_simple        ! Greenland ice sheet volume
-    real(DP) :: V_gsic        ! glacier and ice cap contribution to sea level
-    real(DP) :: R_dais        ! Antarctic ice sheet radius (m)
-    real(DP) :: V_dais        ! Antarctic ice sheet volume (m3)
+    real(DP) :: tstep
+!    real(DP) :: V_te        ! thermal expansion
+!    real(DP) :: V_simple        ! Greenland ice sheet volume
+!    real(DP) :: V_gsic        ! glacier and ice cap contribution to sea level
+!    real(DP) :: R_dais        ! Antarctic ice sheet radius (m)
+!    real(DP) :: V_dais        ! Antarctic ice sheet volume (m3)
 
 ! public subroutines
     public :: brick_step_forward, init_brick
@@ -61,21 +61,21 @@ contains
 
 
 !===============================================================================
-subroutine init_brick(  tstep_in,
-                        S_doeclim_in, kappa_doeclim_in, &
-                        beta0_gsic_in, n_gsic_in, Teq_gsic_in, V0_gsic_in, Gs0_gsic_in, &
-                        a_te_in, b_te_in, invtau_te_in, V0_te_in, &
-                        a_simple_in, b_simple_in, alpha_simple_in, beta_simple_in, V0_simple_in, &
-                        parameters_dais_in, &
-                        temp_init_out, heatflux_mixed_init_out, heatflux_interior_init_out, &
-                        sl_gsic_init_out, sl_te_init_out, sl_gis_init_out, sl_ais_init_out, &
-                        vol_gis_init_out, &
-                        rad_ais_init_out, vol_ais_init_out, sl_init_out)
+subroutine init_brick(tstep_in, &
+                      S_doeclim_in, kappa_doeclim_in, &
+                      beta0_gsic_in, n_gsic_in, Teq_gsic_in, V0_gsic_in, Gs0_gsic_in, &
+                      a_te_in, b_te_in, invtau_te_in, V0_te_in, &
+                      a_simple_in, b_simple_in, alpha_simple_in, beta_simple_in, V0_simple_in, &
+                      parameters_dais_in, &
+                      temp_init_out, heatflux_mixed_init_out, heatflux_interior_init_out, &
+                      sl_gsic_init_out, sl_te_init_out, sl_gis_init_out, sl_ais_init_out, &
+                      vol_gis_init_out, &
+                      rad_ais_init_out, vol_ais_init_out, sl_init_out)
 !  =========================================================================
 !   Initialize the BRICK parameters and initial variables
 !  =========================================================================
 
-    real(DP), intent(IN) :: time_step
+    real(DP), intent(IN) :: tstep_in
     real(DP), intent(IN) :: S_doeclim_in
     real(DP), intent(IN) :: kappa_doeclim_in
     real(DP), intent(IN) :: beta0_gsic_in
@@ -110,11 +110,12 @@ subroutine init_brick(  tstep_in,
     real(DP) :: sea_level_noAIS
 
 ! Assign values to model parameters, and initialize values
-    tstep = time_step
+    tstep = tstep_in
 
 ! DOECLIM
     call init_doeclim_arrays()
     call init_doeclim_parameters(S_doeclim_in, kappa_doeclim_in)
+    !! TODO: you can get these from the global doeclim arrays heatflux_mixed, heatflux_interior, temp_landair, temp_sst (and flnd and bsi)
     temp_init_out   = 0.
     heatflux_mixed_init_out = 0.
     heatflux_interior_init_out = 0.
@@ -143,8 +144,6 @@ subroutine init_brick(  tstep_in,
     sl_init_out = sl_gsic_init_out + sl_te_init_out + &
                   sl_gis_init_out  + sl_ais_init_out
 
-    RETURN
-
 end subroutine init_brick
 !------------------------------------------------------------------------------
 
@@ -157,7 +156,7 @@ subroutine brick_step_forward(  nstep, forcing_current, Tg_current, heatflux_mix
                                 sl_gis_previous, sl_gis_current, &
                                 a_anto, b_anto, Tfrz, &
                                 slope_Ta2Tg, intercept_Ta2Tg, &
-                                rad_ais_current, vol_ais_previous, vol_ais_current, sl_ais_current, &
+                                rad_ais_current, vol_ais_previous, vol_ais_current, sl_ais_previous, sl_ais_current, &
                                 sl_previous, sl_current)
 !------------------------------------------------------------------------------
 ! Calculate current state from previous state
@@ -202,8 +201,16 @@ subroutine brick_step_forward(  nstep, forcing_current, Tg_current, heatflux_mix
     real(DP), intent(IN)  :: sl_gis_previous
     real(DP), intent(IN)  :: vol_ais_previous
     real(DP), intent(IN)  :: sl_ais_previous
+    real(DP), intent(IN)  :: sl_previous
+    real(DP), intent(IN)  :: a_anto
+    real(DP), intent(IN)  :: b_anto
+    real(DP), intent(IN)  :: Tfrz
+    real(DP), intent(IN)  :: slope_Ta2Tg
+    real(DP), intent(IN)  :: intercept_Ta2Tg
 
     real(DP), intent(OUT) :: Tg_current
+    real(DP), intent(OUT) :: heatflux_mixed_current
+    real(DP), intent(OUT) :: heatflux_interior_current
     real(DP), intent(OUT) :: sl_gsic_current
     real(DP), intent(OUT) :: sl_te_current
     real(DP), intent(OUT) :: vol_gis_current
@@ -214,9 +221,11 @@ subroutine brick_step_forward(  nstep, forcing_current, Tg_current, heatflux_mix
     real(DP), intent(OUT) :: sl_current
 
     real(DP) :: sea_level_noAIS, change_sea_level_noAIS
-    real(DP) :: Ta_current, Toc_current, ctmp, Tfrz
+    real(DP) :: Ta_current, Toc_current, ctmp
 
     ! Start the show.
+    heatflux_mixed_current = 0.
+    heatflux_interior_current = 0.
 
     ! DOECLIM
     call doeclimtimestep_simple(nstep, forcing_current, Tg_current)

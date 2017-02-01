@@ -151,8 +151,11 @@ subroutine run_brick(ns, tstep, &
                     GIS_Volume_out(i), AIS_Radius_out(i), AIS_Volume_out(i), sl_out(i) )
 
     Tfrz = dais_parameters(12)
+    time_out(i) = 0.
 
 ! estimate outputs
+
+    if(0 .eq. 1) then
 
 ! forward integration, from beginning to end of simulation
     do i=1,(ns-1)
@@ -166,13 +169,17 @@ subroutine run_brick(ns, tstep, &
                                 anto_a, anto_b, Tfrz, &
                                 slope_Ta2Tg, intercept_Ta2Tg, &
                                 AIS_Radius_out(i+1), AIS_Volume_out(i), &
-                                AIS_Volume_out(i+1), sl_ais_out(i+1), &
+                                AIS_Volume_out(i+1), sl_ais_out(i), sl_ais_out(i+1), &
                                 sl_out(i), sl_out(i+1) )
 
 !        heatflux_mixed_out(i) = heatflux_mixed(i)
 !        heatflux_interior_out(i) = heatflux_interior(i)
 
+        time_out(i+1) = time_out(i) + tstep
+
     end do
+
+    end if
 
     RETURN
 
