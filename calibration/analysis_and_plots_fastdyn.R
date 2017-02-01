@@ -14,7 +14,7 @@ filename.brick.uniform  = '../output_model/BRICK-fastdyn_physical_uniform_31Jan2
 filename.brick.gamma    = '../output_model/BRICK-fastdyn_physical_gamma_31Jan2017.nc'
 
 ## File name for the Van Dantzig model output (netCDF4)
-filename.vandantzig.uniform = '../output_model/vanDantzig_RCP85_uniform_29Jan2017.nc'
+filename.vandantzig.uniform = '../output_model/vanDantzig_RCP85_uniform_31Jan2017.nc'
 filename.vandantzig.gamma   = '../output_model/vanDantzig_RCP85_gamma_31Jan2017.nc'
 
 ## File name for the BRICK post-calibrated parameters (csv) (the BRICK and van Dantzig output came from these guys)
