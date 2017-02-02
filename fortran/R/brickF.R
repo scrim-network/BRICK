@@ -169,49 +169,6 @@ if(.Platform$OS.type == "unix") {
     dyn.load("../fortran/brick_te")
 }
 
-if(FALSE){		# DEBUGGING
-	S.doeclim = 3.1;
-    kappa.doeclim = 3.5;
-    beta0.gsic = 0.000577;
-    V0.gsic = 0.4;
-    n.gsic = 0.82;
-    Gs0.gsic = 0;
-    Teq.gsic = -0.15;
-    a.simple = -0.827;
-    b.simple = 7.242;
-    alpha.simple = 1.630e-4;
-    beta.simple = 2.845e-05;
-    V0.simple = 7.242;
-    a.te = 0.5;
-    b.te = 0;
-    invtau.te = 0.005;
-    V0.te = 0;
-    a.anto = 0.26;
-    b.anto = 0.62;
-    slope.Ta2Tg = 1;
-    intercept.Ta2Tg = 0;
-    b0.dais = 775;
-    slope.dais = 6 * 10^(-4);
-    mu.dais = 8.7;
-    h0.dais = 1471;
-    c.dais = 95;
-    P0.dais = 0.35;
-    kappa.dais = 4 * 10^(-2);
-    nu.dais = 1.2 * 10^(-2);
-    f0.dais = 1.2;
-    gamma.dais = 2.5;
-    alpha.dais = 0.5;
-    Tf.dais = -1.8;
-    rho_w.dais = 1030;
-    rho_i.dais = 917;
-    rho_m.dais = 4000;
-    Toc_0.dais = 0.72;
-    Rad0.dais = 1.864 * 10^6;
-    Aoc.dais = 3.619e14;
-    lf = -1.18;
-    includes_dSLais = 0
-}
-
 brickF <- function(
 	tstep,
     mod.time,
@@ -284,12 +241,6 @@ brickF <- function(
                         lf,
                         includes_dSLais)
 
-# TODO - HERE NOW
-# putting in the parameters - need to do DAIS
-# might also want to bundle all of the models' parameters like DAIS so it
-# is easier to swap them in and out
-# TODO - HERE NOW
-
   # call fortran
   f.output <- .Fortran("run_brick",
         ns = ns,
@@ -297,49 +248,40 @@ brickF <- function(
         forcing_in = as.double(forcing.total),
         doeclim_t2co = as.double(S.doeclim),
         doeclim_kappa = as.double(kappa.doeclim),
+        time_out = as.double(mod.time),
+        temp_out = as.double(rep(0,ns)),
+        heatflux_mixed_out = as.double(rep(0,ns)),
+        heatflux_interior_out = as.double(rep(0,ns)),
         gsic_magicc_beta0 = as.double(beta0.gsic),
         gsic_magicc_V0 = as.double(V0.gsic),
         gsic_magicc_n = as.double(n.gsic),
         gsic_magicc_Gs0 = as.double(Gs0.gsic),
         gsic_magicc_Teq = as.double(Teq.gsic),
+        sl_gsic_out = as.double(rep(-999.99,ns)),
+        brick_te_a = as.double(a.te),
+        brick_te_b = as.double(b.te),
+        brick_te_invtau = as.double(invtau.te),
+        brick_te_V0 = as.double(V0.te),
+        sl_te_out = as.double(rep(-999.99,ns)),
         simple_a = as.double(a.simple),
         simple_b = as.double(b.simple),
         simple_alpha = as.double(alpha.simple),
         simple_beta = as.double(beta.simple),
         simple_V0 = as.double(V0.simple),
-        brick_te_a = as.double(a.te),
-        brick_te_b = as.double(b.te),
-        brick_te_invtau = as.double(invtau.te),
-        brick_te_V0 = as.double(V0.te),
+        sl_gis_out = as.double(rep(-999.99,ns)),
+        vol_gis_out = as.double(rep(-999.99,ns)),
         anto_a = as.double(a.anto),
         anto_b = as.double(b.anto),
         slope_Ta2Tg = as.double(slope.Ta2Tg),
         intercept_Ta2Tg = as.double(intercept.Ta2Tg),
         dais_parameters = as.double(parameters.dais),
-        time_out = as.double(mod.time),
-        temp_out = as.double(rep(-999.99,ns)),
-        heatflux_mixed_out = as.double(rep(-999.99,ns)),
-        heatflux_interior_out = as.double(rep(-999.99,ns)),
-        sl_te_out = as.double(rep(-999.99,ns)),
-        sl_gsic_out = as.double(rep(-999.99,ns)),
-        sl_gis_out = as.double(rep(-999.99,ns)),
-        GIS_Volume_out = as.double(rep(-999.99,ns)),
         sl_ais_out = as.double(rep(-999.99,ns)),
-        AIS_Radius_out = as.double(rep(-999.99,ns)),
-        AIS_Volume_out = as.double(rep(-999.99,ns)),
-		sl_out = as.double(rep(-999.99,ns))
+        rad_ais_out = as.double(rep(-999.99,ns)),
+        vol_ais_out = as.double(rep(-999.99,ns)),
+        sl_out = as.double(rep(-999.99,ns))
     )
 
-# TODO - HERE NOW
-# calculate the right outputs internally (in the fortran routines)
-# and externally (here)
-# TODO - HERE NOW
-
-    ocheat = flux.to.heat(f.output$heatflux_mixed_out, f.output$heatflux_interior_out)
-
-	model.output = list(time=mod.time, temp=f.output$temp_out, ocheat=ocheat$ocean.heat,
-                        ocheat.mixed=ocheat$heat.mixed, ocheat.interior=ocheat$heat.interior,
-						ocheatflux.mixed = f.output$heatflux_mixed, ocheatflux.interior = f.output$heatflux_interior)
+    f.output$ocheat = flux.to.heat(f.output$heatflux_mixed_out, f.output$heatflux_interior_out)$ocean.heat
 
     return(f.output)
 

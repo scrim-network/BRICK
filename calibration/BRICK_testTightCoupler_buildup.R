@@ -209,7 +209,7 @@ forcing.total <- forcing_total(forcing=forcing,
 							  endyear=mod.time[length(mod.time)]
 							  )
 
-dyn.load("../fortran/brick2.so")
+dyn.load("../fortran/brick.so")
 dyn.load("../fortran/dais.so")
 dyn.load("../fortran/doeclim.so")
 dyn.load("../fortran/gsic_magicc.so")
@@ -266,7 +266,7 @@ parameters.dais <- c( b0.dais, slope.dais, mu.dais,
 
 ns <- length(forcing.total)
 
-f.output <- .Fortran("run_brick2",
+f.output <- .Fortran("run_brick",
       ns = ns,
       tstep = as.double(tstep),
       forcing_in = as.double(forcing.total),
