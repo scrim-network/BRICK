@@ -117,8 +117,8 @@ subroutine init_brick(tstep_in, &
     call init_doeclim_parameters(S_doeclim_in, kappa_doeclim_in)
     !! TODO: you can get these from the global doeclim arrays heatflux_mixed, heatflux_interior, temp_landair, temp_sst (and flnd and bsi)
     temp_init_out   = 0.
-    heatflux_mixed_init_out = 0.
-    heatflux_interior_init_out = 0.
+    heatflux_mixed_init_out = heatflux_mixed(1)
+    heatflux_interior_init_out = heatflux_interior(1)
 
 ! GSIC-MAGICC
     call init_gsic_magicc(  tstep, beta0_gsic_in, V0_gsic_in, n_gsic_in, &
@@ -224,20 +224,29 @@ subroutine brick_step_forward(  nstep, forcing_current, Tg_current, heatflux_mix
     real(DP) :: Ta_current, Toc_current, ctmp
 
     ! Start the show.
-    heatflux_mixed_current = 0.
-    heatflux_interior_current = 0.
 
     ! DOECLIM
     call doeclimtimestep_simple(nstep, forcing_current, Tg_current)
+    heatflux_mixed_current = heatflux_mixed(nstep)
+    heatflux_interior_current = heatflux_interior(nstep)
+
+print *, nstep, forcing_current, Tg_current
+
 
     ! GSIC-MAGICC
-    call gsic_magicc_step_forward(Tg_current, sl_gsic_previous, sl_gsic_current)
+!    call gsic_magicc_step_forward(Tg_current, sl_gsic_previous, sl_gsic_current)
+!DEBUG - TW
+sl_gsic_current = 0.
 
     ! TE
-    call brick_te_step_forward(Tg_current, sl_te_previous, sl_te_current)
+!    call brick_te_step_forward(Tg_current, sl_te_previous, sl_te_current)
+!DEBUG - TW
+sl_te_current = 0.
 
     ! GIS-SIMPLE
-    call simple_step_forward(Tg_current, vol_gis_previous, vol_gis_current)
+!    call simple_step_forward(Tg_current, vol_gis_previous, vol_gis_current)
+!DEBUG - TW
+vol_gis_current = vol_gis_previous
     sl_gis_current = sl_gis_previous + (vol_gis_previous - vol_gis_current)
 
     ! AIS-DAIS
@@ -248,12 +257,15 @@ subroutine brick_step_forward(  nstep, forcing_current, Tg_current, heatflux_mix
 
     ! scale temperatures, accounting for relative to 1850 (or whenever iniital point is)
     ctmp = (Tfrz-b_anto)/a_anto
-    Toc_current = Tfrz + ((a_anto*Tg_current + b_anto - Tfrz)/(1. + exp(-Tg_current + ctmp)))
+    Toc_current = Tfrz + ((a_anto*Tg_current + b_anto - Tfrz)/(1. + DEXP(-Tg_current + ctmp)))
     Ta_current = (Tg_current - intercept_Ta2Tg)/slope_Ta2Tg
 
     ! run DAIS
-    call dais_step( Ta_current, sea_level_noAIS, Toc_current, &
-                    change_sea_level_noAIS, rad_ais_current, vol_ais_current)
+!    call dais_step( Ta_current, sea_level_noAIS, Toc_current, &
+!                    change_sea_level_noAIS, rad_ais_current, vol_ais_current)
+!DEBUG - TW
+vol_ais_current = vol_ais_previous
+
     sl_ais_current = sl_ais_previous + &
                      (57. - sl_ais_previous)*(1. - (vol_ais_current/vol_ais_previous))
 

@@ -170,7 +170,7 @@ if(.Platform$OS.type == "unix") {
 }
 
 if(FALSE){		# DEBUGGING
-S.doeclim = 3.1;
+	S.doeclim = 3.1;
     kappa.doeclim = 3.5;
     beta0.gsic = 0.000577;
     V0.gsic = 0.4;
@@ -317,9 +317,9 @@ brickF <- function(
         intercept_Ta2Tg = as.double(intercept.Ta2Tg),
         dais_parameters = as.double(parameters.dais),
         time_out = as.double(mod.time),
-        temp_out = as.double(rep(0,ns)),
-        heatflux_mixed_out = as.double(rep(0,ns)),
-        heatflux_interior_out = as.double(rep(0,ns)),
+        temp_out = as.double(rep(-999.99,ns)),
+        heatflux_mixed_out = as.double(rep(-999.99,ns)),
+        heatflux_interior_out = as.double(rep(-999.99,ns)),
         sl_te_out = as.double(rep(-999.99,ns)),
         sl_gsic_out = as.double(rep(-999.99,ns)),
         sl_gis_out = as.double(rep(-999.99,ns)),
@@ -328,7 +328,6 @@ brickF <- function(
         AIS_Radius_out = as.double(rep(-999.99,ns)),
         AIS_Volume_out = as.double(rep(-999.99,ns)),
 		sl_out = as.double(rep(-999.99,ns))
-
     )
 
 # TODO - HERE NOW
@@ -336,7 +335,7 @@ brickF <- function(
 # and externally (here)
 # TODO - HERE NOW
 
-    ocheat = flux.to.heat(f.output$heatflux_mixed, f.output$heatflux_interior)
+    ocheat = flux.to.heat(f.output$heatflux_mixed_out, f.output$heatflux_interior_out)
 
 	model.output = list(time=mod.time, temp=f.output$temp_out, ocheat=ocheat$ocean.heat,
                         ocheat.mixed=ocheat$heat.mixed, ocheat.interior=ocheat$heat.interior,
