@@ -25,6 +25,7 @@ module brick2
     USE doeclim
     USE gsic_magicc
     USE simple
+    USE brick_te
 
     implicit none
     private
@@ -43,6 +44,7 @@ subroutine init_brick(nstep, tstep_in, forcing_current, &
                       temp_init_out, heatflux_mixed_init_out, heatflux_interior_init_out, &
                       beta0_gsic_magicc_in, V0_gsic_magicc_in, n_gsic_magicc_in, &
                       Teq_gsic_magicc_in, Gs0_gsic_magicc_in, sl_gsic_init_out, &
+                      a_te_in, b_te_in, invtau_te_in, V0_te_in, sl_te_init_out, &
                       a_simple_in, b_simple_in, alpha_simple_in, beta_simple_in, &
                       V0_simple_in, sl_gis_init_out, vol_gis_init_out)
 !  =========================================================================
@@ -59,6 +61,10 @@ subroutine init_brick(nstep, tstep_in, forcing_current, &
     real(DP), intent(IN) :: n_gsic_magicc_in
     real(DP), intent(IN) :: Teq_gsic_magicc_in
     real(DP), intent(IN) :: Gs0_gsic_magicc_in
+    real(DP), intent(IN) :: a_te_in
+    real(DP), intent(IN) :: b_te_in
+    real(DP), intent(IN) :: invtau_te_in
+    real(DP), intent(IN) :: V0_te_in
     real(DP), intent(IN) :: a_simple_in
     real(DP), intent(IN) :: b_simple_in
     real(DP), intent(IN) :: alpha_simple_in
@@ -69,6 +75,7 @@ subroutine init_brick(nstep, tstep_in, forcing_current, &
     real(DP), intent(OUT) :: heatflux_mixed_init_out
     real(DP), intent(OUT) :: heatflux_interior_init_out
     real(DP), intent(OUT) :: sl_gsic_init_out
+    real(DP), intent(OUT) :: sl_te_init_out
     real(DP), intent(OUT) :: sl_gis_init_out
     real(DP), intent(OUT) :: vol_gis_init_out
 
@@ -86,6 +93,10 @@ subroutine init_brick(nstep, tstep_in, forcing_current, &
     call init_gsic_magicc(tstep, beta0_gsic_magicc_in, V0_gsic_magicc_in, n_gsic_magicc_in, &
                           Teq_gsic_magicc_in, Gs0_gsic_magicc_in, sl_gsic_init_out)
 
+! TE
+    call init_brick_te( tstep, a_te_in, b_te_in, invtau_te_in, V0_te_in, &
+                        sl_te_init_out)
+
 ! GIS-SIMPLE
     call init_simple(tstep, a_simple_in, b_simple_in, alpha_simple_in, &
                      beta_simple_in, V0_simple_in, vol_gis_init_out)
@@ -99,6 +110,7 @@ end subroutine init_brick
 subroutine brick_step_forward(nstep, forcing_current, &
                               Tg_previous, Tg_current, heatflux_mixed_current, heatflux_interior_current, &
                               sl_gsic_previous, sl_gsic_current, &
+                              sl_te_previous, sl_te_current, &
                               sl_gis_previous, vol_gis_previous, sl_gis_current, vol_gis_current)
 !------------------------------------------------------------------------------
 ! Calculate current state from previous state
@@ -140,6 +152,7 @@ subroutine brick_step_forward(nstep, forcing_current, &
     real(DP), intent(IN)  :: forcing_current
     real(DP), intent(IN)  :: Tg_previous
     real(DP), intent(IN)  :: sl_gsic_previous
+    real(DP), intent(IN)  :: sl_te_previous
     real(DP), intent(IN)  :: sl_gis_previous
     real(DP), intent(IN)  :: vol_gis_previous
 
@@ -147,6 +160,7 @@ subroutine brick_step_forward(nstep, forcing_current, &
     real(DP), intent(OUT) :: heatflux_mixed_current
     real(DP), intent(OUT) :: heatflux_interior_current
     real(DP), intent(OUT) :: sl_gsic_current
+    real(DP), intent(OUT) :: sl_te_current
     real(DP), intent(OUT) :: sl_gis_current
     real(DP), intent(OUT) :: vol_gis_current
 
@@ -159,6 +173,9 @@ subroutine brick_step_forward(nstep, forcing_current, &
 
     ! GSIC-MAGICC
     call gsic_magicc_step_forward(Tg_previous, sl_gsic_previous, sl_gsic_current)
+
+    ! TE
+    call brick_te_step_forward(Tg_previous, sl_te_previous, sl_te_current)
 
     ! GIS-SIMPLE
     call simple_step_forward(Tg_previous, vol_gis_previous, vol_gis_current)

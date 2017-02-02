@@ -38,7 +38,7 @@ gsic_magicc.so: $(OP)/global.o $(OP)/gsic_magicc.o $(OP)/run_gsic_magicc.o
 doeclim.so: $(OP)/global.o $(OP)/doeclim.o $(OP)/run_doeclim.o
 	$(F90) -o $@ $(Flags) -shared $(Incl) $^
 
-brick2.so: $(OP)/global.o $(OP)/doeclim.o $(OP)/simple.o $(OP)/gsic_magicc.o $(OP)/brick2.o $(OP)/run_brick2.o
+brick2.so: $(OP)/global.o $(OP)/doeclim.o $(OP)/brick_te.o $(OP)/simple.o $(OP)/gsic_magicc.o $(OP)/brick2.o $(OP)/run_brick2.o
 	$(F90) -o $@ $(Flags) -shared $(Incl) $^
 
 # ==============================================================
@@ -49,7 +49,7 @@ brick2.so: $(OP)/global.o $(OP)/doeclim.o $(OP)/simple.o $(OP)/gsic_magicc.o $(O
 $(OP)/run_brick2.o: $(OP)/global.o $(OP)/brick2.o $(SP)/run_brick2.f90
 	$(F90) -c $(Flags) $(Incl) $(SP)/run_brick2.f90 -o $@
 
-$(OP)/brick2.o: $(OP)/global.o $(OP)/doeclim.o $(OP)/simple.o $(OP)/gsic_magicc.o $(SP)/brick2.f90
+$(OP)/brick2.o: $(OP)/global.o $(OP)/doeclim.o $(OP)/brick_te.o $(OP)/simple.o $(OP)/gsic_magicc.o $(SP)/brick2.f90
 	$(F90) -c $(Flags) $(Incl) $(SP)/brick2.f90 -o $@
 
 ## DOECLIM ##

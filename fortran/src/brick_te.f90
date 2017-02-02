@@ -15,7 +15,7 @@
 !
 !   a         sensitivity of equilibrium volume Veq [m sle/degC]
 !   b         equilibrium volume Veq [m sle] for temperature Tg = 0
-!   tau       time-scale of exponential decay (e-folding time) [years]
+!   invtau    1/time-scale of exponential decay (e-folding time) [1/years]
 !   TE_0      initial thermal expansion
 !
 !   TE         current thermal expansion
@@ -44,7 +44,7 @@ module brick_te
 
 ! parameters:
     real(DP) :: tstep
-    real(DP) :: a, b, tau, TE_0
+    real(DP) :: a, b, invtau, TE_0
 
 ! variables
     real(DP) :: TE       ! thermal expansion
@@ -76,7 +76,7 @@ subroutine init_brick_te(time_step, equil_sensitivity, equil_T0, &
     tstep = time_step
     a     = equil_sensitivity
     b     = equil_T0
-    tau   = timescale
+    invtau= timescale
     TE_0  = Initial_TE
 
 ! Initial values
@@ -112,7 +112,7 @@ subroutine brick_te_step_forward(Tg, thermal_previous, thermal_current)
 ! Start model
     TEeq  = a * Tg + b                   ! equilibrium TE
 
-    thermal_current = thermal_previous + tstep * ((TEeq - thermal_previous) / tau)
+    thermal_current = thermal_previous + tstep * ((TEeq - thermal_previous) * invtau)
     TE           = thermal_current
 
 
@@ -145,7 +145,7 @@ subroutine brick_te_step_backward(Tg, thermal_current, thermal_previous)
 ! Start model
     TEeq  = a * Tg + b                   ! equilibrium TE
 
-    thermal_previous = thermal_current - tstep * ((TEeq - thermal_current) / tau)
+    thermal_previous = thermal_current - tstep * ((TEeq - thermal_current) * invtau)
 
 end subroutine brick_te_step_backward
 !------------------------------------------------------------------------------

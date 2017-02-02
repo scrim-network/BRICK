@@ -30,6 +30,8 @@ subroutine run_brick2(ns, tstep, &
                      time_out, temp_out, heatflux_mixed_out, heatflux_interior_out, &
                      gsic_magicc_beta0, gsic_magicc_V0, gsic_magicc_n, &                    ! GSIC input/output
                      gsic_magicc_Gs0, gsic_magicc_Teq, sl_gsic_out, &
+                     brick_te_a, brick_te_b, brick_te_invtau, &                             ! TE input/output
+                     brick_te_V0, sl_te_out, &
                      simple_a, simple_b, simple_alpha, &                                    ! SIMPLE input/output
                      simple_beta, simple_V0, sl_gis_out, vol_gis_out)
 
@@ -99,6 +101,10 @@ subroutine run_brick2(ns, tstep, &
     real(DP),     intent(IN) :: simple_alpha
     real(DP),     intent(IN) :: simple_beta
     real(DP),     intent(IN) :: simple_V0
+    real(DP),     intent(IN) :: brick_te_a
+    real(DP),     intent(IN) :: brick_te_b
+    real(DP),     intent(IN) :: brick_te_invtau
+    real(DP),     intent(IN) :: brick_te_V0
 
 ! output variables
     real(DP), dimension(ns), intent(OUT) :: time_out
@@ -108,6 +114,7 @@ subroutine run_brick2(ns, tstep, &
     real(DP), dimension(ns), intent(OUT) :: sl_gsic_out
     real(DP), dimension(ns), intent(OUT) :: sl_gis_out
     real(DP), dimension(ns), intent(OUT) :: vol_gis_out
+    real(DP), dimension(ns), intent(OUT) :: sl_te_out
 
     integer(i4b) :: i   ! time step counter
 !===============================================================================
@@ -124,6 +131,8 @@ subroutine run_brick2(ns, tstep, &
                     temp_out(i), heatflux_mixed_out(i), heatflux_interior_out(i), &
                     gsic_magicc_beta0, gsic_magicc_V0, gsic_magicc_n, &
                     gsic_magicc_Teq, gsic_magicc_Gs0, sl_gsic_out(i), &
+                    brick_te_a, brick_te_b, brick_te_invtau, &
+                    brick_te_V0, sl_te_out(i), &
                     simple_a, simple_b, simple_alpha, simple_beta, &
                     simple_V0, sl_gis_out(i), vol_gis_out(i))
 
@@ -139,6 +148,7 @@ subroutine run_brick2(ns, tstep, &
         call brick_step_forward(i, forcing_in(i), &
                                 temp_out(i-1), temp_out(i), heatflux_mixed_out(i), heatflux_interior_out(i), &
                                 sl_gsic_out(i-1), sl_gsic_out(i), &
+                                sl_te_out(i-1), sl_te_out(i), &
                                 sl_gis_out(i-1), vol_gis_out(i-1), sl_gis_out(i), vol_gis_out(i))
 
         heatflux_mixed_out(i) = heatflux_mixed(i)

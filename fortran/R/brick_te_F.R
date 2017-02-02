@@ -65,15 +65,13 @@ brick_te_F <- function(a = 0.5,
   # determine series length
   ns <- length(Tg)
 
-  tau = 1/invtau
-
   # call fortran
   f.output <- .Fortran("run_brick_te",
                   ns            = ns,
                   tstep         = as.double(tstep),
                   brick_te_a    = as.double(a),
                   brick_te_b    = as.double(b),
-                  brick_te_tau  = as.double(tau),
+                  brick_te_invtau  = as.double(invtau),
                   brick_te_TE_0 = as.double(TE_0),
                   Gl_Temp       = as.double(Tg),
                   brick_te_i0   = as.double(i0),

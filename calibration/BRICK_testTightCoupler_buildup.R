@@ -228,6 +228,10 @@ b.simple = 7.242;
 alpha.simple = 1.630e-4;
 beta.simple = 2.845e-05;
 V0.simple = 7.242;
+a.te = 0.5;
+b.te = 0;
+invtau.te = 0.005;
+V0.te = 0;
 
 ns <- length(forcing.total)
 
@@ -247,6 +251,11 @@ f.output <- .Fortran("run_brick2",
       gsic_magicc_Gs0 = as.double(Gs0.gsic),
       gsic_magicc_Teq = as.double(Teq.gsic),
       sl_gsic_out = as.double(rep(-999.99,ns)),
+      brick_te_a = as.double(a.te),
+      brick_te_b = as.double(b.te),
+      brick_te_invtau = as.double(invtau.te),
+      brick_te_V0 = as.double(V0.te),
+      sl_te_out = as.double(rep(-999.99,ns)),
       simple_a = as.double(a.simple),
       simple_b = as.double(b.simple),
       simple_alpha = as.double(alpha.simple),
@@ -295,6 +304,20 @@ gis.output <- .Fortran("run_simple",
                 GIS_Volume_out = as.double(rep(-999.99,ns))
 )
 sle.gis <- V0.simple - f.output$GIS_Volume_out
+
+
+te.output <- .Fortran("run_brick_te",
+                  ns            = ns,
+                  tstep         = as.double(tstep),
+                  brick_te_a    = as.double(a.te),
+                  brick_te_b    = as.double(b.te),
+                  brick_te_invtau = as.double(invtau.te),
+                  brick_te_TE_0 = as.double(V0.te),
+                  Gl_Temp       = as.double(doeclim.output$temp_out),
+                  brick_te_i0   = as.double(1),
+                  TE_out        = as.double(rep(-999.99,ns))
+)
+
 
 
 tmp.out <- brickF(  tstep=tstep,

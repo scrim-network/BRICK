@@ -20,7 +20,7 @@
 !================================================================================
 
 !---------------------------------------------------------------------------------
-subroutine run_brick_te(ns, tstep, brick_te_a, brick_te_b, brick_te_tau, &
+subroutine run_brick_te(ns, tstep, brick_te_a, brick_te_b, brick_te_invtau, &
                                brick_te_TE_0, Gl_Temp, brick_te_i0, TE_out)
 !  ===============================================================================
 ! | Inputs:
@@ -32,14 +32,14 @@ subroutine run_brick_te(ns, tstep, brick_te_a, brick_te_b, brick_te_tau, &
 ! |     tstep     	time step
 ! |     a         	sensitivity of equilibrium TE [m/degC]
 ! |     b         	equilibrium TE [m] for temperature Tg = 0
-! |     tau       	timescale (efolding time)
+! |     invtau    	1/timescale (efolding time)
 ! |
 ! |    Initial conditions:
 ! |     TE_0        initial thermal expansion
 ! |     i0          index of the "initial" year (TE_0 initial expansion)
 ! |
 ! | Outputs:
-! |     TE_out	Thermosteric expansion
+! |     TE_out	Thermal expansion
 !  =========================================================================
 
     USE global
@@ -54,7 +54,7 @@ subroutine run_brick_te(ns, tstep, brick_te_a, brick_te_b, brick_te_tau, &
 
     real(DP),     intent(IN) :: brick_te_a
     real(DP),     intent(IN) :: brick_te_b
-    real(DP),     intent(IN) :: brick_te_tau
+    real(DP),     intent(IN) :: brick_te_invtau
 
 ! intial conditions
     real(DP),     intent(IN) :: brick_te_TE_0
@@ -74,7 +74,7 @@ subroutine run_brick_te(ns, tstep, brick_te_a, brick_te_b, brick_te_tau, &
 
 ! Initialize brick_te (parameters and initial variable values)
     i0 = brick_te_i0
-    call init_brick_te(tstep, brick_te_a, brick_te_b, brick_te_tau, &
+    call init_brick_te(tstep, brick_te_a, brick_te_b, brick_te_invtau, &
                           brick_te_TE_0, TE_out(i0) )
 
 ! estimate outputs
