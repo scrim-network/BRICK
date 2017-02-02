@@ -405,13 +405,9 @@ SUBROUTINE doeclimtimestep_simple(n,forcing,temp)
      DPAST = 0.0d0
      do i=1,n-1
         DPAST(2) = DPAST(2)+DTE(2,i)*Ker(nsteps-n+i)
-! DEBUG - TW
-!print *, 'doeclim: n,i,Ker(nsteps-n+i)=',n,i,Ker(nsteps-n+i)
      enddo
      DPAST(2) = DPAST(2)*fso * sqrt(deltat/taudif)
 !     DPAST(2) = fso * sqrt(deltat/taudif) * DTE(2,(1:n-1))*Ker(nsteps-n+1:nsteps-1)  !was transposed
-! DEBUG - TW
-!print *, 'doeclim: fso,deltat,taudif=',fso,deltat,taudif
 
 !     DTE(:,n) = IB * ( DQ + DPAST + A*DTE(:,n-1) )
 
@@ -422,12 +418,6 @@ SUBROUTINE doeclimtimestep_simple(n,forcing,temp)
                 IB(1,2)*(DQ(2)+DPAST(2)+DTEAUX(2))
      DTE(2,n) = IB(2,1)*(DQ(1)+DPAST(1)+DTEAUX(1))+                  &
                 IB(2,2)*(DQ(2)+DPAST(2)+DTEAUX(2))
-
-!DEBUG - TW
-!print *, 'doeclim: deltat,IB(1:2),DQ(1:2)=', n, deltat, IB(1,1), IB(1,2), DQ(1), DQ(2)
-!print *, 'doeclim: DPAST,DTEAUX=', DPAST(1), DPAST(2), DTEAUX(1), DTEAUX(2)
-!print *, 'doeclim: Adoe(1,:)=',n, Adoe(1,1), Adoe(1,2)
-!print *, 'doeclim: DTE(:,n-1)=',n, DTE(1,n-1), DTE(2,n-1)
 
      temp_landair(n) = DTE(1,n)
      temp_sst(n) = DTE(2,n)
@@ -456,9 +446,6 @@ SUBROUTINE doeclimtimestep_simple(n,forcing,temp)
    endif
    
    temp = flnd*temp_landair(n) + (1.-flnd)*bsi*temp_sst(n)
-
-!DEBUG - TW
-print *, 'doeclim, temp temp_landair temp_sst = ',n, temp,temp_landair(n),temp_sst(n)
 
 END SUBROUTINE doeclimtimestep_simple
 !------------------------------------------------------------------------------

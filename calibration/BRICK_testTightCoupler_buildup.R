@@ -232,6 +232,37 @@ a.te = 0.5;
 b.te = 0;
 invtau.te = 0.005;
 V0.te = 0;
+a.anto = 0.26;
+b.anto = 0.62;
+slope.Ta2Tg = 0.8364527;
+intercept.Ta2Tg = 15.4235;
+b0.dais = 775;
+slope.dais = 6 * 10^(-4);
+mu.dais = 8.7;
+h0.dais = 1471;
+c.dais = 95;
+P0.dais = 0.35;
+kappa.dais = 4 * 10^(-2);
+nu.dais = 1.2 * 10^(-2);
+f0.dais = 1.2;
+gamma.dais = 2.5;
+alpha.dais = 0.5;
+Tf.dais = -1.8;
+rho_w.dais = 1030;
+rho_i.dais = 917;
+rho_m.dais = 4000;
+Toc_0.dais = 0.72;
+Rad0.dais = 1.864 * 10^6;
+Aoc.dais = 3.619e14;
+lf = -1.18;
+includes_dSLais = 0;
+parameters.dais <- c( b0.dais, slope.dais, mu.dais,
+                      h0.dais, c.dais, P0.dais,
+                      kappa.dais, nu.dais, f0.dais,
+                      gamma.dais, alpha.dais, Tf.dais,
+                      rho_w.dais, rho_i.dais, rho_m.dais,
+                      Toc_0.dais, Rad0.dais, Aoc.dais,
+                      lf, includes_dSLais)
 
 ns <- length(forcing.total)
 
@@ -262,7 +293,16 @@ f.output <- .Fortran("run_brick2",
       simple_beta = as.double(beta.simple),
       simple_V0 = as.double(V0.simple),
       sl_gis_out = as.double(rep(-999.99,ns)),
-      vol_gis_out = as.double(rep(-999.99,ns))
+      vol_gis_out = as.double(rep(-999.99,ns)),
+      anto_a = as.double(a.anto),
+      anto_b = as.double(b.anto),
+      slope_Ta2Tg = as.double(slope.Ta2Tg),
+      intercept_Ta2Tg = as.double(intercept.Ta2Tg),
+      dais_parameters = as.double(parameters.dais),
+      sl_ais_out = as.double(rep(-999.99,ns)),
+      rad_ais_out = as.double(rep(-999.99,ns)),
+      vol_ais_out = as.double(rep(-999.99,ns)),
+      sl_out = as.double(rep(-999.99,ns))
   )
 
 
@@ -303,7 +343,7 @@ gis.output <- .Fortran("run_simple",
                 simple_i0     = as.double(1),
                 GIS_Volume_out = as.double(rep(-999.99,ns))
 )
-sle.gis <- V0.simple - f.output$GIS_Volume_out
+sle.gis <- V0.simple - gis.output$GIS_Volume_out
 
 
 te.output <- .Fortran("run_brick_te",
@@ -318,6 +358,30 @@ te.output <- .Fortran("run_brick_te",
                   TE_out        = as.double(rep(-999.99,ns))
 )
 
+
+SL <- f.output$sl_ais_out + sle.gis + te.output$TE_out + gsic.output$SL_contribution_out
+for (i in 2:length(SL)) {SL[i]=f.output$sl_ais_out[i-1] + sle.gis[i-1] +
+                                te.output$TE_out[i-1] + gsic.output$SL_contribution_out[i-1] +
+                                        1.1*diff(sle.gis[(i-1):i]) +
+                                        1.0*diff(te.output$TE_out[(i-1):i]) +
+                                        1.1*diff(gsic.output$SL_contribution_out[(i-1):i])}
+dSL <- c(0, 1.1*diff(sle.gis) +
+        1.0*diff(te.output$TE_out) +
+        1.1*diff(gsic.output$SL_contribution_out) )
+Toc <- anto(a=a.anto, b=b.anto, Tf=Tf.dais, Tg=doeclim.output$temp_out)
+Ta.recon = (doeclim.output$temp_out-intercept.Ta2Tg)/slope.Ta2Tg
+dais.output <- .Fortran("run_dais",
+                ns                 = ns,
+                tstep              = as.double(tstep),
+                dais_parameters    = as.double(parameters.dais),
+                Ant_Temp           = as.double(Ta.recon),
+                Ant_Sea_Level      = as.double(SL),
+                Ant_Sur_Ocean_Temp = as.double(Toc),
+                Ant_SL_rate        = as.double(dSL),
+                AIS_Radius_out     = as.double(rep(-999.99,ns)),
+                AIS_Volume_out     = as.double(rep(-999.99,ns))
+)
+Vsle = 57*(1-dais.output$AIS_Volume_out/dais.output$AIS_Volume_out[1]) #Takes steady state present day volume to correspond to 57m SLE
 
 
 tmp.out <- brickF(  tstep=tstep,

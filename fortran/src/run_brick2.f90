@@ -33,7 +33,10 @@ subroutine run_brick2(ns, tstep, &
                      brick_te_a, brick_te_b, brick_te_invtau, &                             ! TE input/output
                      brick_te_V0, sl_te_out, &
                      simple_a, simple_b, simple_alpha, &                                    ! SIMPLE input/output
-                     simple_beta, simple_V0, sl_gis_out, vol_gis_out)
+                     simple_beta, simple_V0, sl_gis_out, vol_gis_out, &
+                     anto_a, anto_b, slope_Ta2Tg, intercept_Ta2Tg, &                        ! DAIS input/output
+                     dais_parameters, sl_ais_out, rad_ais_out, vol_ais_out, &
+                     sl_out)
 
 !===============================================================================
 ! Inputs:
@@ -105,6 +108,11 @@ subroutine run_brick2(ns, tstep, &
     real(DP),     intent(IN) :: brick_te_b
     real(DP),     intent(IN) :: brick_te_invtau
     real(DP),     intent(IN) :: brick_te_V0
+    real(DP),     intent(IN) :: anto_a
+    real(DP),     intent(IN) :: anto_b
+    real(DP),     intent(IN) :: slope_Ta2Tg
+    real(DP),     intent(IN) :: intercept_Ta2Tg
+    real(DP), dimension(20), intent(IN) :: dais_parameters
 
 ! output variables
     real(DP), dimension(ns), intent(OUT) :: time_out
@@ -115,6 +123,10 @@ subroutine run_brick2(ns, tstep, &
     real(DP), dimension(ns), intent(OUT) :: sl_gis_out
     real(DP), dimension(ns), intent(OUT) :: vol_gis_out
     real(DP), dimension(ns), intent(OUT) :: sl_te_out
+    real(DP), dimension(ns), intent(OUT) :: sl_ais_out
+    real(DP), dimension(ns), intent(OUT) :: rad_ais_out
+    real(DP), dimension(ns), intent(OUT) :: vol_ais_out
+    real(DP), dimension(ns), intent(OUT) :: sl_out
 
     integer(i4b) :: i   ! time step counter
 !===============================================================================
@@ -124,6 +136,7 @@ subroutine run_brick2(ns, tstep, &
     ! assign global variables
     deltat = 1.0d0
     nsteps = ns
+    Tfrz = dais_parameters(12)
 
     i=1
     call init_brick(i, tstep, forcing_in(i), &
@@ -134,11 +147,11 @@ subroutine run_brick2(ns, tstep, &
                     brick_te_a, brick_te_b, brick_te_invtau, &
                     brick_te_V0, sl_te_out(i), &
                     simple_a, simple_b, simple_alpha, simple_beta, &
-                    simple_V0, sl_gis_out(i), vol_gis_out(i))
+                    simple_V0, sl_gis_out(i), vol_gis_out(i), &
+                    dais_parameters, sl_ais_out(i), rad_ais_out(i), vol_ais_out(i), &
+                    sl_out(i))
 
 ! estimate outputs
-
-    !if(0 .eq. 1) then
 
 ! forward integration, from beginning to end of simulation
     !do i=1,3
@@ -149,7 +162,11 @@ subroutine run_brick2(ns, tstep, &
                                 temp_out(i-1), temp_out(i), heatflux_mixed_out(i), heatflux_interior_out(i), &
                                 sl_gsic_out(i-1), sl_gsic_out(i), &
                                 sl_te_out(i-1), sl_te_out(i), &
-                                sl_gis_out(i-1), vol_gis_out(i-1), sl_gis_out(i), vol_gis_out(i))
+                                sl_gis_out(i-1), vol_gis_out(i-1), sl_gis_out(i), vol_gis_out(i), &
+                                anto_a, anto_b, slope_Ta2Tg, intercept_Ta2Tg, &
+                                sl_ais_out(i-1), rad_ais_out(i-1), vol_ais_out(i-1), &
+                                sl_ais_out(i), rad_ais_out(i), vol_ais_out(i), &
+                                sl_out(i-1), sl_out(i))
 
         heatflux_mixed_out(i) = heatflux_mixed(i)
         heatflux_interior_out(i) = heatflux_interior(i)
@@ -157,8 +174,6 @@ subroutine run_brick2(ns, tstep, &
     end do
 
     call dealloc_doeclim()
-
-    !end if
 
     RETURN
 

@@ -36,6 +36,7 @@ MODULE global
 
     integer(i4b) :: nsteps
     real(DP) :: deltat
+    real(DP) :: Tfrz
 
 ! Random seed variables:
     integer(i4b) :: rand_seed

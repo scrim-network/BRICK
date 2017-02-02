@@ -26,6 +26,7 @@ module brick2
     USE gsic_magicc
     USE simple
     USE brick_te
+    USE dais
 
     implicit none
     private
@@ -46,7 +47,9 @@ subroutine init_brick(nstep, tstep_in, forcing_current, &
                       Teq_gsic_magicc_in, Gs0_gsic_magicc_in, sl_gsic_init_out, &
                       a_te_in, b_te_in, invtau_te_in, V0_te_in, sl_te_init_out, &
                       a_simple_in, b_simple_in, alpha_simple_in, beta_simple_in, &
-                      V0_simple_in, sl_gis_init_out, vol_gis_init_out)
+                      V0_simple_in, sl_gis_init_out, vol_gis_init_out, &
+                      parameters_dais_in, sl_ais_init_out, rad_ais_init_out, vol_ais_init_out, &
+                      sl_init_out)
 !  =========================================================================
 !   Initialize the BRICK parameters and initial variables
 !  =========================================================================
@@ -70,6 +73,7 @@ subroutine init_brick(nstep, tstep_in, forcing_current, &
     real(DP), intent(IN) :: alpha_simple_in
     real(DP), intent(IN) :: beta_simple_in
     real(DP), intent(IN) :: V0_simple_in
+    real(DP), dimension(20), intent(IN) :: parameters_dais_in
 
     real(DP), intent(OUT) :: temp_init_out
     real(DP), intent(OUT) :: heatflux_mixed_init_out
@@ -78,6 +82,12 @@ subroutine init_brick(nstep, tstep_in, forcing_current, &
     real(DP), intent(OUT) :: sl_te_init_out
     real(DP), intent(OUT) :: sl_gis_init_out
     real(DP), intent(OUT) :: vol_gis_init_out
+    real(DP), intent(OUT) :: sl_ais_init_out
+    real(DP), intent(OUT) :: rad_ais_init_out
+    real(DP), intent(OUT) :: vol_ais_init_out
+    real(DP), intent(OUT) :: sl_init_out
+
+    real(DP) :: sea_level_noAIS
 
 ! Assign values to model parameters, and initialize values
     tstep = tstep_in
@@ -102,6 +112,15 @@ subroutine init_brick(nstep, tstep_in, forcing_current, &
                      beta_simple_in, V0_simple_in, vol_gis_init_out)
     sl_gis_init_out = V0_simple_in - vol_gis_init_out
 
+! AIS-DAIS
+    sea_level_noAIS = sl_gsic_init_out + sl_te_init_out + sl_gis_init_out
+    call init_dais(tstep, parameters_dais_in, sea_level_noAIS, &
+                   rad_ais_init_out, vol_ais_init_out )
+    sl_ais_init_out = 0.0d0
+
+! GMSL
+    sl_init_out = sl_gsic_init_out + sl_te_init_out + sl_gis_init_out + sl_ais_init_out
+
 end subroutine init_brick
 !------------------------------------------------------------------------------
 
@@ -111,7 +130,11 @@ subroutine brick_step_forward(nstep, forcing_current, &
                               Tg_previous, Tg_current, heatflux_mixed_current, heatflux_interior_current, &
                               sl_gsic_previous, sl_gsic_current, &
                               sl_te_previous, sl_te_current, &
-                              sl_gis_previous, vol_gis_previous, sl_gis_current, vol_gis_current)
+                              sl_gis_previous, vol_gis_previous, sl_gis_current, vol_gis_current, &
+                              a_anto, b_anto, slope_Ta2Tg, intercept_Ta2Tg, &
+                              sl_ais_previous, rad_ais_previous, vol_ais_previous, &
+                              sl_ais_current, rad_ais_current, vol_ais_current, &
+                              sl_previous, sl_current)
 !------------------------------------------------------------------------------
 ! Calculate current state from previous state
 ! 
@@ -155,6 +178,14 @@ subroutine brick_step_forward(nstep, forcing_current, &
     real(DP), intent(IN)  :: sl_te_previous
     real(DP), intent(IN)  :: sl_gis_previous
     real(DP), intent(IN)  :: vol_gis_previous
+    real(DP), intent(IN)  :: a_anto
+    real(DP), intent(IN)  :: b_anto
+    real(DP), intent(IN)  :: slope_Ta2Tg
+    real(DP), intent(IN)  :: intercept_Ta2Tg
+    real(DP), intent(IN)  :: sl_ais_previous
+    real(DP), intent(IN)  :: rad_ais_previous
+    real(DP), intent(IN)  :: vol_ais_previous
+    real(DP), intent(IN)  :: sl_previous
 
     real(DP), intent(OUT) :: Tg_current
     real(DP), intent(OUT) :: heatflux_mixed_current
@@ -163,23 +194,51 @@ subroutine brick_step_forward(nstep, forcing_current, &
     real(DP), intent(OUT) :: sl_te_current
     real(DP), intent(OUT) :: sl_gis_current
     real(DP), intent(OUT) :: vol_gis_current
+    real(DP), intent(OUT) :: sl_ais_current
+    real(DP), intent(OUT) :: rad_ais_current
+    real(DP), intent(OUT) :: vol_ais_current
+    real(DP), intent(OUT) :: sl_current
 
-    ! Start the show.
+    real(DP) :: change_sea_level_noAIS, sea_level_noAIS
+    real(DP) :: ctmp, Toc_previous, Ta_previous
 
-    ! DOECLIM
+! Start the show.
+
+! DOECLIM
     call doeclimtimestep_simple(nstep, forcing_current, Tg_current)
     heatflux_mixed_current = heatflux_mixed(nstep)
     heatflux_interior_current = heatflux_interior(nstep)
 
-    ! GSIC-MAGICC
+! GSIC-MAGICC
     call gsic_magicc_step_forward(Tg_previous, sl_gsic_previous, sl_gsic_current)
 
-    ! TE
+! TE
     call brick_te_step_forward(Tg_previous, sl_te_previous, sl_te_current)
 
-    ! GIS-SIMPLE
+! GIS-SIMPLE
     call simple_step_forward(Tg_previous, vol_gis_previous, vol_gis_current)
     sl_gis_current = sl_gis_previous + (vol_gis_previous - vol_gis_current)
+
+! AIS-DAIS
+    ! sea-level changes, fingerprinted to Antarctic local
+    change_sea_level_noAIS = 1.1d0*(sl_gsic_current - sl_gsic_previous) + &
+                             1.0d0*(sl_te_current   - sl_te_previous)   + &
+                             1.1d0*(sl_gis_current  - sl_gis_previous)
+    sea_level_noAIS = sl_previous + change_sea_level_noAIS
+
+    ! scale temperatures, accounting for relative to 1850
+    ctmp = (Tfrz-b_anto)/a_anto
+    Toc_previous = Tfrz + ((a_anto*Tg_previous + b_anto - Tfrz)/(1.0d0 + DEXP(-Tg_previous + ctmp)))
+    Ta_previous = (Tg_previous - intercept_Ta2Tg)/slope_Ta2Tg
+
+    call dais_step( Ta_previous, sea_level_noAIS, Toc_previous, &
+                    change_sea_level_noAIS, rad_ais_current, vol_ais_current)
+
+    sl_ais_current = sl_ais_previous + &
+                     (57.0d0 - sl_ais_previous)*(1.0d0 - (vol_ais_current/vol_ais_previous))
+
+! GMSL
+    sl_current = sl_gsic_current + sl_te_current + sl_gis_current + sl_ais_current
 
 end subroutine brick_step_forward
 !------------------------------------------------------------------------------
