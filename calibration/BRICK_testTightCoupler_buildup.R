@@ -200,7 +200,7 @@ source('../fortran/R/brickF.R')
 
 tstep <- 1
 parameters.in <- parameters[1,]
-parnames.in <- parnames
+parnames.in <- names(parameters.in)
 alpha.doeclim <- parameters.in[match("alpha.doeclim",parnames.in)]
 forcing.total <- forcing_total(forcing=forcing,
 							  alpha.doeclim=alpha.doeclim,
@@ -218,6 +218,7 @@ dyn.load("../fortran/brick_te.so")
 
 S.doeclim = 3.1;
 kappa.doeclim = 3.5;
+T0.doeclim = 0;
 beta0.gsic = 0.000577;
 V0.gsic = 0.4;
 n.gsic = 0.82;
@@ -272,6 +273,7 @@ f.output <- .Fortran("run_brick",
       forcing_in = as.double(forcing.total),
       doeclim_t2co = as.double(S.doeclim),
       doeclim_kappa = as.double(kappa.doeclim),
+      doeclim_T0 = as.double(T0.doeclim),
       time_out = as.double(mod.time),
       temp_out = as.double(rep(0,ns)),
       heatflux_mixed_out = as.double(rep(0,ns)),
@@ -389,6 +391,8 @@ tmp.out <- brickF(  tstep=tstep,
                     forcing.total = forcing.total,
                     S.doeclim = parameters.in[match("S",parnames.in)],
                     kappa.doeclim = parameters.in[match("kappa.doeclim",parnames.in)],
+                    T0.doeclim = parameters.in[match("T0",parnames.in)],
+                    H0.doeclim = parameters.in[match("H0",parnames.in)],
                     beta0.gsic = parameters.in[match("beta0",parnames.in)],
                     V0.gsic = parameters.in[match("V0.gsic",parnames.in)],
                     n.gsic = parameters.in[match("n",parnames.in)],
@@ -419,6 +423,58 @@ tmp.out <- brickF(  tstep=tstep,
                     alpha.dais = parameters.in[match("alpha.dais",parnames.in)]
                     )
 
+# NOTE: the above run will produce wacky results
+# this is because it is applying ~1960 initial conditions to 1850
+
+# NOTE: below, use the i=1 run, but find suitable initial conditions.
+
+##==============================================================================
+
+## Reproduce an old run, but start from 1850
+i <- 1
+
+Gs0.gsic <- brick.out[[i]]$gsic.out[1]
+V0.gsic <- parameters.in[match("V0.gsic",parnames.in)] +
+            (parameters.in[match("Gs0",parnames.in)] - brick.out[[i]]$gsic.out[1])
+V0.te <- brick.out[[i]]$te.out[1]
+V0.simple <- brick.out[[i]]$simple.out$Vgrl[1]
+
+tmp.out <- brickF(  tstep=tstep,
+                    mod.time=mod.time,
+                    forcing.total = forcing.total,
+                    S.doeclim = parameters.in[match("S",parnames.in)],
+                    kappa.doeclim = parameters.in[match("kappa.doeclim",parnames.in)],
+                    T0.doeclim = parameters.in[match("T0",parnames.in)],
+                    H0.doeclim = parameters.in[match("H0",parnames.in)],
+                    beta0.gsic = parameters.in[match("beta0",parnames.in)],
+                    V0.gsic = V0.gsic,
+                    n.gsic = parameters.in[match("n",parnames.in)],
+                    Gs0.gsic = Gs0.gsic,
+                    a.simple = parameters.in[match("a.simple",parnames.in)],
+                    b.simple = parameters.in[match("b.simple",parnames.in)],
+                    alpha.simple = parameters.in[match("alpha.simple",parnames.in)],
+                    beta.simple = parameters.in[match("beta.simple",parnames.in)],
+                    V0.simple = V0.simple,
+                    a.te = parameters.in[match("a.te",parnames.in)],
+                    b.te = parameters.in[match("b.te",parnames.in)],
+                    invtau.te = parameters.in[match("invtau.te",parnames.in)],
+                    V0.te = V0.te,
+                    a.anto = parameters.in[match("anto.a",parnames.in)],
+                    b.anto = parameters.in[match("anto.b",parnames.in)],
+                    slope.Ta2Tg = slope.Ta2Tg,
+                    intercept.Ta2Tg = intercept.Ta2Tg,
+                    b0.dais = parameters.in[match("b0",parnames.in)],
+                    slope.dais = parameters.in[match("slope",parnames.in)],
+                    mu.dais = parameters.in[match("mu",parnames.in)],
+                    h0.dais = parameters.in[match("h0",parnames.in)],
+                    c.dais = parameters.in[match("c",parnames.in)],
+                    P0.dais = parameters.in[match("P0",parnames.in)],
+                    kappa.dais = parameters.in[match("kappa.dais",parnames.in)],
+                    nu.dais = parameters.in[match("nu",parnames.in)],
+                    f0.dais = parameters.in[match("f0",parnames.in)],
+                    gamma.dais = parameters.in[match("gamma",parnames.in)],
+                    alpha.dais = parameters.in[match("alpha.dais",parnames.in)]
+                    )
 
 
 ##==============================================================================

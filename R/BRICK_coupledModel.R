@@ -148,9 +148,9 @@ brick_model = function(
 		# TE expects temp.couple relative to late 1800s, which it already is
 		# with ind.norm.data for temperature rel to 1850-70
 
-    ## Run BRICK-TE (thermosteric expansion) model, using temp output from DOECLIM
+    	## Run BRICK-TE (thermosteric expansion) model, using temp output from DOECLIM
 		## i0$te=1
-    te.out = brick_te_F(a=a.te , b=b.te, invtau=invtau.te, TE_0=TE0, Tg=temp.couple)
+    	te.out = brick_te_F(a=a.te , b=b.te, invtau=invtau.te, TE_0=TE0, Tg=temp.couple)
 
 		## Subtract off normalization period
 		itmp = ind.norm.data[match("te",ind.norm.data[,1]),2]:ind.norm.data[match("te",ind.norm.data[,1]),3]

@@ -39,6 +39,8 @@
 # -- DOECLIM --
 #   S           climate sensitivity (inc temp from 2xCO2) [deg C]
 #   kappa       ocean vertical heat diffusivity [cm2/s]
+#	T0			uncertain initial condition (offset), temperature [deg C]
+#	H0			uncertain initial condition (offset), ocean heat uptake [10^22 J]
 #
 # -- GSIC-MAGICC --
 #   beta0       initial mass balance sensitivity (how long it takes GSIC to respond to
@@ -175,6 +177,8 @@ brickF <- function(
     forcing.total,
     S.doeclim = 3.1,
     kappa.doeclim = 3.5,
+	T0.doeclim = 0,
+	H0.doeclim = 0,
     beta0.gsic = 0.000577,
     V0.gsic = 0.4,
     n.gsic = 0.82,
@@ -248,6 +252,7 @@ brickF <- function(
         forcing_in = as.double(forcing.total),
         doeclim_t2co = as.double(S.doeclim),
         doeclim_kappa = as.double(kappa.doeclim),
+		doeclim_T0 = as.double(T0.doeclim),
         time_out = as.double(mod.time),
         temp_out = as.double(rep(0,ns)),
         heatflux_mixed_out = as.double(rep(0,ns)),
@@ -281,7 +286,9 @@ brickF <- function(
         sl_out = as.double(rep(-999.99,ns))
     )
 
-    f.output$ocheat = flux.to.heat(f.output$heatflux_mixed_out, f.output$heatflux_interior_out)$ocean.heat
+    f.output$ocheat = flux.to.heat(f.output$heatflux_mixed_out,
+								   f.output$heatflux_interior_out)$ocean.heat +
+								   H0.doeclim
 
     return(f.output)
 

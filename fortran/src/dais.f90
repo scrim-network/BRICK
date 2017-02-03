@@ -1,6 +1,6 @@
 !=================================================================================
 !  Subroutines to run DAIS:
-!  simple model for Antarctic ice-sheet radius/volume [m sle] (Schaffer 2014)
+!  simple model for Antarctic ice-sheet radius/volume [m sle] (Shaffer 2014)
 !======================================================================================
 !
 ! Private parameters/variables globally used within module

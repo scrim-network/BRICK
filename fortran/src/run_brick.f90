@@ -26,7 +26,7 @@
 !===============================================================================
 
 subroutine run_brick(ns, tstep, &
-                     forcing_in, doeclim_t2co, doeclim_kappa, &                             ! DOECLIM input/ouput
+                     forcing_in, doeclim_t2co, doeclim_kappa, doeclim_T0, &                 ! DOECLIM input/ouput
                      time_out, temp_out, heatflux_mixed_out, heatflux_interior_out, &
                      gsic_magicc_beta0, gsic_magicc_V0, gsic_magicc_n, &                    ! GSIC input/output
                      gsic_magicc_Gs0, gsic_magicc_Teq, sl_gsic_out, &
@@ -49,6 +49,7 @@ subroutine run_brick(ns, tstep, &
 ! 
 !   doeclim_t2co        cliamte sensitivity to doubling CO2 [deg C]
 !   doeclim_kappa       ocean vertical diffusivity [cm^2 s^-1]
+!   doeclim_T0          uncertain initial condition (offset), temperature [deg C]
 !   gsic_magicc_beta0   initial mass balance sensitivity (how long it takes GSIC to respond to increasing temps) [m/yr/C]
 !   gsic_magicc_V0      initial volume = max(Gs) [meter sle]
 !   gsic_magicc_n       exponent for area-volume scaling [-]
@@ -94,6 +95,7 @@ subroutine run_brick(ns, tstep, &
 
     real(DP),     intent(IN) :: doeclim_t2co
     real(DP),     intent(IN) :: doeclim_kappa
+    real(DP),     intent(IN) :: doeclim_T0
     real(DP),     intent(IN) :: gsic_magicc_beta0
     real(DP),     intent(IN) :: gsic_magicc_n
     real(DP),     intent(IN) :: gsic_magicc_V0
@@ -140,7 +142,7 @@ subroutine run_brick(ns, tstep, &
 
     i=1
     call init_brick(i, tstep, forcing_in(i), &
-                    doeclim_t2co, doeclim_kappa, &
+                    doeclim_t2co, doeclim_kappa, doeclim_T0, &
                     temp_out(i), heatflux_mixed_out(i), heatflux_interior_out(i), &
                     gsic_magicc_beta0, gsic_magicc_V0, gsic_magicc_n, &
                     gsic_magicc_Teq, gsic_magicc_Gs0, sl_gsic_out(i), &
@@ -154,7 +156,6 @@ subroutine run_brick(ns, tstep, &
 ! estimate outputs
 
 ! forward integration, from beginning to end of simulation
-    !do i=1,3
     do i=2,ns
 
         ! step the model forward

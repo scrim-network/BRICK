@@ -41,7 +41,7 @@ contains
 
 !===============================================================================
 subroutine init_brick(nstep, tstep_in, forcing_current, &
-                      S_doeclim_in, kappa_doeclim_in, &
+                      S_doeclim_in, kappa_doeclim_in, T0_doeclim_in, &
                       temp_init_out, heatflux_mixed_init_out, heatflux_interior_init_out, &
                       beta0_gsic_magicc_in, V0_gsic_magicc_in, n_gsic_magicc_in, &
                       Teq_gsic_magicc_in, Gs0_gsic_magicc_in, sl_gsic_init_out, &
@@ -59,6 +59,7 @@ subroutine init_brick(nstep, tstep_in, forcing_current, &
     real(DP), intent(IN) :: forcing_current
     real(DP), intent(IN) :: S_doeclim_in
     real(DP), intent(IN) :: kappa_doeclim_in
+    real(DP), intent(IN) :: T0_doeclim_in
     real(DP), intent(IN) :: beta0_gsic_magicc_in
     real(DP), intent(IN) :: V0_gsic_magicc_in
     real(DP), intent(IN) :: n_gsic_magicc_in
@@ -96,6 +97,7 @@ subroutine init_brick(nstep, tstep_in, forcing_current, &
     call init_doeclim_arrays()
     call init_doeclim_parameters(S_doeclim_in, kappa_doeclim_in)
     call doeclimtimestep_simple(nstep, forcing_current, temp_init_out)
+    temp_init_out = temp_init_out + T0_doeclim_in
     heatflux_mixed_init_out = heatflux_mixed(nstep)
     heatflux_interior_init_out = heatflux_interior(nstep)
 
