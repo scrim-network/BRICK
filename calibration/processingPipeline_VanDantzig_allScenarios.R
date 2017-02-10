@@ -32,22 +32,24 @@
 ## along with BRICK.  If not, see <http://www.gnu.org/licenses/>.
 ##==============================================================================
 
+rm(list=ls())
+
 ##==============================================================================
 ## Input file names from previous parameter sampling/calibration/simulation
 
 ## Sea-level rise projections
-filename.allslr <- "../output_model/BRICK-model_physical_allslr_13Jan2017.nc"
-#filename.gamma <- "../output_model/BRICK-model_physical_fd-gamma_08Dec2016.nc"
-#filename.uniform <- "../output_model/BRICK-model_physical_fd-uniform_08Dec2016.nc"
+filename.allslr <- "../output_model/BRICK-model_physical_allslr_04Feb2017.nc"
+#filename.gamma <- "../output_model/BRICK-fastdyn_physical_gamma_31Jan2017.nc"
+#filename.uniform <- "../output_model/BRICK-fastdyn_physical_uniform_31Jan2017.nc"
 
 ## GEV parameters, fit from tide gauge data
-filename.gevstat <- '../output_calibration/BRICK_GEVsample_13Jan2017.nc'
+filename.gevstat <- '../output_calibration/BRICK_GEVsample-AnnMean_07Feb2017.nc'
 
 ## Surge level increase factors (USACE)
-filename.surgefactor <- '../output_calibration/BRICK_surgefactor_09Jan2017.nc'
+filename.surgefactor <- '../output_calibration/BRICK_surgefactor_04Feb2017.nc'
 
 ## Van Dantzig model parameters
-filename.vdparams <- '../output_calibration/BRICK-VanDantzig_parameters_09Jan2017.nc'
+filename.vdparams <- '../output_calibration/BRICK-VanDantzig_parameters_04Feb2017.nc'
 
 ##==============================================================================
 ## What time horizon to consider?
@@ -156,6 +158,8 @@ if(exists('filename.allslr')) {
 ##==============================================================================
 ## Draw/read (stationary) GEV parameters for each of the n.ens SOW
 source('../calibration/stormsurge_NOLA.R')
+library(extRemes)
+library(zoo)
 
 if(exists('filename.gevstat')){
 	ncdata <- nc_open(filename.gevstat)
@@ -164,8 +168,13 @@ if(exists('filename.gevstat')){
 	nc_close(ncdata)
 	colnames(gev.params) <- gev.names
 } else {
-	gev.est <- BRICK_estimateGEV_NOLA(niter=1e5, burnin=0.5, sd=c(13.5,0.2,0.25), N=n.ens)
-  gev.params <- gev.est[[2]]
+    # sd.prop from a preliminary MLE experiment which found 90% CI for the GEV
+    # parameters that gives stdev estimates of 13.5 (mu), .2 (log(sigma)), .25 (xi)
+    # if interpreted as a 4-sigma window.
+    # sd.prop = [22,.2,.25] is tuned to get about .44 acceptance rate (Rosenthal 2011)
+	gev.est <- BRICK_estimateGEV_NOLA(niter=1e5, burnin=0.5,
+                                      sd.prop=c(22, .2, .25), sd.pri=(4*c(13.5, .2, .25)), N=n.ens)
+    gev.params <- gev.est[[2]]
 }
 
 ##==============================================================================
@@ -225,7 +234,7 @@ if(exists('filename.vdparams')) {
 
   ## Sample parameters (using Dutch Perspective as a guide). Uses Latin Hypercube,
   ## assigns each ensemble member a set of parameters.
-  params.vd = parameter_sampling_DP(ncol(sea_level_rcp26), p_zero_p, alpha_p, V_p, delta_prime_p, I_range, subs_rate)
+  params.vd = parameter_sampling_DP(ncol(slr$rcp26$none), p_zero_p, alpha_p, V_p, delta_prime_p, I_range, subs_rate)
 
   ## Write file with Van Dantzig parameters
   today=Sys.Date(); today=format(today,format="%d%b%Y")
@@ -255,9 +264,9 @@ if(exists('filename.vdparams')) {
 ##==============================================================================
 
 ## Comment/modify in case you only want to (re-)run a selection of the scenarios
-#scen.ais <- c("none","gamma","uniform")
-scen.ais <- c("gamma","uniform")
-#scen.ais <- 'gamma'
+scen.ais <- c("none","gamma","uniform")
+#scen.ais <- c("none","gamma")
+#scen.ais <- 'uniform'
 
 for (ais in scen.ais) {
 

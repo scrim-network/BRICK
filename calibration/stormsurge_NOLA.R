@@ -45,7 +45,8 @@
 ##  Required input:
 ##  niter               number of MCMC iterations to do (total, with burnin included)
 ##  burnin              fraction of the chain to remove for burnin
-##  sd                  standard deviations for the Gaussian random walk
+##  sd.prop             standard deviations for the Gaussian random walk
+##  sd.pri              standard deviations for the normal priors
 ##                      elsements are: [loc, log(scale), shape]
 ##  N                   number of ensemble members (draws) to write to a different
 ##                      file for later reading
@@ -58,7 +59,8 @@
 BRICK_estimateGEV_NOLA <- function(
   niter=10000,
   burnin=0.5,
-  sd=c(13.5,.2,.25),
+  sd.prop=c(13.5,.2,.25),
+  sd.pri=c(27,.4,.5),
   N=NULL
   ){
 
@@ -102,6 +104,8 @@ print('Estimating stationary GEV parameters...')
 # Note: to get actual datestamp back, just do data.all.sort$Date.TIme + origin
 days.year <- 365.25 # number of days in a year, on average
 nyear <- floor(as.numeric(max(data.all.sort$Date.Time)/days.year))
+
+# initialize these list arrays
 data.all.sort$Water.Level.avg <- data.all.sort$Water.Level
 data.all.sort$lsl <- data.all.sort$Water.Level
 data.all.sort$lsl.avg <- data.all.sort$Water.Level
@@ -131,9 +135,11 @@ for (tt in 1:nyear) {
   data.all.sort$lsl.avg[iyear] <- rep(mean(data.all.sort$Water.Level[iyear]),length(iyear))
   data.all.sort$lsl.avg.rel[iyear] <- data.all.sort$Water.Level[iyear]-data.all.sort$lsl.avg[iyear]
   # Method 1:
-  #lsl.max[tt] <- max(data.all.sort$lsl.avg.rel[iyear])
+  lsl.max[tt] <- max(data.all.sort$lsl.avg.rel[iyear])
+  method.name <- '-AnnMean'
   # Method 2:
-  lsl.max[tt] <- max(data.all.sort$lsl[iyear])
+  #lsl.max[tt] <- max(data.all.sort$lsl[iyear])
+  #method.name <- '-NOAAtrend'
 }
 
 # First, estimate GEV parameters using maximum likelihood.
@@ -149,20 +155,25 @@ names(init) <- names(gev.mle$results$par)
 # Assume that the resulting 95% CI is a 2-sigma window, so divide the width by
 # 4 and use that as the proposal sd. These give acceptance rates around 40-50%,
 # which is fine for only 3 parameters.
-params <- vector('list',1)
-params[[1]] <- sd
-names(params) <- 'sd'
+params.prop <- vector('list',1)
+params.prop[[1]] <- sd.prop
+names(params.prop) <- 'sd'
+
+params.pri <- vector('list',1)
+params.pri[[1]] <- sd.pri
+names(params.pri) <- 'v'
 
 # Second, use these as the initial guesses for the Bayesian GEV parameter estimation
 gev.bayes <- fevd(coredata(lsl.max), type="GEV", method="Bayesian",
-                  initial=init, iter=niter, proposalParams=params)
+                  initial=init, iter=niter, proposalParams=params.prop, priorParams=params.pri)
 
 gev.est <- gev.bayes$results[(round(burnin*niter)+1):niter, 1:3]
 gev.est[,2] <- exp(gev.est[,2])   # account for log(scale) from MCMC
 colnames(gev.est) <- c('location','scale','shape')
 
+# check acceptance rates?
+apply(gev.bayes$chain.info[2:10000,],2,sum)/10000
 
-#gev.stat <- data.frame(gev.stat)
 
 
 
@@ -174,7 +185,7 @@ lmax=0
 for (i in 1:ncol(gev.est)){lmax=max(lmax,nchar(colnames(gev.est)[i]))}
 
 today=Sys.Date(); today=format(today,format="%d%b%Y")
-filename.gevstat = paste('../output_calibration/BRICK_estimateGEV_',today,'.nc',sep="")
+filename.gevstat = paste('../output_calibration/BRICK_estimateGEV',method.name,'_',today,'.nc',sep="")
 
 library(ncdf4)
 dim.parameters <- ncdim_def('n.parameters', '', 1:ncol(gev.est), unlim=FALSE)
@@ -189,7 +200,7 @@ nc_close(outnc)
 
 ## Write shorter file, with only the number (N) for the given ensemble
 today=Sys.Date(); today=format(today,format="%d%b%Y")
-filename.gevshort = paste('../output_calibration/BRICK_GEVsample_',today,'.nc',sep="")
+filename.gevshort = paste('../output_calibration/BRICK_GEVsample',method.name,'_',today,'.nc',sep="")
 gev.params <- gev.est[sample(1:nrow(gev.est), size=N, replace=FALSE) , ]
 
 dim.parameters <- ncdim_def('n.parameters', '', 1:ncol(gev.params), unlim=FALSE)

@@ -31,13 +31,13 @@ library(ncdf4)
 #filename.brick.nofd = '../output_model/BRICK-model_physical_fd-gamma_08Dec2016.nc'#no-FD case uses gamma, without disintegration
 #filename.brick.uniform = '../output_model/BRICK-model_physical_fd-uniform_08Dec2016.nc'
 #filename.brick.gamma = '../output_model/BRICK-model_physical_fd-gamma_08Dec2016.nc'
-filename.brick.allslr = '../output_model/BRICK-model_physical_allslr_13Jan2017.nc'
+filename.brick.allslr = '../output_model/BRICK-model_physical_allslr_04Feb2017.nc'
 
 ## File name for the Van Dantzig model output (netCDF4)
 ## Each of these also has x3 RCP scenarios, x2 storm surge scenarios
-filename.vandantzig.nofd = '../output_model/VanDantzig_fd-none_2065_23Jan2017.nc'
-filename.vandantzig.uniform = '../output_model/VanDantzig_fd-uniform_2065_23Jan2017.nc'
-filename.vandantzig.gamma = '../output_model/VanDantzig_fd-gamma_2065_23Jan2017.nc'
+filename.vandantzig.nofd = '../output_model/VanDantzig_fd-none_2065_07Feb2017.nc'
+filename.vandantzig.uniform = '../output_model/VanDantzig_fd-uniform_2065_07Feb2017.nc'
+filename.vandantzig.gamma = '../output_model/VanDantzig_fd-gamma_2065_07Feb2017.nc'
 
 ## File name for the BRICK post-calibrated parameters (netcdf) (the BRICK output came from these guys)
 filename.parameters.nofd = '../output_calibration/BRICK-model_postcalibratedParameters_fd-none_08Dec2016.nc'
@@ -56,6 +56,12 @@ source('../Useful/MultipleOutput.R')    # defines the useful ":=" operator
 c85=6;
 c45=4;
 c26=2;
+
+## And set the IPCC RCP colors
+col26 <- c(0, 0, 255)/255
+col45 <- c(121, 188, 255)/255
+col60 <- c(255, 130, 45)/255
+col85 <- c(255, 0, 0)/255
 
 ## Where would you like to save the plots?
 plotdir='~/Box\ Sync/Wong-Projects/BRICK_scenarios/figures/'
@@ -407,23 +413,6 @@ for (ais in scen.ais) {
   }
 }
 
-## Laplace-averaging minimization of expected costs, expected regret (all
-## scenarios, equal weight)
-
-#todo?
-
-
-# experiment with 50y vs 100y time horizon?
-#costs <- as.matrix(cbind(signif(unlist(Ceum)/1e9,6)))
-#p.inc.cost.ss <- 100*(costs[c(2,4,6,8,10,12),]-costs[c(1,3,5,7,9,11),])/costs[c(1,3,5,7,9,11),]
-#p.inc.cost.fd <- 100*(costs[c(3,4,7,8,11,12),]-costs[c(1,2,5,6,9,10),])/costs[c(1,2,5,6,9,10),]
-#p.inc.cost.rcp <- 100*(costs[c(5,6,7,8,9,10,11,12),]-costs[c(1,2,3,4,1,2,3,4),])/costs[c(1,2,3,4,1,2,3,4),]
-#inc.cost.ss <- (costs[c(2,4,6,8,10,12),]-costs[c(1,3,5,7,9,11),])
-#inc.cost.fd <- (costs[c(3,4,7,8,11,12),]-costs[c(1,2,5,6,9,10),])
-#inc.cost.rcp <- (costs[c(5,6,7,8,9,10,11,12),]-costs[c(1,2,3,4,1,2,3,4),])
-
-
-
 ##==============================================================================
 ##==============================================================================
 
@@ -460,8 +449,8 @@ sf.seasurlev <- init
 lsl.norm <- init
 
 lsl.lower <- 0
-lsl.upper <- 10
-lsl.n <- 2^10 # powers of 2 are good for density estimation in R
+lsl.upper <- 20
+lsl.n <- 2^11 # powers of 2 are good for density estimation in R
               # 2^10 = 1024 ~ number of ensemble members
 
 flood.n <- lsl.n
@@ -503,6 +492,17 @@ x.lsl <- tmp$x
 dx.lsl <- mean(diff(x.lsl))
 kern <- 'gaussian'
 
+
+
+##TODO
+# change all integrals to simpson's rule
+library(Bolstad)
+#sintegral(x=x.lsl, fx=pdf.fit[1,])$value
+##TODO
+
+
+
+
 ## Get the return levels for the stationary GEV storm surge case
 surge.level <- n.ensemble['none'] # desired storm surge level;
   # determine this resolution by size of ensemble (can't resolve the 1% tail if
@@ -510,15 +510,26 @@ surge.level <- n.ensemble['none'] # desired storm surge level;
 q <- seq(0,1,length.out= surge.level +1)  # quantile array
 
 # Find fit to the stationary surge distirbutions
+cdf.fit <- mat.or.vec(n.ensemble['none'],lsl.n)
+pdf.fit <- mat.or.vec(n.ensemble['none'],lsl.n)
+sf.fit <- mat.or.vec(n.ensemble['none'],lsl.n)
 fit.surge <- mat.or.vec(n.ensemble['none'],length(q))
 
+# These cdf and survival function fits are not
 for (i in 1:n.ensemble['none']) {
-  fit.surge[i,] <- qgev(q, xi=gev.stat[i,'shape'], mu=gev.stat[i,'location'], beta=gev.stat[i,'scale'])
+    cdf.fit[i,] <- pevd(1000*x.lsl, shape=gev.stat[i,'shape'], loc=gev.stat[i,'location'], scale=gev.stat[i,'scale'])
+    pdf.fit[i,] <- c(0, diff(cdf.fit[i,]))
+    sf.fit[i,] <- 1-cdf.fit[i,]
+    fit.surge[i,] <- qgev(q, xi=gev.stat[i,'shape'], mu=gev.stat[i,'location'], beta=gev.stat[i,'scale'])
 }
-#fit.surge <- fit.surge[,-n.ensemble['none']]
+fit.surge <- fit.surge[,-n.ensemble['none']]
 
 # Plot them all
 #plot(fit.surge[1,]/1000, log10(1-q[2:1294]), type='l', xlim=c(0,10), ylim=c(-4,0)); for (i in 1:n.ensemble['none']) {lines(fit.surge[i,]/1000, log10(1-q[2:1294]))}
+
+if(FALSE) {
+
+    # use the old surge-level fitting way (kind of a riff of Kelsey's SF codes)
 
 # Get the pdfs for each SOW stationary storm surge
 f.tmp <- mat.or.vec(n.ensemble['none'], n.ensemble['none']+1)
@@ -544,10 +555,20 @@ f.tmp.lsl[which(is.nan(f.tmp.lsl))] <- 0
 # with our model
 max.surge <- fit.surge[,surge.level]/1000
 
+} else {
+
+    # use the pevd (fit CDF) based distributions
+    f.tmp.lsl <- mat.or.vec(n.ensemble['none'], lsl.n)
+    for (sow in 1:n.ensemble['none']) {
+        f.tmp.lsl[sow,] <- pdf.fit[sow,]/sintegral(x=x.lsl, fx=pdf.fit[sow,])$value
+    }
+
+}
+
 
 ## distribution of subsidence
 iproj <- which(mod.time==2065)
-inorm <- which(mod.time==2007)
+inorm <- which(mod.time==2015)
 
 subs <- VD.params[,6] # m/year
 f.subs <- density(x=subs*(mod.time[iproj]-mod.time[inorm]), from=lsl.lower, to=lsl.upper, n=lsl.n, kernel=kern)
@@ -718,16 +739,16 @@ pdf(paste(plotdir,'pdfs_sf_slr_surge.pdf',sep=''),width=8,height=7,colormodel='c
 par(mfrow=c(2,2), mai=c(.6,.63,.2,.26))
 # (a) pdfs of local sea-level rise (2065)
 plot(x.lsl, f.sealev$rcp26$none, type='l', xlim=c(0,1.1), ylim=c(0,10), lwd=1.5,
-     col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lty=1,
+     col=rgb(col26[1],col26[2],col26[3]), lty=1,
      xlab='', ylab='', xaxt='n', yaxt='n', xaxs='i', yaxs='i', axes=FALSE)
-lines(x.lsl, f.sealev$rcp26$gamma, type='l', col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lty=2)
-lines(x.lsl, f.sealev$rcp26$uniform, type='l', col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lty=3)
-lines(x.lsl, f.sealev$rcp45$none, type='l', col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lty=1)
-lines(x.lsl, f.sealev$rcp45$gamma, type='l', col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lty=2)
-lines(x.lsl, f.sealev$rcp45$uniform, type='l', col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lty=3)
-lines(x.lsl, f.sealev$rcp85$none, type='l', col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]), lty=1)
-lines(x.lsl, f.sealev$rcp85$gamma, type='l', col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]), lty=2)
-lines(x.lsl, f.sealev$rcp85$uniform, type='l', col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]), lty=3)
+lines(x.lsl, f.sealev$rcp26$gamma, type='l', col=rgb(col26[1],col26[2],col26[3]), lty=2)
+lines(x.lsl, f.sealev$rcp26$uniform, type='l', col=rgb(col26[1],col26[2],col26[3]), lty=3)
+lines(x.lsl, f.sealev$rcp45$none, type='l', col=rgb(col45[1],col45[2],col45[3]), lty=1)
+lines(x.lsl, f.sealev$rcp45$gamma, type='l', col=rgb(col45[1],col45[2],col45[3]), lty=2)
+lines(x.lsl, f.sealev$rcp45$uniform, type='l', col=rgb(col45[1],col45[2],col45[3]), lty=3)
+lines(x.lsl, f.sealev$rcp85$none, type='l', col=rgb(col85[1],col85[2],col85[3]), lty=1)
+lines(x.lsl, f.sealev$rcp85$gamma, type='l', col=rgb(col85[1],col85[2],col85[3]), lty=2)
+lines(x.lsl, f.sealev$rcp85$uniform, type='l', col=rgb(col85[1],col85[2],col85[3]), lty=3)
 
 axis(1,seq(0,1,0.2),lab=c("0","0.2","0.4","0.6","0.8","1"), cex.axis=1.2)
 u <- par("usr")
@@ -738,7 +759,7 @@ mtext(side=3, text=expression(bold('   a')), line=-1, cex=.9, adj=0);
 
 legend(0.5,9.5,c("RCP2.6","RCP4.5","RCP8.5","no FD","FD, gamma","FD, uniform"),
        lty=c(1,1,1,1,2,3), lwd=2, cex=1.2,
-       col=c(rgb(mycol[13,1],mycol[13,2],mycol[13,3]),rgb(mycol[2,1],mycol[2,2],mycol[2,3]),rgb(mycol[11,1],mycol[11,2],mycol[11,3]),'black','black','black'),
+       col=c(rgb(col26[1],col26[2],col26[3]),rgb(col45[1],col45[2],col45[3]),rgb(col85[1],col85[2],col85[3]),'black','black','black'),
        bty='n')
 
 # (b) pdfs of storm surge
@@ -746,15 +767,15 @@ par(mai=c(.6,.63,.2,.26))
 plot(x.lsl, apply(f.surlev$rcp26$none$st,2,mean), type='l', xlim=c(0,4), ylim=c(0,3), lwd=1.5,
      col=rgb(mycol[6,1],mycol[6,2],mycol[6,3]), lty=1,
      xlab='', ylab='', xaxt='n', yaxt='n', xaxs='i', yaxs='i', axes=FALSE)
-lines(x.lsl, apply(f.surlev$rcp26$none$ns,2,mean), type='l', col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lty=1)
-lines(x.lsl, apply(f.surlev$rcp26$gamma$ns,2,mean), type='l', col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lty=2)
-lines(x.lsl, apply(f.surlev$rcp26$uniform$ns,2,mean), type='l', col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lty=3)
-lines(x.lsl, apply(f.surlev$rcp45$none$ns,2,mean), type='l', col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lty=1)
-lines(x.lsl, apply(f.surlev$rcp45$gamma$ns,2,mean), type='l', col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lty=2)
-lines(x.lsl, apply(f.surlev$rcp45$uniform$ns,2,mean), type='l', col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lty=3)
-lines(x.lsl, apply(f.surlev$rcp85$none$ns,2,mean), type='l', col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]), lty=1)
-lines(x.lsl, apply(f.surlev$rcp85$gamma$ns,2,mean), type='l', col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]), lty=2)
-lines(x.lsl, apply(f.surlev$rcp85$uniform$ns,2,mean), type='l', col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]), lty=3)
+lines(x.lsl, apply(f.surlev$rcp26$none$ns,2,mean), type='l', col=rgb(col26[1],col26[2],col26[3]), lty=1)
+lines(x.lsl, apply(f.surlev$rcp26$gamma$ns,2,mean), type='l', col=rgb(col26[1],col26[2],col26[3]), lty=2)
+lines(x.lsl, apply(f.surlev$rcp26$uniform$ns,2,mean), type='l', col=rgb(col26[1],col26[2],col26[3]), lty=3)
+lines(x.lsl, apply(f.surlev$rcp45$none$ns,2,mean), type='l', col=rgb(col45[1],col45[2],col45[3]), lty=1)
+lines(x.lsl, apply(f.surlev$rcp45$gamma$ns,2,mean), type='l', col=rgb(col45[1],col45[2],col45[3]), lty=2)
+lines(x.lsl, apply(f.surlev$rcp45$uniform$ns,2,mean), type='l', col=rgb(col45[1],col45[2],col45[3]), lty=3)
+lines(x.lsl, apply(f.surlev$rcp85$none$ns,2,mean), type='l', col=rgb(col85[1],col85[2],col85[3]), lty=1)
+lines(x.lsl, apply(f.surlev$rcp85$gamma$ns,2,mean), type='l', col=rgb(col85[1],col85[2],col85[3]), lty=2)
+lines(x.lsl, apply(f.surlev$rcp85$uniform$ns,2,mean), type='l', col=rgb(col85[1],col85[2],col85[3]), lty=3)
 
 axis(1,seq(0,4,0.5),lab=c("0","","1","","2","","3","","4"), cex.axis=1.2)
 u <- par("usr")
@@ -762,32 +783,32 @@ arrows(0, u[3],0, .95*u[4], code = 2, length=.15, xpd = TRUE)
 mtext('Probability density', side=2, line=1.2, cex=1);
 mtext('Projected surge level in 2065 [m]', side=1, line=2.3, cex=1);
 mtext(side=3, text=expression(bold('   b')), line=-1, cex=.9, adj=0);
-text(.45,2.6,"stationary", pos=4, cex=1.3)
+text(.5,2.6,"stationary", pos=4, cex=1.3)
 text(1.1,2,"non-stationary", pos=4, cex=1.3)
 
 # (c) survival functions of sea-level rise
 par(mai=c(.6,.63,.2,.26))
 # rcp2.6
 plot( x.lsl, log10(sf.sealev$rcp26$none), type='l', xlim=c(0,1), ylim=c(-3.2,0),
-      lty=1, col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lwd=1.5, xlab='', ylab='', xaxt='n', yaxt='n', xaxs='i', yaxs='i')
+      lty=1, col=rgb(col26[1],col26[2],col26[3]), lwd=1.5, xlab='', ylab='', xaxt='n', yaxt='n', xaxs='i', yaxs='i')
 lines(x.lsl, log10(sf.sealev$rcp26$gamma), type='l',
-      lty=2, col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lwd=1.5)
+      lty=2, col=rgb(col26[1],col26[2],col26[3]), lwd=1.5)
 lines(x.lsl, log10(sf.sealev$rcp26$uniform), type='l',
-      lty=3, col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lwd=1.5)
+      lty=3, col=rgb(col26[1],col26[2],col26[3]), lwd=1.5)
 # rcp4.5
 lines(x.lsl, log10(sf.sealev$rcp45$none), type='l',
-      lty=1, col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lwd=1.5)
+      lty=1, col=rgb(col45[1],col45[2],col45[3]), lwd=1.5)
 lines(x.lsl, log10(sf.sealev$rcp45$gamma), type='l',
-      lty=2, col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lwd=1.5)
+      lty=2, col=rgb(col45[1],col45[2],col45[3]), lwd=1.5)
 lines(x.lsl, log10(sf.sealev$rcp45$uniform), type='l',
-      lty=3, col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lwd=1.5)
+      lty=3, col=rgb(col45[1],col45[2],col45[3]), lwd=1.5)
 # rcp8.5
 lines(x.lsl, log10(sf.sealev$rcp85$none), type='l',
-      lty=1, col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]), lwd=1.5)
+      lty=1, col=rgb(col85[1],col85[2],col85[3]), lwd=1.5)
 lines(x.lsl, log10(sf.sealev$rcp85$gamma), type='l',
-      lty=2, col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]), lwd=1.5)
+      lty=2, col=rgb(col85[1],col85[2],col85[3]), lwd=1.5)
 lines(x.lsl, log10(sf.sealev$rcp85$uniform), type='l',
-      lty=3, col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]), lwd=1.5)
+      lty=3, col=rgb(col85[1],col85[2],col85[3]), lwd=1.5)
 # x-axis, ticks and text
 axis(1,seq(0,1,0.2),lab=c("0","0.2","0.4","0.6","0.8","1"), cex.axis=1.2)
 mtext('Projected sea level in 2065 [m]', side=1, line=2.3, cex=1);
@@ -796,10 +817,10 @@ axis(2, at=seq(-3,0), label=parse(text=paste("10^", seq(-3,0), sep="")), las=1, 
 mtext('Survival function [1-CDF]', side = 2, line=2.6);
 # add a panel label
 mtext(side=3, text=expression(bold('   c')), line=-1.1, cex=.9, adj=0);
-# add the 1:100, 1:500, 1:1000 levels
-lines(c(-4,4),c(-2,-2),lty=2,col='black'); text(0.16,-1.85,"1:100 level", cex=1.2)
-#lines(c(-4,4),c(-log10(500),-log10(500)),lty=2,col='black'); text(0.1,-2.55,"1:500 level");
-lines(c(-4,4),c(-3,-3),lty=2,col='black'); text(0.16,-2.85,"1:1000 level", cex=1.2)
+# add the 1/100, 1/500, 1/1000 levels
+lines(c(-4,4),c(-2,-2),lty=2,col='black'); text(0.16,-1.85,"1/100 level", cex=1.2)
+lines(c(-4,4),c(-log10(500),-log10(500)),lty=2,col='black'); text(0.16,-2.55,"1/500 level", cex=1.2);
+#lines(c(-4,4),c(-3,-3),lty=2,col='black'); text(0.16,-2.85,"1/1000 level", cex=1.2)
 
 # (d) survival functions of storm surge
 par(mai=c(.6,.63,.2,.26))
@@ -807,25 +828,25 @@ par(mai=c(.6,.63,.2,.26))
 plot( x.lsl, log10(apply(sf.surlev$rcp26$none$st,2,mean)), type='l', xlim=c(0,4), ylim=c(-2.2,0),
       lty=1, col=rgb(mycol[6,1],mycol[6,2],mycol[6,3]), lwd=1.5, xlab='', ylab='', xaxt='n', yaxt='n', xaxs='i', yaxs='i')
 lines(x.lsl, log10(apply(sf.surlev$rcp26$none$ns,2,mean)), type='l',
-      lty=1, col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lwd=1.5)
+      lty=1, col=rgb(col26[1],col26[2],col26[3]), lwd=1.5)
 lines(x.lsl, log10(apply(sf.surlev$rcp26$gamma$ns,2,mean)), type='l',
-      lty=2, col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lwd=1.5)
+      lty=2, col=rgb(col26[1],col26[2],col26[3]), lwd=1.5)
 lines(x.lsl, log10(apply(sf.surlev$rcp26$uniform$ns,2,mean)), type='l',
-      lty=3, col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lwd=1.5)
+      lty=3, col=rgb(col26[1],col26[2],col26[3]), lwd=1.5)
 # rcp4.5
 lines(x.lsl, log10(apply(sf.surlev$rcp45$none$ns,2,mean)), type='l',
-      lty=1, col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lwd=1.5)
+      lty=1, col=rgb(col45[1],col45[2],col45[3]), lwd=1.5)
 lines(x.lsl, log10(apply(sf.surlev$rcp45$gamma$ns,2,mean)), type='l',
-      lty=2, col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lwd=1.5)
+      lty=2, col=rgb(col45[1],col45[2],col45[3]), lwd=1.5)
 lines(x.lsl, log10(apply(sf.surlev$rcp45$uniform$ns,2,mean)), type='l',
-      lty=3, col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lwd=1.5)
+      lty=3, col=rgb(col45[1],col45[2],col45[3]), lwd=1.5)
 # rcp8.5
 lines(x.lsl, log10(apply(sf.surlev$rcp85$none$ns,2,mean)), type='l',
-      lty=1, col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]), lwd=1.5)
+      lty=1, col=rgb(col85[1],col85[2],col85[3]), lwd=1.5)
 lines(x.lsl, log10(apply(sf.surlev$rcp85$gamma$ns,2,mean)), type='l',
-      lty=2, col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]), lwd=1.5)
+      lty=2, col=rgb(col85[1],col85[2],col85[3]), lwd=1.5)
 lines(x.lsl, log10(apply(sf.surlev$rcp85$uniform$ns,2,mean)), type='l',
-      lty=3, col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]), lwd=1.5)
+      lty=3, col=rgb(col85[1],col85[2],col85[3]), lwd=1.5)
 # x-axis, ticks and text
 axis(1,seq(0,4,0.5),lab=c("0","","1","","2","","3","","4"), cex.axis=1.2)
 mtext('Projected surge level in 2065 [m]', side=1, line=2.3, cex=1);
@@ -834,10 +855,10 @@ axis(2, at=seq(-3,0), label=parse(text=paste("10^", seq(-3,0), sep="")), las=1, 
 mtext('Survival function [1-CDF]', side = 2, line=2.6);
 # add a panel label
 mtext(side=3, text=expression(bold('   d')), line=-1.1, cex=.9, adj=0);
-# add the 1:100, 1:500, 1:1000 levels
-lines(c(-4,4),c(-2,-2),lty=2,col='black'); text(0.6,-1.88,"1:100 level", cex=1.2)
-#lines(c(-4,4),c(-log10(500),-log10(500)),lty=2,col='black'); text(0.1,-2.55,"1:500 level");
-lines(c(-4,4),c(-3,-3),lty=2,col='black'); text(0.1,-2.85,"1:1000 level", cex=1.2)
+# add the 1/100, 1/500, 1/1000 levels
+lines(c(-4,4),c(-2,-2),lty=2,col='black'); text(0.6,-1.88,"1/100 level", cex=1.2)
+#lines(c(-4,4),c(-log10(500),-log10(500)),lty=2,col='black'); text(0.6,-1.55,"1/500 level", cex=1.2);
+#lines(c(-4,4),c(-3,-3),lty=2,col='black'); text(0.1,-2.85,"1/1,000 level", cex=1.2)
 
 dev.off()
 
@@ -873,15 +894,15 @@ lines(x.lsl, apply(f.seasurlev$rcp85$none$st,2,mean), type='l', col=rgb(mycol[6,
 lines(x.lsl, apply(f.seasurlev$rcp85$gamma$st,2,mean), type='l', col=rgb(mycol[6,1],mycol[6,2],mycol[6,3]), lty=2)
 lines(x.lsl, apply(f.seasurlev$rcp85$uniform$st,2,mean), type='l', col=rgb(mycol[6,1],mycol[6,2],mycol[6,3]), lty=3)
 # non-stationary
-lines(x.lsl, apply(f.seasurlev$rcp26$none$ns,2,mean), type='l', col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lty=1)
-lines(x.lsl, apply(f.seasurlev$rcp26$gamma$ns,2,mean), type='l', col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lty=2)
-lines(x.lsl, apply(f.seasurlev$rcp26$uniform$ns,2,mean), type='l', col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lty=3)
-lines(x.lsl, apply(f.seasurlev$rcp45$none$ns,2,mean), type='l', col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lty=1)
-lines(x.lsl, apply(f.seasurlev$rcp45$gamma$ns,2,mean), type='l', col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lty=2)
-lines(x.lsl, apply(f.seasurlev$rcp45$uniform$ns,2,mean), type='l', col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lty=3)
-lines(x.lsl, apply(f.seasurlev$rcp85$none$ns,2,mean), type='l', col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]), lty=1)
-lines(x.lsl, apply(f.seasurlev$rcp85$gamma$ns,2,mean), type='l', col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]), lty=2)
-lines(x.lsl, apply(f.seasurlev$rcp85$uniform$ns,2,mean), type='l', col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]), lty=3)
+lines(x.lsl, apply(f.seasurlev$rcp26$none$ns,2,mean), type='l', col=rgb(col26[1],col26[2],col26[3]), lty=1)
+lines(x.lsl, apply(f.seasurlev$rcp26$gamma$ns,2,mean), type='l', col=rgb(col26[1],col26[2],col26[3]), lty=2)
+lines(x.lsl, apply(f.seasurlev$rcp26$uniform$ns,2,mean), type='l', col=rgb(col26[1],col26[2],col26[3]), lty=3)
+lines(x.lsl, apply(f.seasurlev$rcp45$none$ns,2,mean), type='l', col=rgb(col45[1],col45[2],col45[3]), lty=1)
+lines(x.lsl, apply(f.seasurlev$rcp45$gamma$ns,2,mean), type='l', col=rgb(col45[1],col45[2],col45[3]), lty=2)
+lines(x.lsl, apply(f.seasurlev$rcp45$uniform$ns,2,mean), type='l', col=rgb(col45[1],col45[2],col45[3]), lty=3)
+lines(x.lsl, apply(f.seasurlev$rcp85$none$ns,2,mean), type='l', col=rgb(col85[1],col85[2],col85[3]), lty=1)
+lines(x.lsl, apply(f.seasurlev$rcp85$gamma$ns,2,mean), type='l', col=rgb(col85[1],col85[2],col85[3]), lty=2)
+lines(x.lsl, apply(f.seasurlev$rcp85$uniform$ns,2,mean), type='l', col=rgb(col85[1],col85[2],col85[3]), lty=3)
 
 axis(1,seq(0,5,0.5),lab=c("0","","1","","2","","3","","4","","5"), cex.axis=1.3)
 u <- par("usr")
@@ -914,23 +935,23 @@ lines(x.lsl, log10(apply(sf.seasurlev$rcp85$uniform$st,2,mean)), type='l',
       lty=3, col=rgb(mycol[6,1],mycol[6,2],mycol[6,3]), lwd=1.5)
 # non-stationary
 lines(x.lsl, log10(apply(sf.seasurlev$rcp26$none$ns,2,mean)), type='l',
-      lty=1, col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lwd=1.5)
+      lty=1, col=rgb(col26[1],col26[2],col26[3]), lwd=1.5)
 lines(x.lsl, log10(apply(sf.seasurlev$rcp26$gamma$ns,2,mean)), type='l',
-      lty=2, col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lwd=1.5)
+      lty=2, col=rgb(col26[1],col26[2],col26[3]), lwd=1.5)
 lines(x.lsl, log10(apply(sf.seasurlev$rcp26$uniform$ns,2,mean)), type='l',
-      lty=3, col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]), lwd=1.5)
+      lty=3, col=rgb(col26[1],col26[2],col26[3]), lwd=1.5)
 lines(x.lsl, log10(apply(sf.seasurlev$rcp45$none$ns,2,mean)), type='l',
-      lty=1, col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lwd=1.5)
+      lty=1, col=rgb(col45[1],col45[2],col45[3]), lwd=1.5)
 lines(x.lsl, log10(apply(sf.seasurlev$rcp45$gamma$ns,2,mean)), type='l',
-      lty=2, col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lwd=1.5)
+      lty=2, col=rgb(col45[1],col45[2],col45[3]), lwd=1.5)
 lines(x.lsl, log10(apply(sf.seasurlev$rcp45$uniform$ns,2,mean)), type='l',
-      lty=3, col=rgb(mycol[2,1],mycol[2,2],mycol[2,3]), lwd=1.5)
+      lty=3, col=rgb(col45[1],col45[2],col45[3]), lwd=1.5)
 lines(x.lsl, log10(apply(sf.seasurlev$rcp85$none$ns,2,mean)), type='l',
-      lty=1, col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]), lwd=1.5)
+      lty=1, col=rgb(col85[1],col85[2],col85[3]), lwd=1.5)
 lines(x.lsl, log10(apply(sf.seasurlev$rcp85$gamma$ns,2,mean)), type='l',
-      lty=2, col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]), lwd=1.5)
+      lty=2, col=rgb(col85[1],col85[2],col85[3]), lwd=1.5)
 lines(x.lsl, log10(apply(sf.seasurlev$rcp85$uniform$ns,2,mean)), type='l',
-      lty=3, col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]), lwd=1.5)
+      lty=3, col=rgb(col85[1],col85[2],col85[3]), lwd=1.5)
 
 # x-axis, ticks and text
 axis(1,seq(0,5,0.5),lab=c("0","","1","","2","","3","","4","","5"), cex.axis=1.3)
@@ -940,10 +961,10 @@ axis(2, at=seq(-3,0), label=parse(text=paste("10^", seq(-3,0), sep="")), las=1, 
 mtext('Survival function [1-CDF]', side = 2, line=2.8, cex=0.8);
 # add a panel label
 mtext(side=3, text=expression(bold('   b')), line=-1.2, cex=.9, adj=0);
-# add the 1:100, 1:500, 1:1000 levels
-lines(c(-4,6),c(-2,-2),lty=2,col='black'); text(0.8,-1.88,"1:100 level", cex=1.3)
-lines(c(-4,6),c(-log10(500),-log10(500)),lty=2,col='black'); text(0.6,-2.55,"1:500 level", cex=1.3);
-#lines(c(-4,6),c(-3,-3),lty=2,col='black'); text(0.1,-2.85,"1:1000 level", cex=1.3)
+# add the 1/100, 1/500, 1/1000 levels
+lines(c(-4,6),c(-2,-2),lty=2,col='black'); text(0.8,-1.88,"1/100 level", cex=1.3)
+lines(c(-4,6),c(-log10(500),-log10(500)),lty=2,col='black'); text(0.6,-2.55,"1/500 level", cex=1.3);
+#lines(c(-4,6),c(-3,-3),lty=2,col='black'); text(0.1,-2.85,"1/1000 level", cex=1.3)
 
 
 # TODO
@@ -955,7 +976,7 @@ plot( 9, 9, xaxt='n', yaxt='n', xaxs='i', yaxs='i', axes=FALSE, xlim=c(0,1),ylim
 
 legend(0.15,0.75,c("RCP2.6, stationary surge","RCP4.5, stationary surge","RCP8.5, stationary surge","RCP2.6, non-stationary surge","RCP4.5, non-stationary surge","RCP8.5, non-stationary surge","no FD","FD, gamma","FD, uniform"),
        lty=c(1,1,1,1,1,1,1,2,3), lwd=2, cex=1.2,
-       col=c(rgb(mycol[10,1],mycol[10,2],mycol[10,3]),rgb(mycol[8,1],mycol[8,2],mycol[8,3]),rgb(mycol[6,1],mycol[6,2],mycol[6,3]),rgb(mycol[13,1],mycol[13,2],mycol[13,3]),rgb(mycol[2,1],mycol[2,2],mycol[2,3]),rgb(mycol[11,1],mycol[11,2],mycol[11,3]),'black','black','black'),
+       col=c(rgb(mycol[10,1],mycol[10,2],mycol[10,3]),rgb(mycol[8,1],mycol[8,2],mycol[8,3]),rgb(mycol[6,1],mycol[6,2],mycol[6,3]),rgb(col26[1],col26[2],col26[3]),rgb(col45[1],col45[2],col45[3]),rgb(col85[1],col85[2],col85[3]),'black','black','black'),
        bty='n')
 
 dev.off()
@@ -997,7 +1018,7 @@ axis(1,c(1,10,1e2,1e3,1e4),lab=c("1","10","100","1,000","10,000"), cex.axis=1.1,
 mtext('Return period [years]', side=1, line=1.9, cex=1.1)
 axis(2,seq(1,18),lab=scen.names2, cex.axis=1.1, las=1, mgp=c(3,.6,0))
 mtext('Scenario', side=3, line=1.3, cex=1.1, adj=-.3)
-lines(c(100,100),c(-100,100),lty=1, lwd=1.5, col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]))   # Master Plan general safety
+lines(c(100,100),c(-100,100),lty=1, lwd=1.5, col=rgb(col85[1],col85[2],col85[3]))   # Master Plan general safety
 lines(c(500,500),c(-100,20.5),lty=5, lwd=1.5, col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]))   # Master Plan critical infrastructure
 lines(c(5000,5000),c(-100,19),lty=6, lwd=1.5, col=rgb(mycol[3,1],mycol[3,2],mycol[3,3])) # Dutch Perspective economically-efficient
 
@@ -1038,7 +1059,7 @@ axis(1,c(1,10,1e2,1e3,1e4),lab=c("1","10","100","1,000","10,000"), cex.axis=1.1,
 mtext('Return period [years]', side=1, line=1.9, cex=1.1)
 axis(2,seq(1,18),lab=scen.names2, cex.axis=1.1, las=1, mgp=c(3,.6,0))
 mtext('Scenario', side=3, line=1.3, cex=1.1, adj=-.3)
-lines(c(100,100),c(-100,100),lty=1, lwd=1.5, col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]))   # Master Plan general safety
+lines(c(100,100),c(-100,100),lty=1, lwd=1.5, col=rgb(col85[1],col85[2],col85[3]))   # Master Plan general safety
 lines(c(500,500),c(-100,20.5),lty=5, lwd=1.5, col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]))   # Master Plan critical infrastructure
 lines(c(5000,5000),c(-100,19),lty=6, lwd=1.5, col=rgb(mycol[3,1],mycol[3,2],mycol[3,3])) # Dutch Perspective economically-efficient
 
@@ -1070,7 +1091,7 @@ axis(1,c(1,10,1e2,1e3,1e4),lab=c("1","10","100","1,000","10,000"), cex.axis=1.1,
 mtext('Return period [years]', side=1, line=1.9, cex=1.1)
 axis(2,seq(1,18),lab=scen.names2, cex.axis=1.1, las=1, mgp=c(3,.6,0))
 mtext('Scenario', side=3, line=1.3, cex=1.1, adj=-.3)
-lines(c(100,100),c(-100,100),lty=1, lwd=1.5, col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]))   # Master Plan general safety
+lines(c(100,100),c(-100,100),lty=1, lwd=1.5, col=rgb(col85[1],col85[2],col85[3]))   # Master Plan general safety
 lines(c(500,500),c(-100,20.5),lty=5, lwd=1.5, col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]))   # Master Plan critical infrastructure
 lines(c(5000,5000),c(-100,19),lty=6, lwd=1.5, col=rgb(mycol[3,1],mycol[3,2],mycol[3,3])) # Dutch Perspective economically-efficient
 
@@ -1102,7 +1123,7 @@ axis(1,c(1,10,1e2,1e3,1e4),lab=c("1","10","100","1,000","10,000"), cex.axis=1.1,
 mtext('Return period [years]', side=1, line=1.9, cex=1.1)
 axis(2,seq(1,18),lab=scen.names2, cex.axis=1.1, las=1, mgp=c(3,.6,0))
 mtext('Scenario', side=3, line=1.3, cex=1.1, adj=-.3)
-lines(c(100,100),c(-100,100),lty=1, lwd=1.5, col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]))   # Master Plan general safety
+lines(c(100,100),c(-100,100),lty=1, lwd=1.5, col=rgb(col85[1],col85[2],col85[3]))   # Master Plan general safety
 lines(c(500,500),c(-100,20.5),lty=5, lwd=1.5, col=rgb(mycol[13,1],mycol[13,2],mycol[13,3]))   # Master Plan critical infrastructure
 lines(c(5000,5000),c(-100,19),lty=6, lwd=1.5, col=rgb(mycol[3,1],mycol[3,2],mycol[3,3])) # Dutch Perspective economically-efficient
 
