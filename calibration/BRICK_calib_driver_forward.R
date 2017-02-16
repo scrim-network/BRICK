@@ -313,7 +313,7 @@ require('adaptMCMC')
 library(adaptMCMC)						# use robust adaptive Metropolis
 accept.mcmc = 0.234						# Optimal as # parameters->infinity
 										# (Gelman et al, 1996; Roberts et al, 1997)
-niter.mcmc = 1e6						# number of iterations for MCMC
+niter.mcmc = 5e5						# number of iterations for MCMC
 gamma.mcmc = 0.5						# rate of adaptation (between 0.5 and 1, lower is faster adaptation)
 burnin = round(niter.mcmc*0.5)			# remove first ?? of chains for burn-in
 stopadapt.mcmc = round(niter.mcmc*1.0)	# stop adapting after ?? iterations? (niter*1 => don't stop)
@@ -380,7 +380,7 @@ save.image(file = "BRICK_calib_MCMC.RData")
 ## Diagnostic plots
 if(FALSE) {
 ## Check #1: History plots
-par(mfrow=c(5,5))
+par(mfrow=c(6,7))
 for (pp in 1:length(parnames)) {
 	plot(chain1[,pp], type="l", ylab=parnames[pp], xlab="Number of Runs", main="")
 }

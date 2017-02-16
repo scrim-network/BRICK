@@ -191,7 +191,9 @@ log.lik = function( parameters.in,
 
     # Grab the GSIC statistical parameters
 	sigma.gsic=parameters.in[match("sigma.gsic",parnames.in)]
-	rho.gsic  =parameters.in[match("rho.gsic"  ,parnames.in)]
+	#DEBUG
+    #rho.gsic  =parameters.in[match("rho.gsic"  ,parnames.in)]
+    rho.gsic <- 0.896
 
     # Normalize GSIC
 	itmp <- ind.norm.data[which(ind.norm.data[,1]=='gsic'),2]:ind.norm.data[which(ind.norm.data[,1]=='gsic'),3]
