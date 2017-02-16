@@ -476,6 +476,83 @@ tmp.out <- brickF(  tstep=tstep,
                     alpha.dais = parameters.in[match("alpha.dais",parnames.in)]
                     )
 
+##==============================================================================
+## Timing test, old vs new
+
+i <- 1
+
+Gs0.gsic <- brick.out[[i]]$gsic.out[1]
+V0.gsic <- parameters.in[match("V0.gsic",parnames.in)] +
+            (parameters.in[match("Gs0",parnames.in)] - brick.out[[i]]$gsic.out[1])
+V0.te <- brick.out[[i]]$te.out[1]
+V0.simple <- brick.out[[i]]$simple.out$Vgrl[1]
+
+niter <- 1e5
+
+t0.old <- proc.time()
+for (i in 1:niter){
+    # call old brick
+    old.out <- brick_model(parameters.in			= as.numeric(parameters.in),
+    		  			   parnames.in				= parnames.in,
+    					   forcing.in				= forcing,
+    					l.project					= l.project,
+    							slope.Ta2Tg.in		= slope.Ta2Tg,
+    							intercept.Ta2Tg.in= intercept.Ta2Tg,
+    							mod.time					= mod.time,
+    							ind.norm.data 		= ind.norm.data,
+    							ind.norm.sl 			= ind.norm,
+    							luse.brick 				= luse.brick,
+    							i0=i0
+    							)
+
+}
+t1.old <- proc.time()
+
+t0.new <- proc.time()
+for (i in 1:niter){
+    # call new brick
+    tmp.out <- brickF(  tstep=tstep,
+                        mod.time=mod.time,
+                        forcing.total = forcing.total,
+                        S.doeclim = parameters.in[match("S",parnames.in)],
+                        kappa.doeclim = parameters.in[match("kappa.doeclim",parnames.in)],
+                        T0.doeclim = parameters.in[match("T0",parnames.in)],
+                        H0.doeclim = parameters.in[match("H0",parnames.in)],
+                        beta0.gsic = parameters.in[match("beta0",parnames.in)],
+                        V0.gsic = V0.gsic,
+                        n.gsic = parameters.in[match("n",parnames.in)],
+                        Gs0.gsic = Gs0.gsic,
+                        a.simple = parameters.in[match("a.simple",parnames.in)],
+                        b.simple = parameters.in[match("b.simple",parnames.in)],
+                        alpha.simple = parameters.in[match("alpha.simple",parnames.in)],
+                        beta.simple = parameters.in[match("beta.simple",parnames.in)],
+                        V0.simple = V0.simple,
+                        a.te = parameters.in[match("a.te",parnames.in)],
+                        b.te = parameters.in[match("b.te",parnames.in)],
+                        invtau.te = parameters.in[match("invtau.te",parnames.in)],
+                        V0.te = V0.te,
+                        a.anto = parameters.in[match("anto.a",parnames.in)],
+                        b.anto = parameters.in[match("anto.b",parnames.in)],
+                        slope.Ta2Tg = slope.Ta2Tg,
+                        intercept.Ta2Tg = intercept.Ta2Tg,
+                        b0.dais = parameters.in[match("b0",parnames.in)],
+                        slope.dais = parameters.in[match("slope",parnames.in)],
+                        mu.dais = parameters.in[match("mu",parnames.in)],
+                        h0.dais = parameters.in[match("h0",parnames.in)],
+                        c.dais = parameters.in[match("c",parnames.in)],
+                        P0.dais = parameters.in[match("P0",parnames.in)],
+                        kappa.dais = parameters.in[match("kappa.dais",parnames.in)],
+                        nu.dais = parameters.in[match("nu",parnames.in)],
+                        f0.dais = parameters.in[match("f0",parnames.in)],
+                        gamma.dais = parameters.in[match("gamma",parnames.in)],
+                        alpha.dais = parameters.in[match("alpha.dais",parnames.in)]
+                        )
+}
+t1.new <- proc.time()
+
+
+##==============================================================================
+
 
 ##==============================================================================
 ## End

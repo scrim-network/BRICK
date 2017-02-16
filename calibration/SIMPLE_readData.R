@@ -35,6 +35,9 @@ obs.gis.err <- dat[1,15] # The error is +/- 30 Gt
 idx = compute_indices(obs.time=obs.gis.time, mod.time=mod.time)
 oidx.gis = idx$oidx; midx.gis = idx$midx
 
+itmp2 <- which(obs.gis.time==1960):which(obs.gis.time==1990)
+obs.gis <- obs.gis - mean(obs.gis[itmp2])
+
 ##==============================================================================
 ## End
 ##==============================================================================

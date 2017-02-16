@@ -1,6 +1,12 @@
 ##==============================================================================
+##	BRICK_parameterSetup.R
 ##
-## Define parameters and their prior ranges
+## Define parameters and their prior ranges. Note that these ranges are
+## informed using estimates from the first BRICK v0.1 set of calibrated runs.
+## Those simulations started each submodel wherever their initial conditions are
+## specified (most in 1961). Then the model was integrated forward (to match)
+## observational data) and backward (to obtain estimates of initial conditions
+## in 1850). These are informed from the backward integration estimates.
 ##
 ## Note1 -- when defining the names, be sure to use the names which are looked up
 ##			 -- in the BRICK model code that separates the parameters for each model
@@ -28,11 +34,11 @@
 parnames.doeclim   =NULL; p0.doeclim       =NULL; bound.lower.doeclim=NULL;
 bound.upper.doeclim=NULL; step.mcmc.doeclim=NULL; index.model.doeclim=NULL;
 if (luse.doeclim) {
-	parnames.doeclim   =c("S" ,"kappa.doeclim","alpha.doeclim","T0"  ,"H0" ,"sigma.T","sigma.H","rho.T","rho.H")	# parameters names
-	p0.doeclim		     =c(3.1 , 3.5   , 1.1           , -0.06, -33 , 0.1     , 2       , 0.55  , 0.9   )	# initial parameter guesses
+	parnames.doeclim   =c("S.doeclim","kappa.doeclim","alpha.doeclim","T0.doeclim","H0.doeclim","sigma.T","sigma.H","rho.T","rho.H")	# parameters names
+	p0.doeclim		   =c(3.1 , 3.5   , 1.1           , -0.06, -33 , 0.1     , 2       , 0.55  , 0.9   )	# initial parameter guesses
 	bound.lower.doeclim=c(0.1 , 0.1   , 0             , -0.3 , -50 , 0.05    , 0.1     , 0     , 0     )	# prior range lower bounds
 	bound.upper.doeclim=c(10  , 4     , 2             ,  0.3 ,   0 , 5       , 10      , 0.999 , 0.999 )	# prior range upper bounds
-	step.mcmc.doeclim	 =c(0.16, 0.17  ,0.025          ,0.003 , 0.9 , 5e-4    , 0.025   , 0.007 , 0.006 )	# step size for parameters in MCMC (proposals)
+	step.mcmc.doeclim  =c(0.16, 0.17  ,0.025          ,0.003 , 0.9 , 5e-4    , 0.025   , 0.007 , 0.006 )	# step size for parameters in MCMC (proposals)
 	index.model.doeclim=c(1,2,3,4,5)		# which are model parameters? (index within parnames.doeclim)
 }
 
@@ -40,10 +46,10 @@ if (luse.doeclim) {
 parnames.gsic   =NULL; p0.gsic       =NULL; bound.lower.gsic=NULL;
 bound.upper.gsic=NULL; step.mcmc.gsic=NULL; index.model.gsic=NULL;
 if (luse.gsic) {
-	parnames.gsic   =c("beta0","V0.gsic","n"  ,"Gs0"    , "sigma.gsic", "rho.gsic")	# parameters names
-	p0.gsic		      =c(0.00058, 0.41    , 0.82, 0.0     , 0.00045     , 0.5       )	# initial parameter guesses
-	bound.lower.gsic=c(0      , 0.3     , 0.55, -0.0041 , 0           , -0.999    )	# prior range lower bounds
-	bound.upper.gsic=c(0.041  , 0.5     , 1.0 ,  0.0041 , 0.00150     ,  0.999    )	# prior range upper bounds
+	parnames.gsic   =c("beta0.gsic","V0.gsic","n.gsic","Gs0.gsic", "sigma.gsic", "rho.gsic")	# parameters names
+	p0.gsic		    =c(0.00058, 0.41    , 0.82, 0.0     , 0.00045     , 0.5       )	# initial parameter guesses
+	bound.lower.gsic=c(0      , 0.31    , 0.55, -0.037	, 0           , -0.999    )	# prior range lower bounds
+	bound.upper.gsic=c(0.041  , 0.53    , 1.0 ,  0.024	, 0.00150     ,  0.999    )	# prior range upper bounds
 	step.mcmc.gsic	=c(0.01   , 0.01    , 0.1 , 0.01    , 0.0001      , 0.01      )	# step size for parameters in MCMC (proposals)
 	index.model.gsic=c(1,2,3,4)			# which are model parameters? (index within parnames.gsic)
 }
@@ -52,10 +58,10 @@ if (luse.gsic) {
 parnames.te   =NULL; p0.te       =NULL; bound.lower.te=NULL;
 bound.upper.te=NULL; step.mcmc.te=NULL; index.model.te=NULL;
 if (luse.te) {
-	parnames.te   =c("a.te","b.te" ,"invtau.te" ,"TE0"  )        # parameters names
-	p0.te		      =c(0.3616, 0.5   , 1/200      , 0.0   )        # initial parameter guesses
-	bound.lower.te=c(0.0   , 0.0   , 0          ,-0.0484)        # prior range lower bounds
-	bound.upper.te=c(0.8595, 2.193 , 1          , 0.0484)        # prior range upper bounds
+	parnames.te   =c("a.te","b.te" ,"invtau.te" ,"V0.te")        # parameters names
+	p0.te		  =c(0.3616, 0.5   , 1/200      , 0.0   )        # initial parameter guesses
+	bound.lower.te=c(0.0   , 0.0   , 0          ,-0.046	)        # prior range lower bounds
+	bound.upper.te=c(0.8595, 2.193 , 1          , 0.074	)        # prior range upper bounds
 	step.mcmc.te	=0.05*(bound.upper.te-bound.lower.te) # set size for parameters in MCMC (proposals)
 	index.model.te=c(1,2,3,4)			# which are model parameters? (index within parnames.te)
 }
@@ -64,10 +70,10 @@ if (luse.te) {
 parnames.simple   =NULL; p0.simple       =NULL; bound.lower.simple=NULL;
 bound.upper.simple=NULL; step.mcmc.simple=NULL; index.model.simple=NULL;
 if (luse.simple) {
-	parnames.simple   =c("a.simple" ,"b.simple" ,"alpha.simple","beta.simple","V0"      ,"sigma.simple") # parameters names
-	p0.simple         =c(-0.825     , 7.36      , 1.63e-4      , 2.85e-5     , 7.36     , 5e-4         ) # initial parameter guesses
-	bound.lower.simple=c( -4        , 5.888     , 0            , 0           , 7.16     , 0            ) # prior range lower bounds
-	bound.upper.simple=c( -1e-3     , 8.832     , 1e-3         , 1e-3        , 7.56     , 0.002        ) # prior range upper bounds
+	parnames.simple   =c("a.simple" ,"b.simple" ,"alpha.simple","beta.simple","V0.simple","sigma.simple") # parameters names
+	p0.simple         =c(-0.825     , 7.36      , 1.63e-4      , 2.85e-5     , 7.38     , 5e-4         ) # initial parameter guesses
+	bound.lower.simple=c( -4        , 5.888     , 0            , 0           , 7.15     , 0            ) # prior range lower bounds
+	bound.upper.simple=c( -1e-3     , 8.832     , 1e-3         , 1e-3        , 7.58     , 0.002        ) # prior range upper bounds
 	step.mcmc.simple  =c( 0.2       , 0.05      , 1e-5         , 1e-5        , 0.05     , 0.0001       ) # step sizes for initial MCMC
 	index.model.simple=c(1,2,3,4,5)			# which are model parameters? (index within parnames.simple)
 }
@@ -77,9 +83,9 @@ parnames.dais   =NULL; p0.dais       =NULL; bound.lower.dais=NULL;
 bound.upper.dais=NULL; step.mcmc.dais=NULL; index.model.dais=NULL;
 if (luse.dais) {
 	parnames.dais   =c('anto.a','anto.b','gamma','alpha.dais','mu'  ,'nu'  ,'P0' ,'kappa.dais','f0','h0'  ,'c'  , 'b0','slope','var.dais' ) # parameter names
-	p0.dais         =c( 0.1574 , 0.6677 ,  2    , 0.35       , 8.7  , 0.012, 0.35, 0.04       , 1.2, 1471 , 95  , 775 , 0.0006,0.0004656  )
+	p0.dais         =c( 0.1497 , 0.6263 ,  2    , 0.35       , 8.7  , 0.012, 0.35, 0.04       , 1.2, 1471 , 95  , 775 , 0.0006,0.0004656  )
 	bound.lower.dais=c( 0.0    , 0      ,  0.5  , 0          , 7.05 , 0.003,0.026, 0.025      , 0.6, 735.5, 47.5, 740 , 4.5e-4,0          )
-	bound.upper.dais=c( 1.0    , 2      ,  4.25 , 1          , 13.65, 0.015, 1.5 , 0.085      , 1.8,2206.5,142.5, 820 , 7.5e-4,2          )
+	bound.upper.dais=c( 0.33   , 1.53   ,  4.25 , 1          , 13.65, 0.015, 1.5 , 0.085      , 1.8,2206.5,142.5, 820 , 7.5e-4,2          )
 	step.mcmc.dais	=0.05*(bound.upper.dais-bound.lower.dais) # set size for parameters in MCMC (proposals)
 	index.model.dais=c(1,2,3,4,5,6,7,8,9,10,11,12,13)			# which are model parameters? (index within parnames.dais)
 }

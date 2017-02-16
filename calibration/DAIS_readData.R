@@ -79,7 +79,11 @@ midx.sl = which(date==(SL.time[1]-2000)):which(date==(SL.time[length(SL.time)]-2
 ## BRICK model.
 
 dat = read.table("../data/HadCRUT.4.4.0.0.annual_ns_avg.txt")
-Tg = dat[,2]-mean(dat[1:20,2])
+#Tg = dat[,2]-mean(dat[1:20,2]) # original, BRICK v0.1
+Tg = dat[,2]-dat[1,2]           # modified, BRICK v0.2 (fully-forward, needs to be
+                                # relative to 1850)
+# and Ta needs to have mean(1961-1990)=-18 deg C (this is true from Shaffer's
+# original forcing, which we use at Ta above)
 Tg.time = dat[,1]
 i1997 = which(Tg.time==1997) # end fit at 1997 because Ta is obs after that
 ibeg=which(date==-150); iend=ibeg+length(Tg.time[1:i1997])-1;
@@ -89,6 +93,39 @@ slope.Ta2Tg = fit$coefficients[2]
 Tg.recon = fit$coefficients[1] + fit$coefficients[2]*Ta
       # Tg.recon is now an appropriately scaled global surface temperature anomaly
       # akin to output from DOECLIM.
+
+##==============================================================================
+
+## Set up trends from IPCC AR5 for fitting AIS simulation.
+## trends.ais = [Column 1=trend ; Column 2-3=90% window ; Column 4-5=beginning/ending year ;
+##               Column 6-7=beginning/ending model indices for trend period]
+## Note: IPCC trends are through 2010, but for the hindcast calibration, the
+## forcing data go through 2009.
+trends.ais = mat.or.vec( 3 , 7) # each row a differnet trend
+trends.ais[1,1:5] = c( 0.08 , -0.1 , 0.27 , 1992 , 2001 ) # trends in mm/y
+trends.ais[2,1:5] = c( 0.40 , 0.20 , 0.61 , 2002 , 2009 )
+trends.ais[3,1:5] = c( 0.27 , 0.16 , 0.38 , 1993 , 2009 )
+
+## Compute the indices for the model to compare trends
+for (i in 1:nrow(trends.ais)) {
+  idx = compute_indices(obs.time=(trends.ais[i,4]:trends.ais[i,5]) , mod.time=mod.time)
+  trends.ais[i,6:7] = c(idx$midx[1],(idx$midx[length(idx$midx)]))
+}
+
+## Also set up Shepherd et al 2012 window (a la Ruckert et al 2017)
+ais.rate = abs(-71/360)/1000
+time.years = 2002-1992      # using the midpoint of the 19-year interval
+obs.ais <- ais.rate*time.years
+obs.ais.time <- 2002
+oidx.ais <- 1
+midx.ais <- which(mod.time==obs.ais.time)
+
+ais.rate.error = abs(-53/360)/1000     #1-sigma error
+obs.ais.err = sqrt(time.years)*ais.rate.error #1-sigma error
+        # (*sqrt(10) because 10 years of potentially accumulated error:
+        #  total error^2 = year 1 error^2 + year 2 error^2 + ... year 10 error^2
+        #                = 10*year X error^2)
+
 
 ##==============================================================================
 ## End

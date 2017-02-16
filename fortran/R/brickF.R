@@ -21,9 +21,10 @@
 #
 # Input forcing:
 #
-#   forcing             CO2 (RCP8.5) and aerosol, non-CO2 radiative forcings
+#   forcing.raw         CO2 (RCP8.5) and aerosol, non-CO2 radiative forcings
 #                       (co2,nonco2.land/ocean,aerosol.land/ocean,solar.land/ocean,
 #                       volc.land/ocean,tot.land,tot.ocean)
+#	l.project			logical - projections (RCP) or historical forcing?
 #
 # Other input:
 #
@@ -31,6 +32,8 @@
 #                       and global surface temperature anomalies
 #   intercept.Ta2Tg     intercept of this linear regression (if slope and intercept
 #                       are not provided, assumed to be Antarctic temperature already)
+#						NB: these are fitted Tg relative to 1850 and Ta relative
+#						to 1961-1990 mean = -18 deg C (Shaffer 2014)
 #
 #===============================================================================
 # Input parameters:
@@ -39,6 +42,7 @@
 # -- DOECLIM --
 #   S           climate sensitivity (inc temp from 2xCO2) [deg C]
 #   kappa       ocean vertical heat diffusivity [cm2/s]
+#	alpha		aerosol scaling factor [-]
 #	T0			uncertain initial condition (offset), temperature [deg C]
 #	H0			uncertain initial condition (offset), ocean heat uptake [10^22 J]
 #
@@ -174,9 +178,11 @@ if(.Platform$OS.type == "unix") {
 brickF <- function(
 	tstep,
     mod.time,
-    forcing.total,
+    forcing.raw,
+	l.project,
     S.doeclim = 3.1,
     kappa.doeclim = 3.5,
+	alpha.doeclim = 1.1,
 	T0.doeclim = 0,
 	H0.doeclim = 0,
     beta0.gsic = 0.000577,
@@ -218,6 +224,13 @@ brickF <- function(
     lf = -1.18,
     includes_dSLais = 0
 ){
+
+forcing.total <- forcing_total(forcing=forcing.raw,
+							  alpha.doeclim=alpha.doeclim,
+                              l.project=l.project,
+							  begyear=mod.time[1],
+							  endyear=mod.time[length(mod.time)]
+							  )
 
   # determine series length
   ns <- length(forcing.total)
