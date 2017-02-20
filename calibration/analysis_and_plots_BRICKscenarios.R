@@ -31,7 +31,7 @@ library(ncdf4)
 #filename.brick.nofd = '../output_model/BRICK-model_physical_fd-gamma_08Dec2016.nc'#no-FD case uses gamma, without disintegration
 #filename.brick.uniform = '../output_model/BRICK-model_physical_fd-uniform_08Dec2016.nc'
 #filename.brick.gamma = '../output_model/BRICK-model_physical_fd-gamma_08Dec2016.nc'
-filename.brick.allslr = '../output_model/BRICK-model_physical_allslr_04Feb2017.nc'
+filename.brick.allslr = '../output_model/BRICK-model_physical_allslr_20Feb2017.nc'
 
 ## File name for the Van Dantzig model output (netCDF4)
 ## Each of these also has x3 RCP scenarios, x2 storm surge scenarios
@@ -713,7 +713,13 @@ colnames(return.period.fragile60) <- c('Scenario','ReturnPeriod')
 colnames(return.period.fragile80) <- c('Scenario','ReturnPeriod')
 
 ##==============================================================================
+##==============================================================================
+## Sort out Sobol sensitivity analysis for drivers of flood risk
 
+source('BRICK_nola_scenarios_sobol.R')
+
+##==============================================================================
+##==============================================================================
 
 
 

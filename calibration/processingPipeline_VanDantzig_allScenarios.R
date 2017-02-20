@@ -38,9 +38,9 @@ rm(list=ls())
 ## Input file names from previous parameter sampling/calibration/simulation
 
 ## Sea-level rise projections
-filename.allslr <- "../output_model/BRICK-model_physical_allslr_04Feb2017.nc"
-#filename.gamma <- "../output_model/BRICK-fastdyn_physical_gamma_31Jan2017.nc"
-#filename.uniform <- "../output_model/BRICK-fastdyn_physical_uniform_31Jan2017.nc"
+#filename.allslr <- "../output_model/BRICK-model_physical_allslr_04Feb2017.nc"
+filename.gamma <- "../output_model/BRICK-fastdyn_physical_gamma_31Jan2017.nc"
+filename.uniform <- "../output_model/BRICK-fastdyn_physical_uniform_31Jan2017.nc"
 
 ## GEV parameters, fit from tide gauge data
 filename.gevstat <- '../output_calibration/BRICK_GEVsample-AnnMean_07Feb2017.nc'
@@ -133,14 +133,22 @@ if(exists('filename.allslr')) {
   slr.rcp26.gamma <- ncvar_def('LocalSeaLevel_gamma_RCP26', '', list(dim.time,dim.ensemble), -999)
   slr.rcp45.gamma <- ncvar_def('LocalSeaLevel_gamma_RCP45', '', list(dim.time,dim.ensemble), -999)
   slr.rcp85.gamma <- ncvar_def('LocalSeaLevel_gamma_RCP85', '', list(dim.time,dim.ensemble), -999)
+  slr.rcp26.gamma.nofd <- ncvar_def('LocalSeaLevel_gamma_nofd_RCP26', '', list(dim.time,dim.ensemble), -999)
+  slr.rcp45.gamma.nofd <- ncvar_def('LocalSeaLevel_gamma_nofd_RCP45', '', list(dim.time,dim.ensemble), -999)
+  slr.rcp85.gamma.nofd <- ncvar_def('LocalSeaLevel_gamma_nofd_RCP85', '', list(dim.time,dim.ensemble), -999)
   slr.rcp26.uniform <- ncvar_def('LocalSeaLevel_uniform_RCP26', '', list(dim.time,dim.ensemble), -999)
   slr.rcp45.uniform <- ncvar_def('LocalSeaLevel_uniform_RCP45', '', list(dim.time,dim.ensemble), -999)
   slr.rcp85.uniform <- ncvar_def('LocalSeaLevel_uniform_RCP85', '', list(dim.time,dim.ensemble), -999)
+  slr.rcp26.uniform.nofd <- ncvar_def('LocalSeaLevel_uniform_nofd_RCP26', '', list(dim.time,dim.ensemble), -999)
+  slr.rcp45.uniform.nofd <- ncvar_def('LocalSeaLevel_uniform_nofd_RCP45', '', list(dim.time,dim.ensemble), -999)
+  slr.rcp85.uniform.nofd <- ncvar_def('LocalSeaLevel_uniform_nofd_RCP85', '', list(dim.time,dim.ensemble), -999)
   time.proj <- ncvar_def('time_proj', '', list(dim.time), -999)
   outnc <- nc_create(filename.slrout,
                      list(slr.rcp26.none, slr.rcp45.none, slr.rcp85.none,
                           slr.rcp26.gamma, slr.rcp45.gamma, slr.rcp85.gamma,
+                          slr.rcp26.gamma.nofd, slr.rcp45.gamma.nofd, slr.rcp85.gamma.nofd,
                           slr.rcp26.uniform, slr.rcp45.uniform, slr.rcp85.uniform,
+                          slr.rcp26.uniform.nofd, slr.rcp45.uniform.nofd, slr.rcp85.uniform.nofd,
                           time.proj))
   ncvar_put(outnc, slr.rcp26.none, slr$rcp26$none)
   ncvar_put(outnc, slr.rcp45.none, slr$rcp45$none)
@@ -148,9 +156,15 @@ if(exists('filename.allslr')) {
   ncvar_put(outnc, slr.rcp26.gamma, slr$rcp26$gamma)
   ncvar_put(outnc, slr.rcp45.gamma, slr$rcp45$gamma)
   ncvar_put(outnc, slr.rcp85.gamma, slr$rcp85$gamma)
+  ncvar_put(outnc, slr.rcp26.gamma.nofd, slr.nofd$rcp26$gamma)
+  ncvar_put(outnc, slr.rcp45.gamma.nofd, slr.nofd$rcp45$gamma)
+  ncvar_put(outnc, slr.rcp85.gamma.nofd, slr.nofd$rcp85$gamma)
   ncvar_put(outnc, slr.rcp26.uniform, slr$rcp26$uniform)
   ncvar_put(outnc, slr.rcp45.uniform, slr$rcp45$uniform)
   ncvar_put(outnc, slr.rcp85.uniform, slr$rcp85$uniform)
+  ncvar_put(outnc, slr.rcp26.uniform.nofd, slr.nofd$rcp26$uniform)
+  ncvar_put(outnc, slr.rcp45.uniform.nofd, slr.nofd$rcp45$uniform)
+  ncvar_put(outnc, slr.rcp85.uniform.nofd, slr.nofd$rcp85$uniform)
   ncvar_put(outnc, time.proj, mod.time)
   nc_close(outnc)
 }
