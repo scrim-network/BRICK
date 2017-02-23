@@ -68,7 +68,8 @@ source('../calibration/TE_readData.R')			# read TE data
 
 ## Estimate land water storage accounting in global mean sea level budget.
 ## Subtract these contributions off of the GMSL data, and add errors in quadr.
-source('BRICK_estimateLandWater_IPCC.R')
+#source('BRICK_estimateLandWater_IPCC.R')
+source('BRICK_estimateLandWater_IPCC_normEarly.R')
 
 ##==============================================================================
 
@@ -109,6 +110,7 @@ luse.gsic     = TRUE    # glaciers and small ice caps contribution to SLR
 luse.te       = TRUE    # thermosteric expansion contribution to SLR
 luse.simple   = TRUE    # Greenland ice sheet model
 luse.dais     = TRUE    # Antarctic ice sheet model
+luse.gmsl     = TRUE
 luse.brick = cbind(luse.doeclim, luse.gsic, luse.te, luse.simple, luse.dais)
 
 ##==============================================================================
@@ -124,8 +126,8 @@ require('DEoptim')
 library(DEoptim)
 source('../calibration/BRICK_DEoptim.R')
 p0.deoptim=p0								# initialize optimized initial parameters
-niter.deoptim=200					  		# number of iterations for DE optimization
-NP.deoptim=11*length(index.model)			# population size for DEoptim (do at least 10*[N parameters])
+niter.deoptim=250					  		# number of iterations for DE optimization
+NP.deoptim=15*length(index.model)			# population size for DEoptim (do at least 10*[N parameters])
 F.deoptim=0.8								# as suggested by Storn et al (2006)
 CR.deoptim=0.9								# as suggested by Storn et al (2006)
 outDEoptim <- DEoptim(minimize_residuals_brick, bound.lower[index.model], bound.upper[index.model],
@@ -295,7 +297,13 @@ print(paste('scale.invtau=',scale.invtau,' (0.00275?)'))
 ##==============================================================================
 ## Set up and run the MCMC calibration
 
+## Get the DAIS beta prior distributions
+source('../calibration/DAIS_priors.R')
 
+## Get the other prior distirbutions
+#source('../calibration/scratch_BRICK_testTightCoupler_findInitialValues.R')
+
+library(pscl)
 
 # 	xx   xx  xxxxx  xxxxx    xxxxx       xx    xx  xxxxxxx  xx          xx  xx
 #	xx   xx  xx     xx  xx   xx          xxxx  xx  xx   xx  xx          xx  xx
@@ -303,6 +311,11 @@ print(paste('scale.invtau=',scale.invtau,' (0.00275?)'))
 #	xx   xx  xx     xx  xx   xx          xx  xxxx  xx   xx    xx xxxx xx
 #	xx   xx  xxxxx  xx   xx  xxxxx       xx    xx  xxxxxxx     xxx  xxx     xx
 
+#TESTING
+if(FALSE){
+# 1992-2001 and 2002-2009; cut out 1993-2009 since it must be highly correlated with these other ones
+	if(nrow(trends.ais)==3) {trends.ais <- trends.ais[1:2,]}
+}
 
 
 ## Source the statistical models
@@ -310,17 +323,17 @@ source('../calibration/BRICK_assimLikelihood_forward.R')
 
 ## MCMC calibration
 require('adaptMCMC')
-library(adaptMCMC)						# use robust adaptive Metropolis
-accept.mcmc = 0.234						# Optimal as # parameters->infinity
-										# (Gelman et al, 1996; Roberts et al, 1997)
-niter.mcmc = 5e5						# number of iterations for MCMC
-gamma.mcmc = 0.5						# rate of adaptation (between 0.5 and 1, lower is faster adaptation)
-burnin = round(niter.mcmc*0.5)			# remove first ?? of chains for burn-in
-stopadapt.mcmc = round(niter.mcmc*1.0)	# stop adapting after ?? iterations? (niter*1 => don't stop)
+library(adaptMCMC)                      # use robust adaptive Metropolis
+accept.mcmc = 0.234                     # Optimal as # parameters->infinity
+                                        # (Gelman et al, 1996; Roberts et al, 1997)
+niter.mcmc = 1e4                        # number of iterations for MCMC
+gamma.mcmc = 0.5                        # rate of adaptation (between 0.5 and 1, lower is faster adaptation)
+burnin = round(niter.mcmc*0.5)          # remove first ?? of chains for burn-in
+stopadapt.mcmc = round(niter.mcmc*1.0)  # stop adapting after ?? iterations? (niter*1 => don't stop)
 
 ##==============================================================================
 ## Actually run the calibration
-if(FALSE){
+if(TRUE){
 t.beg=proc.time()											# save timing (running millions of iterations so best to have SOME idea...)
 amcmc.out1 = MCMC(log.post, niter.mcmc, p0.deoptim, scale=step.mcmc, adapt=TRUE, acc.rate=accept.mcmc,
 					gamma=gamma.mcmc               , list=TRUE                  , n.start=round(0.01*niter.mcmc)    ,
@@ -329,31 +342,36 @@ amcmc.out1 = MCMC(log.post, niter.mcmc, p0.deoptim, scale=step.mcmc, adapt=TRUE,
 					ind.norm.data=ind.norm.data    , ind.norm.sl=ind.norm.sl    , mod.time=mod.time                 ,
 					oidx = oidx.all                , midx = midx.all            , obs=obs.all                       ,
 					obs.err = obs.err.all          , trends.te = trends.te      , trends.ais = trends.ais			,
-					bound.lower.in=bound.lower     , bound.upper.in=bound.upper , shape.in=shape.invtau      		,
-					scale.in=scale.invtau          , rho.simple.in=rho.simple.fixed, sigma.simple.in=sigma.simple.fixed,
-					luse.brick=luse.brick)
+					bound.lower=bound.lower        , bound.upper=bound.upper    , shape.invtau=shape.invtau      	,
+					scale.invtau=scale.invtau      , rho.simple.fixed=rho.simple.fixed, sigma.simple.fixed=sigma.simple.fixed,
+					luse.brick=luse.brick          , dais.priors=dais.priors    , gamma_slope_P0.prior.fit=gamma_slope_P0.prior.fit,
+					c_h0.prior.fit=c_h0.prior.fit  , te.prior.fit=te.prior.fit  , anto.prior.fit=anto.prior.fit     ,
+					simple.prior.fit=simple.prior.fit)
 t.end=proc.time()											# save timing
 chain1 = amcmc.out1$samples
 }
 
 ## Extend and run more MCMC samples?
 if(FALSE){
-t.beg=proc.time()
+t.beg=proc.time()		## NOTE!! CHECK IF YOU NEED TO EXTEND AN ALREADY EXTENDED CHAIN!!! ##
 amcmc.extend1 = MCMC.add.samples(amcmc.out1, niter.mcmc,
 					parnames.in=parnames           , forcing.raw=forcing        , l.project=l.project          		,
 					slope.Ta2Tg=slope.Ta2Tg		   , intercept.Ta2Tg=intercept.Ta2Tg, tstep=tstep					,
 					ind.norm.data=ind.norm.data    , ind.norm.sl=ind.norm.sl    , mod.time=mod.time                 ,
 					oidx = oidx.all                , midx = midx.all            , obs=obs.all                       ,
 					obs.err = obs.err.all          , trends.te = trends.te      , trends.ais = trends.ais			,
-					bound.lower.in=bound.lower     , bound.upper.in=bound.upper , shape.in=shape.invtau      		,
-					scale.in=scale.invtau          , rho.simple.in=rho.simple.fixed, sigma.simple.in=sigma.simple.fixed,
-					luse.brick=luse.brick)
+					bound.lower=bound.lower        , bound.upper=bound.upper    , shape.invtau=shape.invtau      	,
+					scale.invtau=scale.invtau      , rho.simple.fixed=rho.simple.fixed, sigma.simple.fixed=sigma.simple.fixed,
+					luse.brick=luse.brick          , dais.priors=dais.priors    , gamma_slope_P0.prior.fit=gamma_slope_P0.prior.fit,
+					c_h0.prior.fit=c_h0.prior.fit  , te.prior.fit=te.prior.fit  , anto.prior.fit=anto.prior.fit     ,
+					simple.prior.fit=simple.prior.fit)
 t.end=proc.time()
 chain1 = amcmc.extend1$samples
+amcmc.save <- amcmc.extend1			# just in case...
 }
 
 ## If you want to run 2 (or more) chains in parallel (save time, more sampling)
-if(TRUE){
+if(FALSE){
 t.beg=proc.time()										# save timing (running millions of iterations so best to have SOME idea...)
 amcmc.par1 = MCMC.parallel(log.post, niter.mcmc, p0.deoptim, n.chain=4, n.cpu=4,
 					dyn.libs=c('../fortran/brick.so','../fortran/doeclim.so','../fortran/brick_te.so','../fortran/gsic_magicc.so','../fortran/simple.so'),
@@ -364,9 +382,11 @@ amcmc.par1 = MCMC.parallel(log.post, niter.mcmc, p0.deoptim, n.chain=4, n.cpu=4,
 					ind.norm.data=ind.norm.data    , ind.norm.sl=ind.norm.sl    , mod.time=mod.time                 ,
 					oidx = oidx.all                , midx = midx.all            , obs=obs.all                       ,
 					obs.err = obs.err.all          , trends.te = trends.te      , trends.ais = trends.ais			,
-					bound.lower.in=bound.lower     , bound.upper.in=bound.upper , shape.in=shape.invtau      		,
-					scale.in=scale.invtau          , rho.simple.in=rho.simple.fixed, sigma.simple.in=sigma.simple.fixed,
-					luse.brick=luse.brick)
+					bound.lower=bound.lower        , bound.upper=bound.upper    , shape.invtau=shape.invtau      	,
+					scale.invtau=scale.invtau      , rho.simple.fixed=rho.simple.fixed, sigma.simple.fixed=sigma.simple.fixed,
+					luse.brick=luse.brick          , dais.priors=dais.priors    , gamma_slope_P0.prior.fit=gamma_slope_P0.prior.fit,
+					c_h0.prior.fit=c_h0.prior.fit  , te.prior.fit=te.prior.fit  , anto.prior.fit=anto.prior.fit     ,
+					simple.prior.fit=simple.prior.fit)
 t.end=proc.time()											# save timing
 chain1=amcmc.par1[[1]]$samples
 chain2=amcmc.par1[[2]]$samples
@@ -380,8 +400,13 @@ save.image(file = "BRICK_calib_MCMC.RData")
 ## Diagnostic plots
 if(FALSE) {
 ## Check #1: History plots
-par(mfrow=c(6,7))
+par(mfrow=c(7,7))
 for (pp in 1:length(parnames)) {
+	plot(chain1[,pp], type="l", ylab=parnames[pp], xlab="Number of Runs", main="")
+}
+# laptop screen version
+par(mfrow=c(4,5))
+for (pp in 1:20) {
 	plot(chain1[,pp], type="l", ylab=parnames[pp], xlab="Number of Runs", main="")
 }
 }
@@ -403,12 +428,12 @@ gr.stat = rep(NA,length(niter.test))
 ## converged. It is only after the chains are converged that you should use the
 ## parameter values as posterior draws, for analysis.
 for (i in 1:length(niter.test)){
-  mcmc1 = as.mcmc(chain1[1:niter.test[i],])
-  mcmc2 = as.mcmc(chain2[1:niter.test[i],])
+	mcmc1 = as.mcmc(chain1[1:niter.test[i],])
+	mcmc2 = as.mcmc(chain2[1:niter.test[i],])
 	mcmc3 = as.mcmc(chain3[1:niter.test[i],])
 	mcmc4 = as.mcmc(chain4[1:niter.test[i],])
-  mcmc_chain_list = mcmc.list(list(mcmc1, mcmc2, mcmc3, mcmc4))
-  gr.stat[i] = gelman.diag(mcmc_chain_list)[2]
+	mcmc_chain_list = mcmc.list(list(mcmc1, mcmc2, mcmc3, mcmc4))
+	gr.stat[i] = gelman.diag(mcmc_chain_list)[2]
 }
 
 ## Plot GR statistics as a function of iterations, decide where to cut off

@@ -126,22 +126,29 @@ minimize_residuals_brick = function(
 
 	# TE contribution
 	if(luse.brick[,"luse.te"]) {
-    	# Note 1: the trends from IPCC are in mm/year, and model output is m
-    	# Note 2: these calculate the least squares regression slope coefficients. It
-    	# is more than twice as fast to calcualte by hand like this than to use R's
-    	# "lm(...)" function.
-    	# Note 3: Need 1000*trends.mod because they're in meters, but trends.te is mm
-		# Note 4: No normalization needed, because these are trends (slopes)
+		# Check SLR_TE < SLR total
+		sl.resid.te <- (obs$sl[oidx$sl] - mean(obs$sl[oidx$sl[1:20]])) -
+		               (brick.out$sl_te_out[midx$sl] - mean(brick.out$sl_te_out[midx$sl[1:20]]))
+	    if(all(sl.resid.te[20:length(sl.resid.te)] > 0)){
+			# Note 1: the trends from IPCC are in mm/year, and model output is m
+	    	# Note 2: these calculate the least squares regression slope coefficients. It
+	    	# is more than twice as fast to calcualte by hand like this than to use R's
+	    	# "lm(...)" function.
+	    	# Note 3: Need 1000*trends.mod because they're in meters, but trends.te is mm
+			# Note 4: No normalization needed, because these are trends (slopes)
 
-		trends.mod = rep(0, nrow(trends.te))
-		for (i in 1:nrow(trends.te)) {
-			x = seq(trends.te[i,6],trends.te[i,7]);                 barx = mean(x);
-			y = brick.out$sl_te_out[trends.te[i,6]:trends.te[i,7]]; bary = mean(y);
-	  		trends.mod[i] = sum( (x-rep(barx,length(x)))*(y-rep(bary,length(y))))/sum( (x-rep(barx,length(x)))^2 )
+			trends.mod = rep(0, nrow(trends.te))
+			for (i in 1:nrow(trends.te)) {
+				x = seq(trends.te[i,6],trends.te[i,7]);                 barx = mean(x);
+				y = brick.out$sl_te_out[trends.te[i,6]:trends.te[i,7]]; bary = mean(y);
+		  		trends.mod[i] = sum( (x-rep(barx,length(x)))*(y-rep(bary,length(y))))/sum( (x-rep(barx,length(x)))^2 )
+			}
+		  	resid.trends = 1000*trends.mod - trends.te[,1]
+			err.trends   = 0.5*(trends.te[,3]-trends.te[,2])
+			te.norm.resid = mean(abs(resid.trends)/ err.trends )
+		} else {
+			te.norm.resid <- Inf
 		}
-	  	resid.trends = 1000*trends.mod - trends.te[,1]
-		err.trends   = 0.5*(trends.te[,3]-trends.te[,2])
-		te.norm.resid = mean(abs(resid.trends)/ err.trends )
 	}
 
 	# GIS contribution
@@ -155,43 +162,54 @@ minimize_residuals_brick = function(
     	} else {
 			simple.norm.resid = mean(abs( simple.resid))
 		}
-
 	}
 
 	# AIS contribution
 	if(!is.null(oidx$ais) & luse.brick[,"luse.dais"]) {
-		# First part is from Shepherd et al 2012 instrumental point (from
-		# Ruckert et al 2017, or Wong et al 2017)
-		itmp <- ind.norm.data[which(ind.norm.data[,1]=='ais'),2]:ind.norm.data[which(ind.norm.data[,1]=='ais'),3]
-		ais.model <- brick.out$sl_ais_out - mean(brick.out$sl_ais_out[itmp])
-		ais.instr.resid <- abs(ais.model[midx$ais] - obs$ais[oidx$ais])/obs.err$ais[oidx$ais]
-		ais.norm.resid <- ais.norm.resid + ais.instr.resid
+		# Check SLR_AIS < SLR total
+		sl.resid.ais <- (obs$sl[oidx$sl] - mean(obs$sl[oidx$sl[1:20]])) -
+		                (brick.out$sl_ais_out[midx$sl] - mean(brick.out$sl_ais_out[midx$sl[1:20]]))
 
-		# Second part is from IPCC trends
-		trends.mod = rep(0, nrow(trends.ais))
-		for (i in 1:nrow(trends.ais)) {
-			x = seq(trends.ais[i,6],trends.ais[i,7]);                  barx = mean(x);
-			y = brick.out$sl_ais_out[trends.ais[i,6]:trends.ais[i,7]]; bary = mean(y);
-	  		trends.mod[i] = sum( (x-rep(barx,length(x)))*(y-rep(bary,length(y))))/sum( (x-rep(barx,length(x)))^2 )
+		if(all(!is.na(sl.resid.ais))) {
+			if(all(sl.resid.ais[20:length(sl.resid.ais)] > 0)){
+				# First part is from Shepherd et al 2012 instrumental point (from
+				# Ruckert et al 2017, or Wong et al 2017)
+				itmp <- ind.norm.data[which(ind.norm.data[,1]=='ais'),2]:ind.norm.data[which(ind.norm.data[,1]=='ais'),3]
+				ais.model <- brick.out$sl_ais_out - mean(brick.out$sl_ais_out[itmp])
+				ais.instr.resid <- abs(ais.model[midx$ais] - obs$ais[oidx$ais])/obs.err$ais[oidx$ais]
+				ais.norm.resid <- ais.norm.resid + ais.instr.resid
+
+				# Second part is from IPCC trends
+				trends.mod = rep(0, nrow(trends.ais))
+				for (i in 1:nrow(trends.ais)) {
+					x = seq(trends.ais[i,6],trends.ais[i,7]);                  barx = mean(x);
+					y = brick.out$sl_ais_out[trends.ais[i,6]:trends.ais[i,7]]; bary = mean(y);
+			  		trends.mod[i] = sum( (x-rep(barx,length(x)))*(y-rep(bary,length(y))))/sum( (x-rep(barx,length(x)))^2 )
+				}
+			  	resid.trends = 1000*trends.mod - trends.ais[,1]
+				err.trends   = 0.5*(trends.ais[,3]-trends.ais[,2])
+				ais.trend.resid = mean(abs(resid.trends)/ err.trends )
+
+				ais.norm.resid <- ais.norm.resid + ais.trend.resid
+			} else {
+				ais.norm.resid <- Inf
+			}
+		} else {
+			ais.norm.resid <- Inf
 		}
-	  	resid.trends = 1000*trends.mod - trends.ais[,1]
-		err.trends   = 0.5*(trends.ais[,3]-trends.ais[,2])
-		ais.trend.resid = mean(abs(resid.trends)/ err.trends )
-
-		ais.norm.resid <- ais.norm.resid + ais.trend.resid
 	}
 
 	# GMSL contribution
 	sl.model <- brick.out$sl_out - mean(brick.out$sl_out[ind.norm.sl])
-	resid.sl_lw.1900 <- mean( abs(obs$sl_lw$r1900$sl - sl.model[obs$sl_lw$r1900$midx]) / obs$sl_lw$r1900$err )
-	resid.sl_lw.1970 <- mean( abs(obs$sl_lw$r1970$sl - sl.model[obs$sl_lw$r1970$midx]) / obs$sl_lw$r1970$err )
-	resid.sl_lw.1992 <- mean( abs(obs$sl_lw$r1992$sl - sl.model[obs$sl_lw$r1992$midx]) / obs$sl_lw$r1992$err )
+	resid.sl_lw.1900 <- mean( abs(obs$sl_lw$r1900$sl - (sl.model[obs$sl_lw$r1900$midx]-sl.model[max(obs$sl_lw$r1900$midx)])) / obs$sl_lw$r1900$err )
+	resid.sl_lw.1970 <- mean( abs(obs$sl_lw$r1970$sl - (sl.model[obs$sl_lw$r1970$midx]-sl.model[max(obs$sl_lw$r1970$midx)])) / obs$sl_lw$r1970$err )
+	resid.sl_lw.1992 <- mean( abs(obs$sl_lw$r1992$sl - (sl.model[obs$sl_lw$r1992$midx]-sl.model[max(obs$sl_lw$r1992$midx)])) / obs$sl_lw$r1992$err )
 
 	sl.norm.resid = sl.norm.resid + resid.sl_lw.1900 + resid.sl_lw.1970 + resid.sl_lw.1992
 
 	# Tally up the total normalized residual.
 	err.sum = doeclim.norm.resid + gsic.norm.resid + simple.norm.resid +
-						te.norm.resid      + sl.norm.resid
+			  te.norm.resid      + ais.norm.resid  + sl.norm.resid
 
 	if(is.nan(err.sum)) err.sum=Inf
 	return(err.sum)

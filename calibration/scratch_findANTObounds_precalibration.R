@@ -24,7 +24,7 @@
 ## along with BRICK.  If not, see <http://www.gnu.org/licenses/>.
 ##==============================================================================
 
-rm(list =ls()) #Clear global environment
+#rm(list =ls()) #Clear global environment
 
 ## Setup packages and libraries
 #install.packages('compiler')
@@ -58,10 +58,10 @@ Tg.norm <- Tg - Tg[1]
 source('../fortran/R/daisantoF.R')
 
 ## Set up the parameters to calibrate
-parnames    = c('anto.a','anto.b')
-parameters0 = c(  0.1574, 0.6677 )
-bound.lower = c( 0.0    , 0      )
-bound.upper = c( 1.0    , 2      )
+parnames.anto    = c('anto.a','anto.b')
+parameters0.anto = c(  0.1574, 0.6677 )
+bound.lower.anto = c( 0.0    , 0      )
+bound.upper.anto = c( 1.0    , 2      )
 ##==============================================================================
 rmse = function(parameters.in,
                 parnames.in,
@@ -97,10 +97,10 @@ n.lhs = 10000
 parameters.lhs <- randomLHS(n.lhs, length(parnames))
 
 # Transform unif(0,1) to the parameter bounds
-for (i in 1:length(parnames)) {
-  parameters.lhs[,i] <- qunif(parameters.lhs[,i], bound.lower[i], bound.upper[i])
+for (i in 1:length(parnames.anto)) {
+  parameters.lhs[,i] <- qunif(parameters.lhs[,i], bound.lower.anto[i], bound.upper.anto[i])
 }
-colnames(parameters.lhs)=parnames
+colnames(parameters.lhs)=parnames.anto
 t1=proc.time()
 
 rmse.lhs = rep(NA,n.lhs)
@@ -108,7 +108,7 @@ rmse.lhs = rep(NA,n.lhs)
 pb <- txtProgressBar(min=0,max=n.lhs,initial=0,style=3)
 for (j in 1:n.lhs) {
   rmse.lhs[j] = rmse(   parameters.in = as.numeric(parameters.lhs[j,]),
-                        parnames.in = parnames,
+                        parnames.in = parnames.anto,
                         Toc.obs.in = Toc.recon.norm,
                         Tg.in = Tg.recon.norm
                         )
@@ -135,6 +135,7 @@ plot(tmp.sort[itmp,2],tmp.sort[itmp,3],xlab='anto.a',ylab='anto.b')
 print(paste('low-RMSE anto.a range=',quantile(tmp.sort[itmp,2],0),' to ',quantile(tmp.sort[itmp,2],1)))
 print(paste('low-RMSE anto.b range=',quantile(tmp.sort[itmp,3],0),' to ',quantile(tmp.sort[itmp,3],1)))
 print(paste('min-RMSE (anto.a, anto.b)=(',tmp.sort[1,2],',',tmp.sort[1,3],')'))
+
 
 ##==============================================================================
 ## End
