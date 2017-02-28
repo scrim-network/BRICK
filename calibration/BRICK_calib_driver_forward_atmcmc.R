@@ -117,8 +117,7 @@ luse.brick = cbind(luse.doeclim, luse.gsic, luse.te, luse.simple, luse.dais)
 ## Define parameters and their prior ranges
 ## -> Note: 'parnames' is defined here, which establishes how the parameters
 ##    are passed around into DEoptim, MCMC, likelihood functions, and the models
-#source('../calibration/BRICK_parameterSetup.R')
-source('../calibration/BRICK_parameterSetup_no-h0-c.R')
+source('../calibration/BRICK_parameterSetup.R')
 
 ##==============================================================================
 ## Use differential optimization (DEoptim) algorithm to find suitable initial
@@ -326,43 +325,16 @@ idais <- match('gamma',parnames):match('slope',parnames)
 iRuckert <- match('gamma',parnames.Ruckert):match('slope',parnames.Ruckert)
 jump.all[idais,idais] <- jump.dais[iRuckert,iRuckert]
 
-## Set up jump covariance matrix from previous estimates using the
-## pseudo-Metropolis-within-Gibbs
-## And get initial parameter estimates from previous epxeriments
-p0.mcmc <- p0.deoptim
-jump.dais <- amcmc.dais.once$cov.jump
-colnames(jump.dais) <- parnames[ind.dais.fixed]
-rownames(jump.dais) <- parnames[ind.dais.fixed]
-jump.other <- amcmc.notdais.once$cov.jump
-colnames(jump.other) <- parnames[ind.notdais.fixed]
-rownames(jump.other) <- parnames[ind.notdais.fixed]
-jump.all <- diag(step.mcmc)
-colnames(jump.all) <- parnames
-rownames(jump.all) <- parnames
-for (pp in 1:length(ind.dais.fixed)) {
-	jump.all[ind.dais.fixed[pp],ind.dais.fixed] <- jump.dais[pp,]
-	jump.all[ind.dais.fixed,ind.dais.fixed[pp]] <- jump.dais[,pp]
-	p0.mcmc[ind.dais.fixed[pp]] <- amcmc.dais.once$samples[nrow(amcmc.dais.once$samples),pp]
-}
-for (pp in 1:length(ind.notdais.fixed)) {
-	jump.all[ind.notdais.fixed[pp],ind.notdais.fixed] <- jump.other[pp,]
-	jump.all[ind.notdais.fixed,ind.notdais.fixed[pp]] <- jump.other[,pp]
-	p0.mcmc[ind.notdais.fixed[pp]] <- amcmc.notdais.once$samples[nrow(amcmc.notdais.once$samples),pp]
-}
-
-
 ## Source the statistical models
 source('../calibration/BRICK_assimLikelihood_forward.R')
-source('../calibration/BRICK_assimLikelihood_forward_DAIS.R')
-source('../calibration/BRICK_assimLikelihood_forward_notDAIS.R')
 
 ## MCMC calibration
-require('adaptMCMC')
-library(adaptMCMC)                      # use robust adaptive Metropolis
+require('atmcmc')
+#library(atmcmc)                      # use automatically-tuned Metrop-within-Gibbs, then symm random walk Metrop
 accept.mcmc = 0.234                     # Optimal as # parameters->infinity
                                         # (Gelman et al, 1996; Roberts et al, 1997)
-niter.mcmc = 1e5                        # number of iterations for MCMC
-gamma.mcmc = 0.66                        # rate of adaptation (between 0.5 and 1, lower is faster adaptation)
+niter.mcmc = 1e4                        # number of iterations for MCMC
+gamma.mcmc = 0.5                        # rate of adaptation (between 0.5 and 1, lower is faster adaptation)
 burnin = round(niter.mcmc*0.5)          # remove first ?? of chains for burn-in
 stopadapt.mcmc = round(niter.mcmc*1.0)  # stop adapting after ?? iterations? (niter*1 => don't stop)
 
@@ -370,18 +342,8 @@ stopadapt.mcmc = round(niter.mcmc*1.0)  # stop adapting after ?? iterations? (ni
 ## Actually run the calibration
 if(TRUE){
 t.beg=proc.time()											# save timing (running millions of iterations so best to have SOME idea...)
-amcmc.out1 = MCMC(log.post, niter.mcmc, p0.mcmc, scale=step.mcmc, adapt=FALSE, acc.rate=accept.mcmc,
-					gamma=gamma.mcmc               , list=TRUE                  , n.start=round(0.05*niter.mcmc)    ,
-					parnames.in=parnames           , forcing.raw=forcing        , l.project=l.project          		,
-					slope.Ta2Tg=slope.Ta2Tg		   , intercept.Ta2Tg=intercept.Ta2Tg, tstep=tstep					,
-					ind.norm.data=ind.norm.data    , ind.norm.sl=ind.norm.sl    , mod.time=mod.time                 ,
-					oidx = oidx.all                , midx = midx.all            , obs=obs.all                       ,
-					obs.err = obs.err.all          , trends.te = trends.te      , trends.ais = trends.ais			,
-					bound.lower=bound.lower        , bound.upper=bound.upper    , shape.invtau=shape.invtau      	,
-					scale.invtau=scale.invtau      , rho.simple.fixed=rho.simple.fixed, sigma.simple.fixed=sigma.simple.fixed,
-					luse.brick=luse.brick          , dais.prior.fit=dais.prior.fit, gsic.prior.fit=gsic.prior.fit   ,
-					doeclim.prior.fit=doeclim.prior.fit, te.prior.fit=te.prior.fit, anto.prior.fit=anto.prior.fit   ,
-					simple.prior.fit=simple.prior.fit)
+atmcmc.out1 = atmcmc(g=log.post, dim=length(p0.deoptim), maxiter=niter.mcmc, X0=p0.deoptim, support=cbind(bound.lower, bound.upper),
+					multimodal=F				   )
 t.end=proc.time()											# save timing
 chain1 = amcmc.out1$samples
 }
@@ -397,8 +359,8 @@ amcmc.extend1 = MCMC.add.samples(amcmc.out1, niter.mcmc,
 					obs.err = obs.err.all          , trends.te = trends.te      , trends.ais = trends.ais			,
 					bound.lower=bound.lower        , bound.upper=bound.upper    , shape.invtau=shape.invtau      	,
 					scale.invtau=scale.invtau      , rho.simple.fixed=rho.simple.fixed, sigma.simple.fixed=sigma.simple.fixed,
-					luse.brick=luse.brick          , dais.prior.fit=dais.prior.fit, gsic.prior.fit=gsic.prior.fit   ,
-					doeclim.prior.fit=doeclim.prior.fit, te.prior.fit=te.prior.fit, anto.prior.fit=anto.prior.fit   ,
+					luse.brick=luse.brick          , dais.priors=dais.priors    , gamma_slope_P0.prior.fit=gamma_slope_P0.prior.fit,
+					c_h0.prior.fit=c_h0.prior.fit  , te.prior.fit=te.prior.fit  , anto.prior.fit=anto.prior.fit     ,
 					simple.prior.fit=simple.prior.fit)
 t.end=proc.time()
 chain1 = amcmc.extend1$samples
@@ -419,8 +381,8 @@ amcmc.par1 = MCMC.parallel(log.post, niter.mcmc, p0.deoptim, n.chain=4, n.cpu=4,
 					obs.err = obs.err.all          , trends.te = trends.te      , trends.ais = trends.ais			,
 					bound.lower=bound.lower        , bound.upper=bound.upper    , shape.invtau=shape.invtau      	,
 					scale.invtau=scale.invtau      , rho.simple.fixed=rho.simple.fixed, sigma.simple.fixed=sigma.simple.fixed,
-					luse.brick=luse.brick          , dais.prior.fit=dais.prior.fit, gsic.prior.fit=gsic.prior.fit   ,
-					doeclim.prior.fit=doeclim.prior.fit, te.prior.fit=te.prior.fit, anto.prior.fit=anto.prior.fit   ,
+					luse.brick=luse.brick          , dais.priors=dais.priors    , gamma_slope_P0.prior.fit=gamma_slope_P0.prior.fit,
+					c_h0.prior.fit=c_h0.prior.fit  , te.prior.fit=te.prior.fit  , anto.prior.fit=anto.prior.fit     ,
 					simple.prior.fit=simple.prior.fit)
 t.end=proc.time()											# save timing
 chain1=amcmc.par1[[1]]$samples

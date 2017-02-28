@@ -90,7 +90,7 @@ logl.ar1 <-
 ##==============================================================================
 ## rest of the statistical model
 ##==============================================================================
-log.lik = function( parameters.in,
+log.lik_nodais = function( parameters.in,
                     parnames.in,
                     forcing.raw,
                     l.project=FALSE,
@@ -141,8 +141,8 @@ log.lik = function( parameters.in,
                         b0.dais = parameters.in[match("b0",parnames.in)],
                         slope.dais = parameters.in[match("slope",parnames.in)],
                         mu.dais = parameters.in[match("mu",parnames.in)],
-#                        h0.dais = parameters.in[match("h0",parnames.in)],
-#                        c.dais = parameters.in[match("c",parnames.in)],
+                        h0.dais = parameters.in[match("h0",parnames.in)],
+                        c.dais = parameters.in[match("c",parnames.in)],
                         P0.dais = parameters.in[match("P0",parnames.in)],
                         kappa.dais = parameters.in[match("kappa.dais",parnames.in)],
                         nu.dais = parameters.in[match("nu",parnames.in)],
@@ -355,13 +355,13 @@ if(FALSE){
 
   # Assume residual time series are independent
 #  llik = llik.temp + llik.ocheat + llik.gsic + llik.te + llik.simple + llik.dais + llik.sl
-  llik = llik.temp + llik.ocheat + llik.gsic + llik.simple + llik.te + llik.sl + llik.dais
+  llik = llik.temp + llik.ocheat + llik.gsic + llik.simple + llik.te + llik.sl #+ llik.dais
 
   return(llik)
 }
 ##==============================================================================
 ## (log of the) prior probability
-log.pri = function(parameters.in,
+log.pri_nodais = function(parameters.in,
                    parnames.in,
                    bound.lower,
                    bound.upper,
@@ -452,7 +452,7 @@ log.pri = function(parameters.in,
 }
 ##==============================================================================
 ## (log of the) posterior distribution:  posterior ~ likelihood * prior
-log.post = function(  parameters.in,
+log.post_nodais = function(  parameters.in,
                       parnames.in,
                       forcing.raw,
                       bound.lower,
@@ -484,7 +484,7 @@ log.post = function(  parameters.in,
                       ){
 
   llik = 0
-  lpri = log.pri( parameters.in      = parameters.in,
+  lpri = log.pri_nodais( parameters.in      = parameters.in,
                   parnames.in        = parnames.in,
                   bound.lower        = bound.lower,
                   bound.upper        = bound.upper,
@@ -497,7 +497,7 @@ log.post = function(  parameters.in,
                   anto.prior.fit     = anto.prior.fit,
                   doeclim.prior.fit  = doeclim.prior.fit)
   if(is.finite(lpri)) { # evaluate likelihood if nonzero prior probability
-    llik = log.lik( parameters.in=parameters.in,
+    llik = log.lik_nodais( parameters.in=parameters.in,
                     parnames.in=parnames.in,
                     forcing.raw=forcing.raw,
                     l.project=l.project,

@@ -121,19 +121,82 @@ itmp <- which(V0.te >= -0.046 & V0.te <= 0.074)
 ptmp <- range.to.beta(V0.te[itmp], -0.046, 0.074)
 V0.te.prior <- fitdist(ptmp, 'beta')$estimate
 
+itmp <- which(V0.simple >= 7.15 & V0.simple <= 7.58)
+ptmp <- range.to.beta(V0.simple[itmp], 7.15, 7.58)
+V0.simple.prior <- fitdist(ptmp, 'beta')$estimate
+
+itmp <- which(parameters.fit[,'rho.gsic'] >= 0 & parameters.fit[,'rho.gsic'] <= 1)
+ptmp <- range.to.beta(parameters.fit[itmp,'rho.gsic'], 0, 1)
+rho.gsic.prior <- fitdist(ptmp, 'beta')$estimate
+
+# sigmaT and sigmaH, fit as variance with inverse gamma
+# to match mean and variance of the sample, pick shape1=2+mean/variance and
+# shape2=mean*(shape1-1)
+xtmp <- parameters.fit[,'sigma.T']^2
+sigmaT.prior <- matrix(c(2+((mean(xtmp)^2)/var(xtmp)),
+                         mean(xtmp)*(1+((mean(xtmp)^2)/var(xtmp)))), 1,2)
+colnames(sigmaT.prior) <- c('shape','rate')
+
+xtmp <- parameters.fit[,'sigma.H']^2
+sigmaH.prior <- matrix(c(2+((mean(xtmp)^2)/var(xtmp)),
+                         mean(xtmp)*(1+((mean(xtmp)^2)/var(xtmp)))), 1,2)
+colnames(sigmaH.prior) <- c('shape','rate')
 
 ##==============================================================================
 
-# joint prior for b.te and invtau.te?
+# joint prior for a.te, b.te and invtau.te?
 
 # install.packages('sn')
 # install.packages('fMultivar')
 library(sn)
 library(fMultivar)
 
-itmp <- c(match('b.te',parnames.fit), match('invtau.te',parnames.fit))
-te.prior <- mscFit(parameters.fit[,itmp])
+itmp <- c(match('a.te',parnames.fit), match('b.te',parnames.fit), match('invtau.te',parnames.fit))
+te.prior <- msnFit(parameters.fit[,itmp])
 te.prior.fit <- te.prior@fit$estimated
+# account for truncated prior
+te.prior.fit$cnorm <- as.numeric(pmsn( bound.upper[match(parnames.fit[itmp],parnames)], te.prior.fit$beta, te.prior.fit$Omega, te.prior.fit$alpha) -
+                       pmsn( bound.lower[match(parnames.fit[itmp],parnames)], te.prior.fit$beta, te.prior.fit$Omega, te.prior.fit$alpha))
+
+# formulate bivariate gamma?
+a.bivg <- 1.4638434
+rate.invtau <- 1/scale.invtau
+bivg <- function(x,y,shape1,rate1,shape2){
+    tmp <- (rate1^shape1)*(x^(shape1+shape2-1))*(y^(shape1-1))*exp(-x*(shape1+y))
+    tmp <- tmp/gamma(shape1)
+    tmp <- tmp/gamma(shape2)
+    return(tmp)
+}
+
+##==============================================================================
+
+# joint prior for n.gsic, beta0.gsic, rho.gsic?
+
+itmp <- c(match('beta0',parnames.fit), match('n',parnames.fit), match('rho.gsic',parnames.fit))
+gsic.prior <- msnFit(parameters.fit[,itmp])
+gsic.prior.fit <- gsic.prior@fit$estimated
+# account for truncated prior
+# CAREFUL - hardcoded in the change in parnames between old and new
+gsic.prior.fit$cnorm <- as.numeric(pmsn( bound.upper[c(6,8,37)], gsic.prior.fit$beta, gsic.prior.fit$Omega, gsic.prior.fit$alpha) -
+                       pmsn( bound.lower[c(6,8,37)], gsic.prior.fit$beta, gsic.prior.fit$Omega, gsic.prior.fit$alpha))
+
+##==============================================================================
+
+# joint prior for DOECLIM parameters?
+
+# install.packages('sn')
+# install.packages('fMultivar')
+library(sn)
+library(fMultivar)
+
+itmp <- c(match('S',parnames.fit), match('kappa.doeclim',parnames.fit),
+          match('alpha.doeclim',parnames.fit), match('T0',parnames.fit), match('H0',parnames.fit))
+doeclim.prior <- msnFit(parameters.fit[,itmp])
+doeclim.prior.fit <- doeclim.prior@fit$estimated
+# account for truncated prior
+# CAREFUL - hardcoded in the change in parnames between old and new
+doeclim.prior.fit$cnorm <- as.numeric(pmsn( bound.upper[1:5], doeclim.prior.fit$beta, doeclim.prior.fit$Omega, doeclim.prior.fit$alpha) -
+                            pmsn( bound.lower[1:5], doeclim.prior.fit$beta, doeclim.prior.fit$Omega, doeclim.prior.fit$alpha))
 
 ##==============================================================================+
 
@@ -143,6 +206,9 @@ itmp <- c(match('a.simple',parnames.fit), match('b.simple',parnames.fit),
           match('alpha.simple',parnames.fit), match('beta.simple',parnames.fit))
 simple.prior <- msnFit(parameters.fit[,itmp])
 simple.prior.fit <- simple.prior@fit$estimated
+# account for truncated prior
+simple.prior.fit$cnorm <- as.numeric(pmsn( bound.upper[match(parnames.fit[itmp],parnames)], simple.prior.fit$beta, simple.prior.fit$Omega, simple.prior.fit$alpha) -
+                           pmsn( bound.lower[match(parnames.fit[itmp],parnames)], simple.prior.fit$beta, simple.prior.fit$Omega, simple.prior.fit$alpha))
 
 ##==============================================================================
 
@@ -155,11 +221,15 @@ source('scratch_findANTObounds_precalibration.R')
 
 anto.prior <- msnFit(tmp.sort[itmp,2:3])
 anto.prior.fit <- anto.prior@fit$estimated
+# account for truncated prior
+itmp <- c(match('anto.a',parnames),match('anto.b',parnames))
+anto.prior.fit$cnorm <- as.numeric(pmsn( bound.upper[itmp], anto.prior.fit$beta, anto.prior.fit$Omega, anto.prior.fit$alpha) -
+                         pmsn( bound.lower[itmp], anto.prior.fit$beta, anto.prior.fit$Omega, anto.prior.fit$alpha))
 
 ##==============================================================================
 # if you want to visualize any of these priors, fit to the data
 X <- parameters.fit[,itmp]
-ans <- te.prior                                           # <<< for example
+ans <- gsic.prior                                           # <<< for example
 plot(hexBinning(X[,1], X[, 2], bins = 30), main="Skew Normal")
 N <- 101
 x <- seq(min(X[, 1]), max(X[, 1]), l=N)

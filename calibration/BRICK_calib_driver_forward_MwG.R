@@ -117,8 +117,7 @@ luse.brick = cbind(luse.doeclim, luse.gsic, luse.te, luse.simple, luse.dais)
 ## Define parameters and their prior ranges
 ## -> Note: 'parnames' is defined here, which establishes how the parameters
 ##    are passed around into DEoptim, MCMC, likelihood functions, and the models
-#source('../calibration/BRICK_parameterSetup.R')
-source('../calibration/BRICK_parameterSetup_no-h0-c.R')
+source('../calibration/BRICK_parameterSetup.R')
 
 ##==============================================================================
 ## Use differential optimization (DEoptim) algorithm to find suitable initial
@@ -326,31 +325,6 @@ idais <- match('gamma',parnames):match('slope',parnames)
 iRuckert <- match('gamma',parnames.Ruckert):match('slope',parnames.Ruckert)
 jump.all[idais,idais] <- jump.dais[iRuckert,iRuckert]
 
-## Set up jump covariance matrix from previous estimates using the
-## pseudo-Metropolis-within-Gibbs
-## And get initial parameter estimates from previous epxeriments
-p0.mcmc <- p0.deoptim
-jump.dais <- amcmc.dais.once$cov.jump
-colnames(jump.dais) <- parnames[ind.dais.fixed]
-rownames(jump.dais) <- parnames[ind.dais.fixed]
-jump.other <- amcmc.notdais.once$cov.jump
-colnames(jump.other) <- parnames[ind.notdais.fixed]
-rownames(jump.other) <- parnames[ind.notdais.fixed]
-jump.all <- diag(step.mcmc)
-colnames(jump.all) <- parnames
-rownames(jump.all) <- parnames
-for (pp in 1:length(ind.dais.fixed)) {
-	jump.all[ind.dais.fixed[pp],ind.dais.fixed] <- jump.dais[pp,]
-	jump.all[ind.dais.fixed,ind.dais.fixed[pp]] <- jump.dais[,pp]
-	p0.mcmc[ind.dais.fixed[pp]] <- amcmc.dais.once$samples[nrow(amcmc.dais.once$samples),pp]
-}
-for (pp in 1:length(ind.notdais.fixed)) {
-	jump.all[ind.notdais.fixed[pp],ind.notdais.fixed] <- jump.other[pp,]
-	jump.all[ind.notdais.fixed,ind.notdais.fixed[pp]] <- jump.other[,pp]
-	p0.mcmc[ind.notdais.fixed[pp]] <- amcmc.notdais.once$samples[nrow(amcmc.notdais.once$samples),pp]
-}
-
-
 ## Source the statistical models
 source('../calibration/BRICK_assimLikelihood_forward.R')
 source('../calibration/BRICK_assimLikelihood_forward_DAIS.R')
@@ -361,17 +335,17 @@ require('adaptMCMC')
 library(adaptMCMC)                      # use robust adaptive Metropolis
 accept.mcmc = 0.234                     # Optimal as # parameters->infinity
                                         # (Gelman et al, 1996; Roberts et al, 1997)
-niter.mcmc = 1e5                        # number of iterations for MCMC
-gamma.mcmc = 0.66                        # rate of adaptation (between 0.5 and 1, lower is faster adaptation)
+niter.batch = 1e4                        # number of iterations for MCMC
+gamma.mcmc = 0.5                        # rate of adaptation (between 0.5 and 1, lower is faster adaptation)
 burnin = round(niter.mcmc*0.5)          # remove first ?? of chains for burn-in
 stopadapt.mcmc = round(niter.mcmc*1.0)  # stop adapting after ?? iterations? (niter*1 => don't stop)
 
 ##==============================================================================
-## Actually run the calibration
-if(TRUE){
+
+# initial calibration -- along llik.dais direction on likelihood surface
 t.beg=proc.time()											# save timing (running millions of iterations so best to have SOME idea...)
-amcmc.out1 = MCMC(log.post, niter.mcmc, p0.mcmc, scale=step.mcmc, adapt=FALSE, acc.rate=accept.mcmc,
-					gamma=gamma.mcmc               , list=TRUE                  , n.start=round(0.05*niter.mcmc)    ,
+amcmc.out1 = MCMC(log.post_dais, niter.mcmc, p0.deoptim, scale=step.mcmc, adapt=TRUE, acc.rate=accept.mcmc,
+					gamma=gamma.mcmc               , list=TRUE                  , n.start=round(0.01*niter.mcmc)    ,
 					parnames.in=parnames           , forcing.raw=forcing        , l.project=l.project          		,
 					slope.Ta2Tg=slope.Ta2Tg		   , intercept.Ta2Tg=intercept.Ta2Tg, tstep=tstep					,
 					ind.norm.data=ind.norm.data    , ind.norm.sl=ind.norm.sl    , mod.time=mod.time                 ,
@@ -384,10 +358,34 @@ amcmc.out1 = MCMC(log.post, niter.mcmc, p0.mcmc, scale=step.mcmc, adapt=FALSE, a
 					simple.prior.fit=simple.prior.fit)
 t.end=proc.time()											# save timing
 chain1 = amcmc.out1$samples
-}
 
-## Extend and run more MCMC samples?
-if(FALSE){
+
+##==========
+# extend calibration -- along llik.[everything else] on likelihood surface
+
+amcmc.extend1$sampling.parameters$sample.density <- log.post_nodais
+
+t.beg=proc.time()		## NOTE!! CHECK IF YOU NEED TO EXTEND AN ALREADY EXTENDED CHAIN!!! ##
+amcmc.extend1 = MCMC.add.samples(amcmc.extend1, niter.mcmc,
+					parnames.in=parnames           , forcing.raw=forcing        , l.project=l.project          		,
+					slope.Ta2Tg=slope.Ta2Tg		   , intercept.Ta2Tg=intercept.Ta2Tg, tstep=tstep					,
+					ind.norm.data=ind.norm.data    , ind.norm.sl=ind.norm.sl    , mod.time=mod.time                 ,
+					oidx = oidx.all                , midx = midx.all            , obs=obs.all                       ,
+					obs.err = obs.err.all          , trends.te = trends.te      , trends.ais = trends.ais			,
+					bound.lower=bound.lower        , bound.upper=bound.upper    , shape.invtau=shape.invtau      	,
+					scale.invtau=scale.invtau      , rho.simple.fixed=rho.simple.fixed, sigma.simple.fixed=sigma.simple.fixed,
+					luse.brick=luse.brick          , dais.prior.fit=dais.prior.fit, gsic.prior.fit=gsic.prior.fit   ,
+					doeclim.prior.fit=doeclim.prior.fit, te.prior.fit=te.prior.fit, anto.prior.fit=anto.prior.fit   ,
+					simple.prior.fit=simple.prior.fit)
+t.end=proc.time()
+chain1 = amcmc.extend1$samples
+amcmc.save <- amcmc.extend1			# just in case...
+
+##==========
+# extend calibration -- along llik.dais on likelihood surface
+
+amcmc.extend1$sampling.parameters$sample.density <- log.post_dais
+
 t.beg=proc.time()		## NOTE!! CHECK IF YOU NEED TO EXTEND AN ALREADY EXTENDED CHAIN!!! ##
 amcmc.extend1 = MCMC.add.samples(amcmc.out1, niter.mcmc,
 					parnames.in=parnames           , forcing.raw=forcing        , l.project=l.project          		,
@@ -403,31 +401,51 @@ amcmc.extend1 = MCMC.add.samples(amcmc.out1, niter.mcmc,
 t.end=proc.time()
 chain1 = amcmc.extend1$samples
 amcmc.save <- amcmc.extend1			# just in case...
-}
 
-## If you want to run 2 (or more) chains in parallel (save time, more sampling)
-if(FALSE){
-t.beg=proc.time()										# save timing (running millions of iterations so best to have SOME idea...)
-amcmc.par1 = MCMC.parallel(log.post, niter.mcmc, p0.deoptim, n.chain=4, n.cpu=4,
-					dyn.libs=c('../fortran/brick.so','../fortran/doeclim.so','../fortran/brick_te.so','../fortran/gsic_magicc.so','../fortran/simple.so'),
-					scale=step.mcmc, adapt=TRUE, acc.rate=accept.mcmc,
-					gamma=gamma.mcmc, list=TRUE, n.start=round(0.01*niter.mcmc),
-					parnames.in=parnames           , forcing.raw=forcing        , l.project=l.project          		,
-					slope.Ta2Tg=slope.Ta2Tg		   , intercept.Ta2Tg=intercept.Ta2Tg, tstep=tstep					,
-					ind.norm.data=ind.norm.data    , ind.norm.sl=ind.norm.sl    , mod.time=mod.time                 ,
-					oidx = oidx.all                , midx = midx.all            , obs=obs.all                       ,
-					obs.err = obs.err.all          , trends.te = trends.te      , trends.ais = trends.ais			,
-					bound.lower=bound.lower        , bound.upper=bound.upper    , shape.invtau=shape.invtau      	,
-					scale.invtau=scale.invtau      , rho.simple.fixed=rho.simple.fixed, sigma.simple.fixed=sigma.simple.fixed,
-					luse.brick=luse.brick          , dais.prior.fit=dais.prior.fit, gsic.prior.fit=gsic.prior.fit   ,
-					doeclim.prior.fit=doeclim.prior.fit, te.prior.fit=te.prior.fit, anto.prior.fit=anto.prior.fit   ,
-					simple.prior.fit=simple.prior.fit)
-t.end=proc.time()											# save timing
-chain1=amcmc.par1[[1]]$samples
-chain2=amcmc.par1[[2]]$samples
-chain3=amcmc.par1[[3]]$samples
-chain4=amcmc.par1[[4]]$samples
+##==========
+# automated bounce back and forth
+
+niter.batch <- 1e4
+nbatch		<- 10
+amcmc.batch <- amcmc.extend5
+
+for (ib in 1:nbatch) {
+
+	# sample from llik with no DAIS
+	amcmc.batch$sampling.parameters$sample.density <- log.post_nodais
+	amcmc.extend = MCMC.add.samples(amcmc.batch, niter.batch,
+						parnames.in=parnames           , forcing.raw=forcing        , l.project=l.project          		,
+						slope.Ta2Tg=slope.Ta2Tg		   , intercept.Ta2Tg=intercept.Ta2Tg, tstep=tstep					,
+						ind.norm.data=ind.norm.data    , ind.norm.sl=ind.norm.sl    , mod.time=mod.time                 ,
+						oidx = oidx.all                , midx = midx.all            , obs=obs.all                       ,
+						obs.err = obs.err.all          , trends.te = trends.te      , trends.ais = trends.ais			,
+						bound.lower=bound.lower        , bound.upper=bound.upper    , shape.invtau=shape.invtau      	,
+						scale.invtau=scale.invtau      , rho.simple.fixed=rho.simple.fixed, sigma.simple.fixed=sigma.simple.fixed,
+						luse.brick=luse.brick          , dais.prior.fit=dais.prior.fit, gsic.prior.fit=gsic.prior.fit   ,
+						doeclim.prior.fit=doeclim.prior.fit, te.prior.fit=te.prior.fit, anto.prior.fit=anto.prior.fit   ,
+						simple.prior.fit=simple.prior.fit)
+	amcmc.batch <- amcmc.extend
+
+	# sample from llik with only DAIS
+	amcmc.batch$sampling.parameters$sample.density <- log.post_dais
+	amcmc.extend = MCMC.add.samples(amcmc.batch, niter.batch,
+						parnames.in=parnames           , forcing.raw=forcing        , l.project=l.project          		,
+						slope.Ta2Tg=slope.Ta2Tg		   , intercept.Ta2Tg=intercept.Ta2Tg, tstep=tstep					,
+						ind.norm.data=ind.norm.data    , ind.norm.sl=ind.norm.sl    , mod.time=mod.time                 ,
+						oidx = oidx.all                , midx = midx.all            , obs=obs.all                       ,
+						obs.err = obs.err.all          , trends.te = trends.te      , trends.ais = trends.ais			,
+						bound.lower=bound.lower        , bound.upper=bound.upper    , shape.invtau=shape.invtau      	,
+						scale.invtau=scale.invtau      , rho.simple.fixed=rho.simple.fixed, sigma.simple.fixed=sigma.simple.fixed,
+						luse.brick=luse.brick          , dais.prior.fit=dais.prior.fit, gsic.prior.fit=gsic.prior.fit   ,
+						doeclim.prior.fit=doeclim.prior.fit, te.prior.fit=te.prior.fit, anto.prior.fit=anto.prior.fit   ,
+						simple.prior.fit=simple.prior.fit)
+	amcmc.batch <- amcmc.extend
 }
+chain1 = amcmc.batch$samples
+amcmc.save <- amcmc.batch			# just in case...
+
+##==========
+
 
 save.image(file = "BRICK_calib_MCMC.RData")
 ##==============================================================================

@@ -90,8 +90,10 @@ logl.ar1 <-
 ##==============================================================================
 ## rest of the statistical model
 ##==============================================================================
-log.lik = function( parameters.in,
+log.lik_nodais = function( parameters.in,
                     parnames.in,
+                    parameters.fixed,
+                    parnames.fixed,
                     forcing.raw,
                     l.project=FALSE,
                     rho.simple.fixed=NULL,
@@ -134,21 +136,21 @@ log.lik = function( parameters.in,
                         b.te = parameters.in[match("b.te",parnames.in)],
                         invtau.te = parameters.in[match("invtau.te",parnames.in)],
                         V0.te = parameters.in[match("V0.te",parnames.in)],
-                        a.anto = parameters.in[match("anto.a",parnames.in)],
-                        b.anto = parameters.in[match("anto.b",parnames.in)],
+                        a.anto = parameters.fixed[match("anto.a",parnames.fixed)],
+                        b.anto = parameters.fixed[match("anto.b",parnames.fixed)],
                         slope.Ta2Tg = slope.Ta2Tg,
                         intercept.Ta2Tg = intercept.Ta2Tg,
-                        b0.dais = parameters.in[match("b0",parnames.in)],
-                        slope.dais = parameters.in[match("slope",parnames.in)],
-                        mu.dais = parameters.in[match("mu",parnames.in)],
-#                        h0.dais = parameters.in[match("h0",parnames.in)],
-#                        c.dais = parameters.in[match("c",parnames.in)],
-                        P0.dais = parameters.in[match("P0",parnames.in)],
-                        kappa.dais = parameters.in[match("kappa.dais",parnames.in)],
-                        nu.dais = parameters.in[match("nu",parnames.in)],
-                        f0.dais = parameters.in[match("f0",parnames.in)],
-                        gamma.dais = parameters.in[match("gamma",parnames.in)],
-                        alpha.dais = parameters.in[match("alpha.dais",parnames.in)]
+                        b0.dais = parameters.fixed[match("b0",parnames.fixed)],
+                        slope.dais = parameters.fixed[match("slope",parnames.fixed)],
+                        mu.dais = parameters.fixed[match("mu",parnames.fixed)],
+                        h0.dais = parameters.fixed[match("h0",parnames.fixed)],
+                        c.dais = parameters.fixed[match("c",parnames.fixed)],
+                        P0.dais = parameters.fixed[match("P0",parnames.fixed)],
+                        kappa.dais = parameters.fixed[match("kappa.dais",parnames.fixed)],
+                        nu.dais = parameters.fixed[match("nu",parnames.fixed)],
+                        f0.dais = parameters.fixed[match("f0",parnames.fixed)],
+                        gamma.dais = parameters.fixed[match("gamma",parnames.fixed)],
+                        alpha.dais = parameters.fixed[match("alpha.dais",parnames.fixed)]
                         )
 
   ## Calculate contribution from DOECLIM temperature
@@ -288,7 +290,7 @@ if(FALSE){
 
 #    if(all(resid.sl.ais[20:length(resid.sl.ais)]>0)){
 
-        var.dais <- parameters.in[match("var.dais",parnames.in)]
+        var.dais <- parameters.fixed[match("var.dais",parnames.fixed)]
 
         # First part is from Shepherd et al 2012 instrumental point (from
         # Ruckert et al 2017, or Wong et al 2017)
@@ -361,8 +363,12 @@ if(FALSE){
 }
 ##==============================================================================
 ## (log of the) prior probability
-log.pri = function(parameters.in,
+log.pri_nodais = function(parameters.in,
                    parnames.in,
+                   parameters.fixed,
+                   parnames.fixed,
+                   bound.lower.fixed,
+                   bound.upper.fixed,
                    bound.lower,
                    bound.upper,
                    shape.invtau,
@@ -382,7 +388,7 @@ log.pri = function(parameters.in,
     ind.V0.gsic    <- match("V0.gsic",parnames.in)
     ind.V0.te      <- match("V0.te",parnames.in)
     ind.V0.simple  <- match("V0.simple",parnames.in)
-    ind.vdais      <- match("var.dais",parnames.in)
+    ind.vdais      <- match("var.dais",parnames.fixed)
     ind.vgmsl      <- match("var.gmsl",parnames.in)
     ind.rgsic      <- match("rho.gsic",parnames.in)
     ind.gsic       <- c(match("beta0.gsic",parnames.in), match("n.gsic",parnames.in), match("rho.gsic",parnames.in))
@@ -392,8 +398,8 @@ log.pri = function(parameters.in,
                         match('H0.doeclim',parnames.in))
     ind.simple     <- c(match('a.simple',parnames.in)    , match('b.simple',parnames.in),
                         match('alpha.simple',parnames.in), match('beta.simple',parnames.in))
-    ind.anto       <- c(match('anto.a',parnames.in), match('anto.b',parnames.in))
-    ind.dais       <- match('gamma',parnames.in):match('slope',parnames.in)
+    ind.anto       <- c(match('anto.a',parnames.fixed), match('anto.b',parnames.fixed))
+    ind.dais       <- match('gamma',parnames.fixed):match('slope',parnames.fixed)
     lpri.S         <- 0
     lpri.invtau    <- 0
     lpri.dais      <- 0
@@ -411,7 +417,7 @@ log.pri = function(parameters.in,
     lpri.rgsic     <- 0
 
     # some of the parameters have infinite support in one or both directions
-    ind.inf.up <- c(ind.vdais, ind.vgmsl)
+    ind.inf.up <- c(ind.vgmsl)
     ind.inf.dn <- c()
     #in.range <- all(parameters.in > bound.lower) &
     #            all(parameters.in < bound.upper)
@@ -433,14 +439,14 @@ log.pri = function(parameters.in,
                           shape1=V0.simple.prior[1], shape2=V0.simple.prior[2], log=TRUE)
 #        lpri.rgsic     <- dbeta(range.to.beta(parameters.in[ind.rgsic], bound.lower[ind.rgsic], bound.upper[ind.rgsic]),
 #                          shape1=rho.gsic.prior[1], shape2=rho.gsic.prior[2], log=TRUE)
-        lpri.vdais     <- log(densigamma(x=parameters.in[ind.vdais], alpha=2.2, beta=3e-5) )
+        lpri.vdais     <- log(densigamma(x=parameters.fixed[ind.vdais], alpha=2.2, beta=3e-5) )
         lpri.vgmsl     <- log(densigamma(x=parameters.in[ind.vgmsl], alpha=6.26, beta=3.27e-4) )
         lpri.gsic      <- log(dmsn( parameters.in[ind.gsic], gsic.prior.fit$beta, gsic.prior.fit$Omega, gsic.prior.fit$alpha)/gsic.prior.fit$cnorm)
         lpri.te        <- log(dmsn( parameters.in[ind.te], te.prior.fit$beta, te.prior.fit$Omega, te.prior.fit$alpha)/te.prior.fit$cnorm)
         lpri.doeclim   <- log(dmsn( parameters.in[ind.doeclim], doeclim.prior.fit$beta, doeclim.prior.fit$Omega, doeclim.prior.fit$alpha)/doeclim.prior.fit$cnorm)
         lpri.simple    <- log(dmsn( parameters.in[ind.simple], simple.prior.fit$beta, simple.prior.fit$Omega, simple.prior.fit$alpha)/simple.prior.fit$cnorm)
-        lpri.anto      <- log(dmsn( parameters.in[ind.anto], anto.prior.fit$beta, anto.prior.fit$Omega, anto.prior.fit$alpha)/anto.prior.fit$cnorm)
-        lpri.dais      <- log(dmsn( parameters.in[ind.dais], dais.prior.fit$beta, dais.prior.fit$Omega, dais.prior.fit$alpha)/dais.prior.fit$cnorm)
+        lpri.anto      <- log(dmsn( parameters.fixed[ind.anto], anto.prior.fit$beta, anto.prior.fit$Omega, anto.prior.fit$alpha)/anto.prior.fit$cnorm)
+        lpri.dais      <- log(dmsn( parameters.fixed[ind.dais], dais.prior.fit$beta, dais.prior.fit$Omega, dais.prior.fit$alpha)/dais.prior.fit$cnorm)
         lpri = lpri.uni +
                lpri.doeclim + lpri.gsic + lpri.dais + lpri.te + lpri.simple + lpri.anto +
                lpri.vdais + lpri.vgmsl + lpri.Gs0 + lpri.V0.gsic + lpri.V0.te + lpri.V0.simple
@@ -452,8 +458,12 @@ log.pri = function(parameters.in,
 }
 ##==============================================================================
 ## (log of the) posterior distribution:  posterior ~ likelihood * prior
-log.post = function(  parameters.in,
+log.post_nodais = function(  parameters.in,
                       parnames.in,
+                      parameters.fixed,
+                      parnames.fixed,
+                      bound.lower.fixed,
+                      bound.upper.fixed,
                       forcing.raw,
                       bound.lower,
                       bound.upper,
@@ -484,8 +494,12 @@ log.post = function(  parameters.in,
                       ){
 
   llik = 0
-  lpri = log.pri( parameters.in      = parameters.in,
+  lpri = log.pri_nodais( parameters.in      = parameters.in,
                   parnames.in        = parnames.in,
+                  parameters.fixed   = parameters.fixed,
+                  parnames.fixed     = parnames.fixed,
+                  bound.lower.fixed  = bound.lower.fixed,
+                  bound.upper.fixed  = bound.upper.fixed,
                   bound.lower        = bound.lower,
                   bound.upper        = bound.upper,
                   shape.invtau       = shape.invtau,
@@ -497,8 +511,10 @@ log.post = function(  parameters.in,
                   anto.prior.fit     = anto.prior.fit,
                   doeclim.prior.fit  = doeclim.prior.fit)
   if(is.finite(lpri)) { # evaluate likelihood if nonzero prior probability
-    llik = log.lik( parameters.in=parameters.in,
+    llik = log.lik_nodais( parameters.in=parameters.in,
                     parnames.in=parnames.in,
+                    parameters.fixed   = parameters.fixed,
+                    parnames.fixed     = parnames.fixed,
                     forcing.raw=forcing.raw,
                     l.project=l.project,
                     rho.simple.fixed=rho.simple.fixed,

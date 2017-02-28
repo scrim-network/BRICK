@@ -79,6 +79,21 @@ c_h0.prior.fit <- c_h0.prior@fit$estimated
 dais.priors <- dais.priors[,-match('h0',colnames(dais.priors))]
 dais.priors <- dais.priors[,-match('c',colnames(dais.priors))]
 
+# all of them?
+parnames.tmp <- parnames.dais[3:(length(parnames.dais)-1)]
+itmp <- NULL
+for (p in 1:length(parnames.tmp)) {itmp <- c(itmp,match(parnames.tmp[p],parnames.fit))}
+dais.all.prior <- msnFit(parameters.fit[,itmp])
+dais.prior.fit <- dais.all.prior@fit$estimated
+# account for truncation; these are normal (skewed and multivariate, but still
+# normally distributed), so farthest from origin has highest CDF and closest to
+# origin has lowest.
+dais.prior.fit$cnorm <- as.numeric(pmsn( bounds.upper.dais, dais.priors$beta, dais.priors$Omega, dais.priors$alpha) -
+                         pmsn( bounds.lower.dais, dais.priors$beta, dais.priors$Omega, dais.priors$alpha))
+
+# load DAIS jump covariance matrix from Ruckert et al 2017
+load('~/Downloads/DAIS_MCMCcovjump_Ruckertetal2017.RData')
+jump.dais <- covjump.Ruckert
 
 if(FALSE){  # if you want to visualize these priors
 X <- parameters.fit[,itmp]

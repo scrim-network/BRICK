@@ -83,15 +83,12 @@ if (luse.simple) {
 parnames.dais   =NULL; p0.dais       =NULL; bound.lower.dais=NULL;
 bound.upper.dais=NULL; step.mcmc.dais=NULL; index.model.dais=NULL;
 if (luse.dais) {
-	parnames.dais   =c('anto.a','anto.b','gamma','alpha.dais','mu'  ,'nu'  ,'P0' ,'kappa.dais','f0','h0'  ,'c'  , 'b0','slope','var.dais' ) # parameter names
-	p0.dais         =c( 0.1497 , 0.6263 ,  2    , 0.35       , 8.7  , 0.012, 0.35, 0.04       , 1.2, 1471 , 95  , 775 , 0.0006,0.0002     )
-	bound.lower.dais=c( 0.0    , 0      ,  0.5  , 0          , 7.05 , 0.003,0.026, 0.025      , 0.6, 735.5, 47.5, 740 , 4.5e-4,0          )
-	bound.upper.dais=c( 0.33   , 1.53   ,  4.25 , 1          , 13.65, 0.015, 1.5 , 0.085      , 1.8,2206.5,142.5, 820 , 7.5e-4,0.0004     )
+	parnames.dais   =c('anto.a','anto.b','gamma','alpha.dais','mu'  ,'nu'  ,'P0' ,'kappa.dais','f0', 'b0','slope','var.dais' ) # parameter names
+	p0.dais         =c( 0.1497 , 0.6263 ,  2    , 0.35       , 8.7  , 0.012, 0.35, 0.04       , 1.2, 775 , 0.0006,0.0002     )
+	bound.lower.dais=c( 0.0    , 0      ,  0.5  , 0          , 7.05 , 0.003,0.026, 0.025      , 0.6, 740 , 4.5e-4,0          )
+	bound.upper.dais=c( 0.33   , 1.53   ,  4.25 , 1          , 13.65, 0.015, 1.5 , 0.085      , 1.8, 820 , 7.5e-4,0.0004     )
 	step.mcmc.dais	=0.05*(bound.upper.dais-bound.lower.dais) # set size for parameters in MCMC (proposals)
-	step.mcmc.dais[match('h0',parnames.dais)] <- 100
-	step.mcmc.dais[match('b0',parnames.dais)] <- 5
-	step.mcmc.dais[match('c',parnames.dais)] <- 6
-	index.model.dais=c(1,2,3,4,5,6,7,8,9,10,11,12,13)			# which are model parameters? (index within parnames.dais)
+	index.model.dais=c(1,2,3,4,5,6,7,8,9,10,11)			# which are model parameters? (index within parnames.dais)
 }
 
 ## GMSL
