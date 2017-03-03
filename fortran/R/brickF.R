@@ -2,6 +2,14 @@
 # BRICK Fortran90
 #
 # Call full model, stepped forward together
+#
+# Note: In this 'brick_chr' version, it is enabled that the runoff line height
+#		for Antarctic ice sheet (hr=h0+c*Ta) parameters c and h0 are fixed at
+#		defaults from Shaffer (GMD, 2014). Instead, we calibrate chr in
+#		hr=chr*(h0+c*Ta). c and h0 are still taken as inputs to the R wrapper
+#		function, however, but should not be prescribed in the function call if
+#		you want to calibrate chr instead.
+# TODO: Make the calibration interface general to accept all three.
 ##==============================================================================
 ## Copyright 2016 Tony Wong, Alexander Bakker
 ## This file is part of BRICK (Building blocks for Relevant Ice and Climate
@@ -75,6 +83,7 @@
 #   mu          Profile parameter for parabolic ice sheet surface (related to ice stress) [m0.5]
 #   h0          hr(Ta=0): Height of runoff line at Ta = 0 [m]
 #   c           Sensitivity of Height of runoff line (hr) [m/degC]
+#	chr			calibration parameter for runoff line height [-]
 #   P0          P(Ta=0): Annual precipitation for Ta = 0 [m (ice equivalent)]
 #   kappa       Coefficient for the exponential dependency of precipitation on Ta [degC-1]
 #   nu          Proportionality constant relating runoff decrease with height to precipitation [m^(-1/2) yr^(-1/2)]
@@ -161,18 +170,18 @@ flux.to.heat = function(heatflux.mixed, heatflux.interior)
 # to check if library is loaded: is.loaded("run_brick") (for example)
 if(.Platform$OS.type == "unix") {
     dyn.load("../fortran/brick.so")
-    dyn.load("../fortran/dais.so")
-    dyn.load("../fortran/doeclim.so")
-    dyn.load("../fortran/gsic_magicc.so")
-    dyn.load("../fortran/simple.so")
-    dyn.load("../fortran/brick_te.so")
+#    dyn.load("../fortran/dais.so")
+#    dyn.load("../fortran/doeclim.so")
+#    dyn.load("../fortran/gsic_magicc.so")
+#    dyn.load("../fortran/simple.so")
+#    dyn.load("../fortran/brick_te.so")
 } else {
     dyn.load("../fortran/brick")
-    dyn.load("../fortran/dais")
-    dyn.load("../fortran/doeclim")
-    dyn.load("../fortran/gsic_magicc")
-    dyn.load("../fortran/simple")
-    dyn.load("../fortran/brick_te")
+#    dyn.load("../fortran/dais")
+#    dyn.load("../fortran/doeclim")
+#    dyn.load("../fortran/gsic_magicc")
+#    dyn.load("../fortran/simple")
+#    dyn.load("../fortran/brick_te")
 }
 
 brickF <- function(
@@ -208,6 +217,7 @@ brickF <- function(
     mu.dais = 8.7,
     h0.dais = 1471,
     c.dais = 95,
+	chr.dais = 1,
     P0.dais = 0.35,
     kappa.dais = 4 * 10^(-2),
     nu.dais = 1.2 * 10^(-2),
@@ -256,7 +266,8 @@ forcing.total <- forcing_total(forcing=forcing.raw,
                         Rad0.dais,
                         Aoc.dais,
                         lf,
-                        includes_dSLais)
+                        includes_dSLais,
+						chr.dais)
 
   # call fortran
   f.output <- .Fortran("run_brick",

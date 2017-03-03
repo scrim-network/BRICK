@@ -74,7 +74,7 @@ subroutine run_dais(ns, tstep, dais_parameters,                   &
 
 ! parameters
     real(DP),     intent(IN) :: tstep
-    real(DP), dimension(20), intent(IN) :: dais_parameters
+    real(DP), dimension(21), intent(IN) :: dais_parameters
 
 ! input variables
     real(DP), dimension(ns), intent(IN) :: Ant_Temp

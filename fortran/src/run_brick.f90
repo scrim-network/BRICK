@@ -114,7 +114,7 @@ subroutine run_brick(ns, tstep, &
     real(DP),     intent(IN) :: anto_b
     real(DP),     intent(IN) :: slope_Ta2Tg
     real(DP),     intent(IN) :: intercept_Ta2Tg
-    real(DP), dimension(20), intent(IN) :: dais_parameters
+    real(DP), dimension(21), intent(IN) :: dais_parameters
 
 ! output variables
     real(DP), dimension(ns), intent(OUT) :: time_out

@@ -10,6 +10,7 @@
 !   b0        Undisturbed bed height at the continent center [m]
 !   slope     Slope of ice sheet bed before loading [-]
 !   mu        Profile parameter for parabolic ice surface (related to ice stress) [m0.5]
+!   chr       multiplicative calibration parameter for runoff line height [-]
 !   h0        hr(Ta=0): Height of runoff line at Ta = 0 [m]
 !   c         Sensitivity of Height of runoff line (hr) [m/degC]
 !   P0        P(Ta=0): Annual precipitation for Ta = 0 [m (ice equivalent)]
@@ -60,6 +61,7 @@ module dais
     real(DP) :: b0
     real(DP) :: slope
     real(DP) :: mu
+    real(DP) :: chr
     real(DP) :: h0
     real(DP) :: c
     real(DP) :: P0
@@ -98,7 +100,7 @@ subroutine init_dais(time_step, parameters, SL, Rad, Vol)
 !  =========================================================================
 
     real(DP), intent(IN) :: time_step
-    real(DP), dimension(20), intent(IN) :: parameters
+    real(DP), dimension(21), intent(IN) :: parameters
     real(DP), intent(IN)  :: SL
     real(DP), intent(OUT) :: Rad
     real(DP), intent(OUT) :: Vol
@@ -128,6 +130,7 @@ subroutine init_dais(time_step, parameters, SL, Rad, Vol)
     Aoc    = parameters(18)
     lf     = parameters(19)
     includes_dSLais = parameters(20)
+    chr    = parameters(21)
 
 ! Initialize intermediate parameters
     del  = rho_w / rho_i
@@ -185,7 +188,7 @@ subroutine dais_step(Ta, SL, Toc, dSL, Rad, Vol)
     real(DP) :: c_iso
 
 ! Start model
-    hr   = h0 + c * Ta        ! equation 5
+    hr   = chr*(h0 + c * Ta)        ! equation 5
     rc   = (b0 - SL)/slope    ! application of equation 1 (paragraph after eq3)
     P    = P0 * exp(kappa*Ta) ! equation 6
     beta = nu * P**(0.5)      ! equation 7 (corrected with respect to text)

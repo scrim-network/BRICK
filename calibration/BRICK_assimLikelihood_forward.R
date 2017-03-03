@@ -143,6 +143,7 @@ log.lik = function( parameters.in,
                         mu.dais = parameters.in[match("mu",parnames.in)],
 #                        h0.dais = parameters.in[match("h0",parnames.in)],
 #                        c.dais = parameters.in[match("c",parnames.in)],
+                        chr.dais = parameters.in[match("chr",parnames.in)],
                         P0.dais = parameters.in[match("P0",parnames.in)],
                         kappa.dais = parameters.in[match("kappa.dais",parnames.in)],
                         nu.dais = parameters.in[match("nu",parnames.in)],
@@ -192,8 +193,6 @@ log.lik = function( parameters.in,
     # Grab the GSIC statistical parameters
 	sigma.gsic=parameters.in[match("sigma.gsic",parnames.in)]
     rho.gsic  =parameters.in[match("rho.gsic"  ,parnames.in)]
-#DEBUG
-#rho.gsic <- 0.85
 
     # Normalize GSIC
 	itmp <- ind.norm.data[which(ind.norm.data[,1]=='gsic'),2]:ind.norm.data[which(ind.norm.data[,1]=='gsic'),3]
@@ -208,21 +207,13 @@ log.lik = function( parameters.in,
   llik.te = 0
   if(luse.brick[,"luse.te"]) {
 
-    # Calculate the SLR residuals - only proceed if all TE SLR < total SLR
-    # (all after the first 20 years, that is, because they are the 0 point)
-
-#    resid.sl.te = (obs$sl[oidx$sl]-mean(obs$sl[oidx$sl[1:20]])) -
-#                   (brick.out$sl_te_out[midx$sl]-mean(brick.out$sl_te_out[midx$sl[1:20]]))
-
-#    if(all(resid.sl.te[20:length(resid.sl.te)]>0)){
-
       # Note 1: the trends from IPCC are in mm/year, and model output is m
       # Note 2: these calculate the least squares regression slope coefficients. It
       # is more than twice as fast to calcualte by hand like this than to use R's
       # "lm(...)" function.
       # Note 3: Need 1000*trends.mod because they're in meters, but trends.te is mm
 
-if(FALSE){
+if(TRUE){
 	  trends.mod = rep(0, nrow(trends.te))
 	  for (i in 1:nrow(trends.te)) {
 		  x = seq(trends.te[i,6],trends.te[i,7]);                 barx = mean(x);
@@ -244,9 +235,6 @@ if(FALSE){
       llik.te = sum (dnorm(c(mod.te1, mod.te2), mean=c(obs.te1,obs.te2), sd=c(obs.err.te1,obs.err.te2), log=TRUE))
 }
 
-#    } else {
-#      llik.te = -Inf
-#    }
   }
 
   ## Calculate contribution from SIMPLE (Greenland Ice Sheet)
@@ -268,25 +256,13 @@ if(FALSE){
     # Calibrate SIMPLE based on GIS data alone?
     resid.simple = obs$gis[oidx$gis] - gis.model[midx$gis] #Calculate the residuals
 
-#    if(!all(is.finite(resid.simple))) {
-#      llik.simple = -Inf
-#    } else {
-      llik.simple  = logl.ar1(r=resid.simple, sigma1=sigma.simple,
+    llik.simple  = logl.ar1(r=resid.simple, sigma1=sigma.simple,
                               rho1=rho.simple, eps1=obs.err$gis) # AR(1) #Set up the likelihood function
-#    }
   }
 
   ## Calculate contribution from Antarctic ice sheet
   llik.dais = 0
   if(luse.brick[,"luse.dais"]) {
-
-    # Calculate the SLR residuals - only proceed if all AIS SLR < total SLR
-    # (all after the first 20 years, that is, because they are the 0 point)
-
-#    resid.sl.ais <- (obs$sl[oidx$sl]-mean(obs$sl[oidx$sl[1:20]])) -
-#                    (brick.out$sl_ais_out[midx$sl]-mean(brick.out$sl_ais_out[midx$sl[1:20]]))
-
-#    if(all(resid.sl.ais[20:length(resid.sl.ais)]>0)){
 
         var.dais <- parameters.in[match("var.dais",parnames.in)]
 
@@ -296,9 +272,7 @@ if(FALSE){
         ais.model       <- brick.out$sl_ais_out - mean(brick.out$sl_ais_out[itmp])
         ais.instr.resid <- obs$ais[oidx$ais] - ais.model[midx$ais]
 
-#        llik.instr <- sum(dnorm(ais.instr.resid, mean=0, sd=sqrt(var.dais + obs.err$ais[oidx$ais]^2), log=TRUE))
-#        llik.instr <- sum(dnorm(ais.instr.resid, mean=0, sd=obs.err$ais[oidx$ais], log=TRUE))
-        llik.instr <- sum(dnorm(ais.instr.resid, mean=0, sd=sqrt(var.dais), log=TRUE))
+        llik.instr <- sum(dnorm(ais.instr.resid, mean=0, sd=sqrt(var.dais + obs.err$ais[oidx$ais]^2), log=TRUE))
 
 if(FALSE){
         # Second part is from IPCC trends
@@ -320,12 +294,9 @@ if(FALSE){
       #obs.ais2 <- trends.ais[2,1]*0.5*diff(trends.ais[2,6:7])/1000
       mod.ais2 <- brick.out$sl_te_out[trends.ais[2,6]+0.5*diff(trends.ais[2,6:7])] - brick.out$sl_te_out[trends.ais[2,6]]
 
-      llik.trends = sum (dnorm(c(mod.ais1, mod.ais2), mean=c(obs.ais1,obs.ais2), sd=c(obs.err.ais1,obs.err.ais2), log=TRUE))
+      llik.trends <- sum (dnorm(c(mod.ais1, mod.ais2), mean=c(obs.ais1,obs.ais2), sd=c(obs.err.ais1,obs.err.ais2), log=TRUE))
 }
-        llik.dais    <- llik.instr + llik.trends
-#    } else {
-#        llik.dais    <- -Inf
-#    }
+      llik.dais <- llik.instr + llik.trends
   }
 
   # Calculate contribution from total sea level rise
@@ -354,8 +325,7 @@ if(FALSE){
 #  llik.sl      <- llik.sl.1900
 
   # Assume residual time series are independent
-#  llik = llik.temp + llik.ocheat + llik.gsic + llik.te + llik.simple + llik.dais + llik.sl
-  llik = llik.temp + llik.ocheat + llik.gsic + llik.simple + llik.te + llik.sl + llik.dais
+  llik = llik.temp + llik.ocheat + llik.gsic + llik.te + llik.simple + llik.dais + llik.sl
 
   return(llik)
 }
@@ -365,50 +335,22 @@ log.pri = function(parameters.in,
                    parnames.in,
                    bound.lower,
                    bound.upper,
-                   shape.invtau,
-                   scale.invtau,
-                   dais.prior.fit,
-                   gsic.prior.fit,
-                   te.prior.fit,
-                   simple.prior.fit,
-                   anto.prior.fit,
-                   doeclim.prior.fit)
+                   invtau.prior.fit,
+                   vdais.prior.fit,
+                   vgmsl.prior.fit,
+                   anto.prior.fit)
 {
 
     # Get the model and statistical parameters (only ones without uniform prior)
     ind.S          <- match("S.doeclim",parnames.in)
     ind.invtau     <- match("invtau.te",parnames.in)
-    ind.Gs0        <- match("Gs0.gsic",parnames.in)
-    ind.V0.gsic    <- match("V0.gsic",parnames.in)
-    ind.V0.te      <- match("V0.te",parnames.in)
-    ind.V0.simple  <- match("V0.simple",parnames.in)
     ind.vdais      <- match("var.dais",parnames.in)
     ind.vgmsl      <- match("var.gmsl",parnames.in)
-    ind.rgsic      <- match("rho.gsic",parnames.in)
-    ind.gsic       <- c(match("beta0.gsic",parnames.in), match("n.gsic",parnames.in), match("rho.gsic",parnames.in))
-    ind.te         <- c(match('a.te',parnames.in), match('b.te',parnames.in), match('invtau.te',parnames.in))
-    ind.doeclim    <- c(match('S.doeclim',parnames.in)    , match('kappa.doeclim',parnames.in),
-                        match('alpha.doeclim',parnames.in), match('T0.doeclim',parnames.in)   ,
-                        match('H0.doeclim',parnames.in))
-    ind.simple     <- c(match('a.simple',parnames.in)    , match('b.simple',parnames.in),
-                        match('alpha.simple',parnames.in), match('beta.simple',parnames.in))
     ind.anto       <- c(match('anto.a',parnames.in), match('anto.b',parnames.in))
-    ind.dais       <- match('gamma',parnames.in):match('slope',parnames.in)
-    lpri.S         <- 0
     lpri.invtau    <- 0
-    lpri.dais      <- 0
-    lpri.gsic      <- 0
-    lpri.doeclim   <- 0
-    lpri.te        <- 0
-    lpri.simple    <- 0
     lpri.anto      <- 0
-    lpri.Gs0       <- 0
-    lpri.V0.gsic   <- 0
-    lpri.V0.te     <- 0
-    lpri.V0.simple <- 0
     lpri.vdais     <- 0
     lpri.vgmsl     <- 0
-    lpri.rgsic     <- 0
 
     # some of the parameters have infinite support in one or both directions
     ind.inf.up <- c(ind.vdais, ind.vgmsl)
@@ -420,30 +362,38 @@ log.pri = function(parameters.in,
 
 	if(in.range){
         lpri.uni = 0									# Sum of all uniform priors (log(1)=0)
+
+        # Mechanistically-motivated priors
+        lpri.invtau    <- dgamma( parameters.in[ind.invtau], shape=invtau.prior.fit[1], scale=invtau.prior.fit[2], log=TRUE )
+        lpri.vdais     <- vdais.prior.fit[1]*log(vdais.prior.fit[2])- log(gamma(vdais.prior.fit[1])) +
+                        (-vdais.prior.fit[1]-1)*log(parameters.in[ind.vdais]) - vdais.prior.fit[2]/parameters.in[ind.vdais]
+        lpri.vgmsl     <- vgmsl.prior.fit[1]*log(vgmsl.prior.fit[2])- log(gamma(vgmsl.prior.fit[1])) +
+                        (-vgmsl.prior.fit[1]-1)*log(parameters.in[ind.vgmsl]) - vgmsl.prior.fit[2]/parameters.in[ind.vgmsl]
+        lpri.anto      <- log(dmsn( parameters.in[ind.anto], anto.prior.fit$beta, anto.prior.fit$Omega, anto.prior.fit$alpha)/anto.prior.fit$cnorm)
+
+        # Other priors you might use
 #        lpri.S         <- log(dcauchy(parameters.in[ind.S],location=3,scale=2) / 	# S has truncated Cauchy(3,2) prior
 #					         (pcauchy(bound.upper[ind.S],location=3,scale=2)-pcauchy(bound.lower[ind.S],location=3,scale=2)))
-#        lpri.invtau    <- dgamma( parameters.in[ind.invtau], shape=shape.invtau, scale=scale.invtau, log=TRUE )
-        lpri.Gs0       <- dbeta(range.to.beta(parameters.in[ind.Gs0], bound.lower[ind.Gs0], bound.upper[ind.Gs0]),
-                          shape1=Gs0.gsic.prior[1], shape2=Gs0.gsic.prior[2], log=TRUE)
-        lpri.V0.gsic   <- dbeta(range.to.beta(parameters.in[ind.V0.gsic], bound.lower[ind.V0.gsic], bound.upper[ind.V0.gsic]),
-                          shape1=V0.gsic.prior[1], shape2=V0.gsic.prior[2], log=TRUE)
-        lpri.V0.te     <- dbeta(range.to.beta(parameters.in[ind.V0.te], bound.lower[ind.V0.te], bound.upper[ind.V0.te]),
-                          shape1=V0.te.prior[1], shape2=V0.te.prior[2], log=TRUE)
-        lpri.V0.simple <- dbeta(range.to.beta(parameters.in[ind.V0.simple], bound.lower[ind.V0.simple], bound.upper[ind.V0.simple]),
-                          shape1=V0.simple.prior[1], shape2=V0.simple.prior[2], log=TRUE)
+#        lpri.Gs0       <- dbeta(range.to.beta(parameters.in[ind.Gs0], bound.lower[ind.Gs0], bound.upper[ind.Gs0]),
+#                          shape1=Gs0.gsic.prior[1], shape2=Gs0.gsic.prior[2], log=TRUE)
+#        lpri.V0.gsic   <- dbeta(range.to.beta(parameters.in[ind.V0.gsic], bound.lower[ind.V0.gsic], bound.upper[ind.V0.gsic]),
+#                          shape1=V0.gsic.prior[1], shape2=V0.gsic.prior[2], log=TRUE)
+#        lpri.V0.te     <- dbeta(range.to.beta(parameters.in[ind.V0.te], bound.lower[ind.V0.te], bound.upper[ind.V0.te]),
+#                          shape1=V0.te.prior[1], shape2=V0.te.prior[2], log=TRUE)
+#        lpri.V0.simple <- dbeta(range.to.beta(parameters.in[ind.V0.simple], bound.lower[ind.V0.simple], bound.upper[ind.V0.simple]),
+#                          shape1=V0.simple.prior[1], shape2=V0.simple.prior[2], log=TRUE)
 #        lpri.rgsic     <- dbeta(range.to.beta(parameters.in[ind.rgsic], bound.lower[ind.rgsic], bound.upper[ind.rgsic]),
 #                          shape1=rho.gsic.prior[1], shape2=rho.gsic.prior[2], log=TRUE)
-        lpri.vdais     <- log(densigamma(x=parameters.in[ind.vdais], alpha=2.2, beta=3e-5) )
-        lpri.vgmsl     <- log(densigamma(x=parameters.in[ind.vgmsl], alpha=6.26, beta=3.27e-4) )
-        lpri.gsic      <- log(dmsn( parameters.in[ind.gsic], gsic.prior.fit$beta, gsic.prior.fit$Omega, gsic.prior.fit$alpha)/gsic.prior.fit$cnorm)
-        lpri.te        <- log(dmsn( parameters.in[ind.te], te.prior.fit$beta, te.prior.fit$Omega, te.prior.fit$alpha)/te.prior.fit$cnorm)
-        lpri.doeclim   <- log(dmsn( parameters.in[ind.doeclim], doeclim.prior.fit$beta, doeclim.prior.fit$Omega, doeclim.prior.fit$alpha)/doeclim.prior.fit$cnorm)
-        lpri.simple    <- log(dmsn( parameters.in[ind.simple], simple.prior.fit$beta, simple.prior.fit$Omega, simple.prior.fit$alpha)/simple.prior.fit$cnorm)
-        lpri.anto      <- log(dmsn( parameters.in[ind.anto], anto.prior.fit$beta, anto.prior.fit$Omega, anto.prior.fit$alpha)/anto.prior.fit$cnorm)
-        lpri.dais      <- log(dmsn( parameters.in[ind.dais], dais.prior.fit$beta, dais.prior.fit$Omega, dais.prior.fit$alpha)/dais.prior.fit$cnorm)
-        lpri = lpri.uni +
-               lpri.doeclim + lpri.gsic + lpri.dais + lpri.te + lpri.simple + lpri.anto +
-               lpri.vdais + lpri.vgmsl + lpri.Gs0 + lpri.V0.gsic + lpri.V0.te + lpri.V0.simple
+#        lpri.gsic      <- log(dmsn( parameters.in[ind.gsic], gsic.prior.fit$beta, gsic.prior.fit$Omega, gsic.prior.fit$alpha)/gsic.prior.fit$cnorm)
+#        lpri.te        <- log(dmsn( parameters.in[ind.te], te.prior.fit$beta, te.prior.fit$Omega, te.prior.fit$alpha)/te.prior.fit$cnorm)
+#        lpri.doeclim   <- log(dmsn( parameters.in[ind.doeclim], doeclim.prior.fit$beta, doeclim.prior.fit$Omega, doeclim.prior.fit$alpha)/doeclim.prior.fit$cnorm)
+#        lpri.simple    <- log(dmsn( parameters.in[ind.simple], simple.prior.fit$beta, simple.prior.fit$Omega, simple.prior.fit$alpha)/simple.prior.fit$cnorm)
+#        lpri.dais      <- log(dmsn( parameters.in[ind.dais], dais.prior.fit$beta, dais.prior.fit$Omega, dais.prior.fit$alpha)/dais.prior.fit$cnorm)
+#        lpri = lpri.uni +
+#               lpri.doeclim + lpri.gsic + lpri.dais + lpri.te + lpri.simple + lpri.anto +
+#               lpri.vdais + lpri.vgmsl + lpri.Gs0 + lpri.V0.gsic + lpri.V0.te + lpri.V0.simple
+
+        lpri = lpri.uni + lpri.invtau + lpri.vdais + lpri.vgmsl + lpri.anto
 	} else {
         lpri = -Inf
 	}
@@ -460,8 +410,6 @@ log.post = function(  parameters.in,
                       l.project=FALSE,
                       rho.simple.fixed=NULL,
                       sigma.simple.fixed=NULL,
-                      shape.invtau,
-                      scale.invtau,
                       slope.Ta2Tg=1,
                       intercept.Ta2Tg=0,
                       mod.time,
@@ -474,12 +422,10 @@ log.post = function(  parameters.in,
                       obs.err,
                       trends.te,
                       trends.ais,
-                      dais.prior.fit=NULL,
-                      gsic.prior.fit=NULL,
-                      te.prior.fit=NULL,
-                      simple.prior.fit=NULL,
+                      invtau.prior.fit=NULL,
+                      vdais.prior.fit=NULL,
+                      vgmsl.prior.fit=NULL,
                       anto.prior.fit=NULL,
-                      doeclim.prior.fit=NULL,
                       luse.brick
                       ){
 
@@ -488,14 +434,10 @@ log.post = function(  parameters.in,
                   parnames.in        = parnames.in,
                   bound.lower        = bound.lower,
                   bound.upper        = bound.upper,
-                  shape.invtau       = shape.invtau,
-                  scale.invtau       = scale.invtau,
-                  dais.prior.fit     = dais.prior.fit,
-                  gsic.prior.fit     = gsic.prior.fit,
-                  te.prior.fit       = te.prior.fit,
-                  simple.prior.fit   = simple.prior.fit,
-                  anto.prior.fit     = anto.prior.fit,
-                  doeclim.prior.fit  = doeclim.prior.fit)
+                  invtau.prior.fit   = invtau.prior.fit,
+                  vdais.prior.fit    = vdais.prior.fit,
+                  vgmsl.prior.fit    = vgmsl.prior.fit,
+                  anto.prior.fit     = anto.prior.fit)
   if(is.finite(lpri)) { # evaluate likelihood if nonzero prior probability
     llik = log.lik( parameters.in=parameters.in,
                     parnames.in=parnames.in,

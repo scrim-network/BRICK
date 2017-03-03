@@ -74,7 +74,7 @@ subroutine init_brick(nstep, tstep_in, forcing_current, &
     real(DP), intent(IN) :: alpha_simple_in
     real(DP), intent(IN) :: beta_simple_in
     real(DP), intent(IN) :: V0_simple_in
-    real(DP), dimension(20), intent(IN) :: parameters_dais_in
+    real(DP), dimension(21), intent(IN) :: parameters_dais_in
 
     real(DP), intent(OUT) :: temp_init_out
     real(DP), intent(OUT) :: heatflux_mixed_init_out

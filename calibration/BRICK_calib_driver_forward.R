@@ -29,50 +29,79 @@
 
 rm(list=ls())												# Clear all previous variables
 
-## Install packages/get libraries
-library(DEoptim)
-
 ## Set the seed (for reproducibility)
-#set.seed(1234)
-set.seed(as.double(Sys.time())) # should yield same distributions...
+set.seed(1234)					# for reproducibility
+#set.seed(as.double(Sys.time())) # should yield same distributions...
+
+
+##==============================================================================
+## Start model set-up and get the forcing data
 
 ## Do you want to use RCP8.5 to make projections? (l.project=TRUE)
 ## Or do you want to use historical data to make hindcasts? (l.project=FALSE)
-## Note -- l.project=FALSE => Kriegler (2005) data, same as Urban and Keller (2010)
-l.project = FALSE
-begyear = 1850
-endyear = 2009; #if(!l.project & endyear>2009) print('l.project and endyear not compatible')
-mod.time= begyear:endyear
-begyear.norm = 1961
-endyear.norm = 1990
-ind.norm.sl = which(mod.time==begyear.norm):which(mod.time==endyear.norm)
-tstep <- 1	# model time step (years)
+## Note -- l.project=FALSE => same as Urban and Keller (2010)
+l.project    <- FALSE
+begyear      <- 1850
+endyear      <- 2009; #if(!l.project & endyear>2009) print('l.project and endyear not compatible')
+tstep        <- 1	# model time step (years)
+mod.time     <- seq(from=begyear, to=endyear, by=tstep)
+begyear.norm <- 1961
+endyear.norm <- 1990
+ind.norm.sl  <- which(mod.time==begyear.norm):which(mod.time==endyear.norm)
+
+## Which model(s) will you use?
+## If you want to plug in your own model, insert the relevant "luse.XXX" line
+## below, as well as into the "luse.brick = ..." command.
+luse.doeclim  = TRUE    # diffusion-ocean-energy balance climate model
+luse.gsic     = TRUE    # glaciers and small ice caps contribution to SLR
+luse.te       = TRUE    # thermosteric expansion contribution to SLR
+luse.simple   = TRUE    # Greenland ice sheet model
+luse.dais     = TRUE    # Antarctic ice sheet model
+luse.gmsl     = TRUE
+luse.brick = cbind(luse.doeclim, luse.gsic, luse.te, luse.simple, luse.dais)
 
 ## Source the models
 source('../fortran/R/brickF.R')		# the full BRICK model
+
+## Define parameters and their prior ranges
+## -> Note: 'parnames' is defined here, which establishes how the parameters
+##    are passed around into DEoptim, MCMC, likelihood functions, and the models
+#source('../calibration/BRICK_parameterSetup.R')
+#source('../calibration/BRICK_parameterSetup_no-gamma.R')
+source('../calibration/BRICK_parameterSetup_chr.R')
 
 ## Source some useful functions for manipulating data
 source('../R/forcing_total.R')		# function to add up the total forcing
 source('../R/compute_indices.R')	# function to determine the model and
 									# data indices for comparisons
+
+## Get the forcing data
+if(l.project) {
+  forcing = read.csv( '../data/forcing_rcp85.csv', header=TRUE )
+} else {
+  forcing = read.csv( '../data/forcing_hindcast.csv', header=TRUE )
+}
 ##==============================================================================
 
+
+##==============================================================================
 ## Read the model calibration data sets
 source('../calibration/DOECLIM_readData.R')		# read DOECLIM calibration data
 source('../calibration/GSIC_readData.R')		# read GSIC calibration data
 source('../calibration/SIMPLE_readData.R')		# GIS data, and trends in mass balance
 source('../calibration/DAIS_readData.R')		# DAIS forcing data (if at all uncoupled)
 source('../calibration/TE_readData.R')			# read TE data
-
 ##==============================================================================
 
+
+##==============================================================================
 ## Estimate land water storage accounting in global mean sea level budget.
 ## Subtract these contributions off of the GMSL data, and add errors in quadr.
-#source('BRICK_estimateLandWater_IPCC.R')
-source('BRICK_estimateLandWater_IPCC_normEarly.R')
-
+source('BRICK_estimateLandWater_IPCC.R')
 ##==============================================================================
 
+
+##==============================================================================
 ## Gather up all the data/model indices for comparisons. use lists to avoid
 ## enormous amounts of input to the MCMC functions
 midx.all        = list(midx.temp,midx.ocheat,midx.gis,midx.gsic,midx.ais,midx.sl)
@@ -91,38 +120,15 @@ ind.norm.data = data.frame(
 		c( "temp"              , "ocheat"            , "gsic"             , "gis"               , "te"                 , "ais"               , "sl"                ) ,
 		c(which(mod.time==1850),which(mod.time==1960),which(mod.time==1960),which(mod.time==1960),which(mod.time==1961),which(mod.time==1992),which(mod.time==1961)) ,
 		c(which(mod.time==1870),which(mod.time==1990),which(mod.time==1960),which(mod.time==1990),which(mod.time==1990),which(mod.time==1992),which(mod.time==1990)) )
-
 ##==============================================================================
 
-## Get the forcing data
-if(l.project) {
-  forcing = read.csv( '../data/forcing_rcp85.csv', header=TRUE )
-} else {
-  forcing = read.csv( '../data/forcing_hindcast.csv', header=TRUE )
-}
-
-##==============================================================================
-## Which model(s) will you use?
-## If you want to plug in your own model, insert the relevant "luse.XXX" line
-## below, as well as into the "luse.brick = ..." command.
-luse.doeclim  = TRUE    # diffusion-ocean-energy balance climate model
-luse.gsic     = TRUE    # glaciers and small ice caps contribution to SLR
-luse.te       = TRUE    # thermosteric expansion contribution to SLR
-luse.simple   = TRUE    # Greenland ice sheet model
-luse.dais     = TRUE    # Antarctic ice sheet model
-luse.gmsl     = TRUE
-luse.brick = cbind(luse.doeclim, luse.gsic, luse.te, luse.simple, luse.dais)
-
-##==============================================================================
-## Define parameters and their prior ranges
-## -> Note: 'parnames' is defined here, which establishes how the parameters
-##    are passed around into DEoptim, MCMC, likelihood functions, and the models
-#source('../calibration/BRICK_parameterSetup.R')
-source('../calibration/BRICK_parameterSetup_no-h0-c.R')
 
 ##==============================================================================
 ## Use differential optimization (DEoptim) algorithm to find suitable initial
 ## parameters for the MCMC chains
+
+print('Starting preliminary optimization to find starting parameter values...')
+
 require('DEoptim')
 library(DEoptim)
 source('../calibration/BRICK_DEoptim.R')
@@ -142,7 +148,12 @@ outDEoptim <- DEoptim(minimize_residuals_brick, bound.lower[index.model], bound.
 				)
 p0.deoptim[index.model] = outDEoptim$optim$bestmem
 
-## Run the model and examine output at these parameter values
+## Run the model and examine output at these parameter values. Note that since
+## there is not much thermal expansion data, no GMSL data is assimilated before
+## 1900, and there is no prior distribution on the TE rate parameter invtau.te,
+## the modelled TE sea-level rise is likely absurdly rapid during the beginning
+## of the simulation. The DEoptim is only to get decent starting values for the
+## more rigorous MCMC calibration below, so don't worry about it.
 brick.out <- brickF(tstep=tstep,
                     mod.time=mod.time,
                     forcing.raw = forcing,
@@ -172,8 +183,9 @@ brick.out <- brickF(tstep=tstep,
                     b0.dais = p0.deoptim[match("b0",parnames)],
                     slope.dais = p0.deoptim[match("slope",parnames)],
                     mu.dais = p0.deoptim[match("mu",parnames)],
-                    h0.dais = p0.deoptim[match("h0",parnames)],
-                    c.dais = p0.deoptim[match("c",parnames)],
+#                    h0.dais = p0.deoptim[match("h0",parnames)],
+#                    c.dais = p0.deoptim[match("c",parnames)],
+                    chr.dais = p0.deoptim[match("chr",parnames)],
                     P0.dais = p0.deoptim[match("P0",parnames)],
                     kappa.dais = p0.deoptim[match("kappa.dais",parnames)],
                     nu.dais = p0.deoptim[match("nu",parnames)],
@@ -202,40 +214,10 @@ plot(mod.time, brick.out$sl_ais_out - mean(brick.out$sl_ais_out[ind.norm.sl]), t
 	# plot 7 -- SLR match
 plot(obs.sl.time[oidx.sl], obs.sl[oidx.sl], pch=20, ylab = 'sea level [m]', xlab='year')
 lines(mod.time, brick.out$sl_out-mean(brick.out$sl_out[ind.norm.sl]), col="purple", lwd=2)
+
+print('  ... done.')
 ##==============================================================================
 
-## Fix the SIMPLE (GIS) rho.simple statistical parameter at value from the
-## optimized coupled model. There are problems of convergence when it is
-## free-running in the calibration, caused by the high degree of autocorrelation
-## in the GIS residuals. The sigma.simple parameter also was trouble, but not
-## anymore (if convergence issues arise, this might be why).
-
-sigma.simple.fixed = NULL
-rho.simple.fixed   = NULL
-
-## Read an old rho.simple.fixed?
-if(TRUE){
-	rho.simple.fixed = as.numeric(read.csv('../output_calibration/rho_simple_fixed_15Feb2017.csv'))
-} else {
-	## If rho/sigma.simple.fixed = NULL, then will be calibrated
-	resid = brick.out$sl_gis_out[midx.gis] - obs.gis[oidx.gis]
-	ac = acf(resid, lag.max=5, plot=FALSE, main="")
-
-	## If not in the declared parameter names, then fix the estimate of the
-	## AR(1) process sqrt(variance) and autocorrelation
-	if(is.na(match("sigma.simple",parnames))) sigma.simple.fixed = sd(resid)
-	if(is.na(match("rho.simple",parnames)))   rho.simple.fixed = ac$acf[2]
-
-	## rho.simple.fixed should be somewhere around 0.85-0.90
-	## Fix it at a value you decide. Model results are insensitive to this choice,
-	## provided it is realistic (between 0.85 and 1). Write to a file.
-
-	today=Sys.Date(); today=format(today,format="%d%b%Y")
-	filename=paste('../output_calibration/rho_simple_fixed_',today,'.csv', sep="")
-	write.table(rho.simple.fixed, file=filename, sep=",", qmethod="double", row.names=FALSE)
-}
-
-print(paste('rho.simple.fixed=',rho.simple.fixed))
 
 ##==============================================================================
 ## Establish a gamma prior for drawing 1/tau.
@@ -245,6 +227,8 @@ print(paste('rho.simple.fixed=',rho.simple.fixed))
 ## For the TE model, this is not quite accurate, but similar enough (and
 ## previous testing with uniform priors on 1/tau confirm) that the gamma is an
 ## excellent approximation of the distribution of 1/tau (or tau)
+
+print('Starting preliminary optimization to fit prior distribution for invtau.te...')
 
 invtau.hat = 1/200   # preliminary guess at what the expected value of 1/tau should be
                      # (The timescale and extent of thermal expansion of the oceans due to climate change, Marcelja, 2009)
@@ -279,6 +263,10 @@ scale.invtau = outDEoptim$optim$bestmem[2]
 print(paste('shape.invtau=',shape.invtau,' (1.81?)'))
 print(paste('scale.invtau=',scale.invtau,' (0.00275?)'))
 
+invtau.prior.fit <- c(shape.invtau, scale.invtau)
+
+print('  ... done.')
+
 ## This should yield results somewhere in the ballpark of
 ##
 ##     shape.invtau = 1.81    and     scale.invtau = 0.00275
@@ -289,28 +277,70 @@ print(paste('scale.invtau=',scale.invtau,' (0.00275?)'))
 ## members (NP.deoptim) or more iterations (niter.deoptim).
 ##==============================================================================
 
+
+##==============================================================================
+## Set up prior distributions for variance of instrumental period AIS and
+## global mean sea level (GMSL). Inverse gamma is appropriate conjugate prior
+## for the unknown variance of a normally distributed random variable.
+
+## For var.dais -- matching the mean and variance ("mu", "sigsq" below) of the
+## calibrated distribution from Ruckert et al (PLOS ONE, 2017). For an inverse
+## gamma, this means (no pun intended) the shape (alpha) and rate (beta)
+## hyperparameters must be related as follows:
+## 1. mu = beta/(alpha-1) --> beta = mu*(alpha-1)
+## 2. sigsq = (beta^2) / ((alpha-1)^2 * (alpha-2))
+## If alpha > 1, algebra reveals:
+## alpha = 2 + mu^2 / sigsq, and
+## beta  = mu*(alpha-1)
+## You can obtain the results needed for this from
+## [https://download.scrim.psu.edu/Ruckert_etal_DAIS/], and loading the file
+## [DAIS_calib_MCMC_C1234_relative_8e5.RData], using mu=mean(DAIS_chains[,13])
+## and var=var(DAIS_chains[,13]).
+
+#alpha <- 2+(mean(vdais)^2)/var(vdais)
+#[1] 3.49405
+#beta <- mean(vdais)*(alpha-1)
+#[1] 0.000358406
+vdais.prior.fit <- c(3.5, 3.6e-4)
+
+## For var.gmsl -- estimate using innovation standard deviation from the
+## Rahmstorf (2007) emulator, calibrated in Wong et al (GMDD, 2017).
+## File to use: [BRICK-model_calibratedParameters_R07_01Nov2016.nc] provided at
+## [https://download.scrim.psu.edu/Wong_etal_BRICK/] in the tar-ball.
+
+#alpha <- 2+ (mean(vgmsl)^2)/(var(vgmsl))
+#[1] 2.473752
+#beta <- mean(vgmsl)*(alpha-1)
+#[1] 1.497093e-06
+vgmsl.prior.fit <- c(2.5, 1.5e-6)
+##==============================================================================
+
+
+##==============================================================================
+## Fit prior distributions for ANTO parameters. Uses a Latin hypercube sample
+## precalibration approach with paleo reconstructions of Antarctic temperature
+## (Shaffer, GMD 2014; Ruckert et al, PLOS ONE 2017).
+## This will yield 'anto.prior.fit', with the hyperparameters for a multivariate
+## skew-normal distribution on anto.a and anto.b
+
+print('Starting precalibration to fit prior distribution for anto.a and anto.b ...')
+
+source('ANTO_precalibration.R')
+
+print('  ... done.')
+##==============================================================================
+
+
 ##==============================================================================
 ## Now set up the coupled model calibration
 ##	-- will need to whip up a coupled model likelihood function file
-## 	-- will calibrate with log.post(...) (in the above LL file) calling 'brick_model'
+## 	-- will calibrate with log.post(...) (in the above log-likelihood file)
+##		calling 'brickF' R wrapper for the Fortran model.
 ## Notes:
-##	-- With DOECLIM+GSIC+TE+SIMPLE, all R models, requires ~1900s for 1e6 iterations.
+##	-- With DOECLIM+GSIC+TE+SIMPLE+DAIS, all R models calling Fortran,
+##		requires ~1 hour for 1e6 iterations.
 ##==============================================================================
 ## Set up and run the MCMC calibration
-
-## Get the DAIS beta prior distributions
-source('../calibration/DAIS_priors.R')
-
-## Get the other prior distirbutions
-#source('../calibration/scratch_BRICK_testTightCoupler_findInitialValues.R')
-
-library(pscl)
-
-# 	xx   xx  xxxxx  xxxxx    xxxxx       xx    xx  xxxxxxx  xx          xx  xx
-#	xx   xx  xx     xx  xx   xx          xxxx  xx  xx   xx  xx          xx  xx
-#	xxxxxxx  xxxx   xxxxx    xxxx        xx xx xx  xx   xx   xx   xx   xx   xx
-#	xx   xx  xx     xx  xx   xx          xx  xxxx  xx   xx    xx xxxx xx
-#	xx   xx  xxxxx  xx   xx  xxxxx       xx    xx  xxxxxxx     xxx  xxx     xx
 
 #TESTING
 if(FALSE){
@@ -318,71 +348,41 @@ if(FALSE){
 	if(nrow(trends.ais)==3) {trends.ais <- trends.ais[1:2,]}
 }
 
-## Set up jump covariance matrix
-jump.all <- diag(step.mcmc)
-load('~/Downloads/DAIS_MCMCcovjump_Ruckertetal2017.RData')
-jump.dais <- covjump.Ruckert
-idais <- match('gamma',parnames):match('slope',parnames)
-iRuckert <- match('gamma',parnames.Ruckert):match('slope',parnames.Ruckert)
-jump.all[idais,idais] <- jump.dais[iRuckert,iRuckert]
-
-## Set up jump covariance matrix from previous estimates using the
-## pseudo-Metropolis-within-Gibbs
-## And get initial parameter estimates from previous epxeriments
-p0.mcmc <- p0.deoptim
-jump.dais <- amcmc.dais.once$cov.jump
-colnames(jump.dais) <- parnames[ind.dais.fixed]
-rownames(jump.dais) <- parnames[ind.dais.fixed]
-jump.other <- amcmc.notdais.once$cov.jump
-colnames(jump.other) <- parnames[ind.notdais.fixed]
-rownames(jump.other) <- parnames[ind.notdais.fixed]
-jump.all <- diag(step.mcmc)
-colnames(jump.all) <- parnames
-rownames(jump.all) <- parnames
-for (pp in 1:length(ind.dais.fixed)) {
-	jump.all[ind.dais.fixed[pp],ind.dais.fixed] <- jump.dais[pp,]
-	jump.all[ind.dais.fixed,ind.dais.fixed[pp]] <- jump.dais[,pp]
-	p0.mcmc[ind.dais.fixed[pp]] <- amcmc.dais.once$samples[nrow(amcmc.dais.once$samples),pp]
-}
-for (pp in 1:length(ind.notdais.fixed)) {
-	jump.all[ind.notdais.fixed[pp],ind.notdais.fixed] <- jump.other[pp,]
-	jump.all[ind.notdais.fixed,ind.notdais.fixed[pp]] <- jump.other[,pp]
-	p0.mcmc[ind.notdais.fixed[pp]] <- amcmc.notdais.once$samples[nrow(amcmc.notdais.once$samples),pp]
-}
-
+##TODO
+##TODO
+##TODO -- add setting vdais.prior.fit and vgmsl.prior.fit somewhere
+##TODO -- make sure you're happy with the numbers used for each
+##TODO
+##TODO
 
 ## Source the statistical models
 source('../calibration/BRICK_assimLikelihood_forward.R')
-source('../calibration/BRICK_assimLikelihood_forward_DAIS.R')
-source('../calibration/BRICK_assimLikelihood_forward_notDAIS.R')
 
 ## MCMC calibration
 require('adaptMCMC')
 library(adaptMCMC)                      # use robust adaptive Metropolis
 accept.mcmc = 0.234                     # Optimal as # parameters->infinity
                                         # (Gelman et al, 1996; Roberts et al, 1997)
-niter.mcmc = 1e5                        # number of iterations for MCMC
-gamma.mcmc = 0.66                        # rate of adaptation (between 0.5 and 1, lower is faster adaptation)
+niter.mcmc = 1e4                        # number of iterations for MCMC
+gamma.mcmc = 0.5                        # rate of adaptation (between 0.5 and 1, lower is faster adaptation)
 burnin = round(niter.mcmc*0.5)          # remove first ?? of chains for burn-in
 stopadapt.mcmc = round(niter.mcmc*1.0)  # stop adapting after ?? iterations? (niter*1 => don't stop)
 
 ##==============================================================================
 ## Actually run the calibration
 if(TRUE){
-t.beg=proc.time()											# save timing (running millions of iterations so best to have SOME idea...)
-amcmc.out1 = MCMC(log.post, niter.mcmc, p0.mcmc, scale=step.mcmc, adapt=FALSE, acc.rate=accept.mcmc,
-					gamma=gamma.mcmc               , list=TRUE                  , n.start=round(0.05*niter.mcmc)    ,
-					parnames.in=parnames           , forcing.raw=forcing        , l.project=l.project          		,
-					slope.Ta2Tg=slope.Ta2Tg		   , intercept.Ta2Tg=intercept.Ta2Tg, tstep=tstep					,
-					ind.norm.data=ind.norm.data    , ind.norm.sl=ind.norm.sl    , mod.time=mod.time                 ,
-					oidx = oidx.all                , midx = midx.all            , obs=obs.all                       ,
-					obs.err = obs.err.all          , trends.te = trends.te      , trends.ais = trends.ais			,
-					bound.lower=bound.lower        , bound.upper=bound.upper    , shape.invtau=shape.invtau      	,
-					scale.invtau=scale.invtau      , rho.simple.fixed=rho.simple.fixed, sigma.simple.fixed=sigma.simple.fixed,
-					luse.brick=luse.brick          , dais.prior.fit=dais.prior.fit, gsic.prior.fit=gsic.prior.fit   ,
-					doeclim.prior.fit=doeclim.prior.fit, te.prior.fit=te.prior.fit, anto.prior.fit=anto.prior.fit   ,
-					simple.prior.fit=simple.prior.fit)
-t.end=proc.time()											# save timing
+t.beg=proc.time()
+amcmc.out1 = MCMC(log.post, niter.mcmc, p0, scale=step.mcmc, adapt=TRUE, acc.rate=accept.mcmc,
+					gamma=gamma.mcmc               , list=TRUE                  , n.start=round(0.01*niter.mcmc),
+					parnames.in=parnames           , forcing.raw=forcing        , l.project=l.project        	,
+					slope.Ta2Tg=slope.Ta2Tg		   , intercept.Ta2Tg=intercept.Ta2Tg, tstep=tstep				,
+					ind.norm.data=ind.norm.data    , ind.norm.sl=ind.norm.sl    , mod.time=mod.time         	,
+					oidx = oidx.all                , midx = midx.all            , obs=obs.all               	,
+					obs.err = obs.err.all          , trends.te = trends.te      , trends.ais = trends.ais		,
+					bound.lower=bound.lower        , bound.upper=bound.upper    , luse.brick=luse.brick			,
+					invtau.prior.fit=invtau.prior.fit    , anto.prior.fit=anto.prior.fit  ,
+					vgmsl.prior.fit=vgmsl.prior.fit      , vdais.prior.fit=vdais.prior.fit)
+t.end=proc.time()
 chain1 = amcmc.out1$samples
 }
 
@@ -390,16 +390,14 @@ chain1 = amcmc.out1$samples
 if(FALSE){
 t.beg=proc.time()		## NOTE!! CHECK IF YOU NEED TO EXTEND AN ALREADY EXTENDED CHAIN!!! ##
 amcmc.extend1 = MCMC.add.samples(amcmc.out1, niter.mcmc,
-					parnames.in=parnames           , forcing.raw=forcing        , l.project=l.project          		,
-					slope.Ta2Tg=slope.Ta2Tg		   , intercept.Ta2Tg=intercept.Ta2Tg, tstep=tstep					,
-					ind.norm.data=ind.norm.data    , ind.norm.sl=ind.norm.sl    , mod.time=mod.time                 ,
-					oidx = oidx.all                , midx = midx.all            , obs=obs.all                       ,
-					obs.err = obs.err.all          , trends.te = trends.te      , trends.ais = trends.ais			,
-					bound.lower=bound.lower        , bound.upper=bound.upper    , shape.invtau=shape.invtau      	,
-					scale.invtau=scale.invtau      , rho.simple.fixed=rho.simple.fixed, sigma.simple.fixed=sigma.simple.fixed,
-					luse.brick=luse.brick          , dais.prior.fit=dais.prior.fit, gsic.prior.fit=gsic.prior.fit   ,
-					doeclim.prior.fit=doeclim.prior.fit, te.prior.fit=te.prior.fit, anto.prior.fit=anto.prior.fit   ,
-					simple.prior.fit=simple.prior.fit)
+					parnames.in=parnames           , forcing.raw=forcing        , l.project=l.project        	,
+					slope.Ta2Tg=slope.Ta2Tg		   , intercept.Ta2Tg=intercept.Ta2Tg, tstep=tstep				,
+					ind.norm.data=ind.norm.data    , ind.norm.sl=ind.norm.sl    , mod.time=mod.time         	,
+					oidx = oidx.all                , midx = midx.all            , obs=obs.all               	,
+					obs.err = obs.err.all          , trends.te = trends.te      , trends.ais = trends.ais		,
+					bound.lower=bound.lower        , bound.upper=bound.upper    , luse.brick=luse.brick			,
+					invtau.prior.fit=invtau.prior.fit    , anto.prior.fit=anto.prior.fit  ,
+					vgmsl.prior.fit=vgmsl.prior.fit      , vdais.prior.fit=vdais.prior.fit)
 t.end=proc.time()
 chain1 = amcmc.extend1$samples
 amcmc.save <- amcmc.extend1			# just in case...
@@ -407,35 +405,36 @@ amcmc.save <- amcmc.extend1			# just in case...
 
 ## If you want to run 2 (or more) chains in parallel (save time, more sampling)
 if(FALSE){
-t.beg=proc.time()										# save timing (running millions of iterations so best to have SOME idea...)
+t.beg=proc.time()
 amcmc.par1 = MCMC.parallel(log.post, niter.mcmc, p0.deoptim, n.chain=4, n.cpu=4,
-					dyn.libs=c('../fortran/brick.so','../fortran/doeclim.so','../fortran/brick_te.so','../fortran/gsic_magicc.so','../fortran/simple.so'),
+					dyn.libs=c('../fortran/brick_chr.so','../fortran/doeclim.so','../fortran/brick_te.so','../fortran/gsic_magicc.so','../fortran/simple.so'),
 					scale=step.mcmc, adapt=TRUE, acc.rate=accept.mcmc,
 					gamma=gamma.mcmc, list=TRUE, n.start=round(0.01*niter.mcmc),
-					parnames.in=parnames           , forcing.raw=forcing        , l.project=l.project          		,
-					slope.Ta2Tg=slope.Ta2Tg		   , intercept.Ta2Tg=intercept.Ta2Tg, tstep=tstep					,
-					ind.norm.data=ind.norm.data    , ind.norm.sl=ind.norm.sl    , mod.time=mod.time                 ,
-					oidx = oidx.all                , midx = midx.all            , obs=obs.all                       ,
-					obs.err = obs.err.all          , trends.te = trends.te      , trends.ais = trends.ais			,
-					bound.lower=bound.lower        , bound.upper=bound.upper    , shape.invtau=shape.invtau      	,
-					scale.invtau=scale.invtau      , rho.simple.fixed=rho.simple.fixed, sigma.simple.fixed=sigma.simple.fixed,
-					luse.brick=luse.brick          , dais.prior.fit=dais.prior.fit, gsic.prior.fit=gsic.prior.fit   ,
-					doeclim.prior.fit=doeclim.prior.fit, te.prior.fit=te.prior.fit, anto.prior.fit=anto.prior.fit   ,
-					simple.prior.fit=simple.prior.fit)
-t.end=proc.time()											# save timing
+					parnames.in=parnames           , forcing.raw=forcing        , l.project=l.project        	,
+					slope.Ta2Tg=slope.Ta2Tg		   , intercept.Ta2Tg=intercept.Ta2Tg, tstep=tstep				,
+					ind.norm.data=ind.norm.data    , ind.norm.sl=ind.norm.sl    , mod.time=mod.time         	,
+					oidx = oidx.all                , midx = midx.all            , obs=obs.all               	,
+					obs.err = obs.err.all          , trends.te = trends.te      , trends.ais = trends.ais		,
+					bound.lower=bound.lower        , bound.upper=bound.upper    , luse.brick=luse.brick			,
+					invtau.prior.fit=invtau.prior.fit    , anto.prior.fit=anto.prior.fit  ,
+					vgmsl.prior.fit=vgmsl.prior.fit      , vdais.prior.fit=vdais.prior.fit)
+t.end=proc.time()
 chain1=amcmc.par1[[1]]$samples
 chain2=amcmc.par1[[2]]$samples
 chain3=amcmc.par1[[3]]$samples
 chain4=amcmc.par1[[4]]$samples
 }
 
-save.image(file = "BRICK_calib_MCMC.RData")
+## Save RData file if you want to resume this work later. (Or if you are worried
+## about accidentally deleting many millions of nice MCMC samples...)
+#save.image(file = "BRICK_calib_MCMC.RData")
+
 ##==============================================================================
 
 ## Diagnostic plots
 if(FALSE) {
 ## Check #1: History plots
-par(mfrow=c(7,7))
+par(mfrow=c(6,7))
 for (pp in 1:length(parnames)) {
 	plot(chain1[,pp], type="l", ylab=parnames[pp], xlab="Number of Runs", main="")
 }
@@ -502,7 +501,7 @@ for (i in 1:length(parnames)){lmax=max(lmax,nchar(parnames[i]))}
 
 ## Name the output file
 today=Sys.Date(); today=format(today,format="%d%b%Y")
-filename.parameters = paste('../output_calibration/BRICK-model_calibratedParameters_control_',today,'.nc',sep="")
+filename.parameters = paste('../output_calibration/BRICK-v02_calibratedParameters_',today,'.nc',sep="")
 
 library(ncdf4)
 dim.parameters <- ncdim_def('n.parameters', '', 1:ncol(parameters.posterior), unlim=FALSE)

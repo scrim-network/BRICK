@@ -29,12 +29,13 @@
 ## Setup packages and libraries
 #install.packages('compiler')
 #install.packages('pscl')
+#install.packages('sn')
+#install.packages('fMultivar')
+library(sn)
+library(fMultivar)
 library(pscl) # install inverse gamma distribution
 library(compiler)
 enableJIT(3)
-
-## Set the seed (for reproducibility)
-set.seed(1234)
 
 ## Read the data forcing for hindcasts and projections. Yields:
 ##  Ta (Antarctic temperature reduced to sea-level)
@@ -42,7 +43,8 @@ set.seed(1234)
 ##  SL, obs.sl (Reconstructed sea level, Church and White (2011) modern-era sea level)
 ##  dSL (time rate of change of sea level)
 ##  date (240 Kyr before present to 2100 AD at 1-year intervals of forcings)
-source('../calibration/DAIS_readData.R')
+## Note: already have from previous call in BRICK_calib_driver.R.
+#source('../calibration/DAIS_readData.R')
 
 ## To run BRICK in a full-forward capacity, want to calibrate so that Tg relative
 ## to 1850 can give us Toc relative to Toc(1961-1990 mean)=0.72
@@ -94,7 +96,7 @@ require(lhs)
 t0=proc.time()
 # Draw LHS sample
 n.lhs = 10000
-parameters.lhs <- randomLHS(n.lhs, length(parnames))
+parameters.lhs <- randomLHS(n.lhs, length(parnames.anto))
 
 # Transform unif(0,1) to the parameter bounds
 for (i in 1:length(parnames.anto)) {
@@ -136,6 +138,18 @@ print(paste('low-RMSE anto.a range=',quantile(tmp.sort[itmp,2],0),' to ',quantil
 print(paste('low-RMSE anto.b range=',quantile(tmp.sort[itmp,3],0),' to ',quantile(tmp.sort[itmp,3],1)))
 print(paste('min-RMSE (anto.a, anto.b)=(',tmp.sort[1,2],',',tmp.sort[1,3],')'))
 
+# joint prior for anto.a and anto.b?
+
+# first, run precalibration LHS in scratch_findANTObounds_precalibration.R
+# will yield tmp.sort, where columns 2 and 3 are anto.a and anto.b, respectively
+
+
+anto.prior <- msnFit(tmp.sort[itmp,2:3])
+anto.prior.fit <- anto.prior@fit$estimated
+# account for truncated prior
+itmp <- c(match('anto.a',parnames),match('anto.b',parnames))
+anto.prior.fit$cnorm <- as.numeric(pmsn( bound.upper[itmp], anto.prior.fit$beta, anto.prior.fit$Omega, anto.prior.fit$alpha) -
+                         pmsn( bound.lower[itmp], anto.prior.fit$beta, anto.prior.fit$Omega, anto.prior.fit$alpha))
 
 ##==============================================================================
 ## End
