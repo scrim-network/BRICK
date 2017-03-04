@@ -1,9 +1,13 @@
 # =======================================================================================
-# Create projections of local sea level and storm surge for Annapolis.
+# Create projections of local sea level and storm surge for Sewall Point.
 # Use storm surge projections a la Grinsted et al 2013, with T=temperature
 # anomaly relative to 1980-2000 average.
 # And temperature projections from DOECLIM (within BRICK v0.1) under RCP2.6,
 # 4.5 and 8.5.
+#
+# NOTE -- NOT CURRENTLY SUPPORTING TIDE GAUGE DATA AND STORM SURGE PROJECTION
+#           FOR SEWALL PT --
+#
 # =======================================================================================
 #
 #   Required settings (define below):
@@ -56,8 +60,8 @@ dat.dir <- '../data/tidegauge_Annapolis/'
 filetype <- 'txt'
 septype <- '\t'
 
-lat.proj <- 38+(59/60)          # Annapolis tide gauge at 38° 59' N
-lon.proj <- -(76+(28.9/60))     # 76° 28.9' W (NOAA Tides and Currents website)
+lat.proj <- 36+(56.8/60)          # Sewall Point tide gauge at 36° 56.8' N
+lon.proj <- -(76+(19.8/60))     # 76° 19.8' W (NOAA Tides and Currents website)
 scen.rcp <- c('rcp26','rcp45','rcp85')
 
 l.nonstat <- vector('list',3); names(l.nonstat) <- c('location','shape','scale')
@@ -70,8 +74,8 @@ burnin <- 0.5
 filename.brick <- '../output_model/BRICK-fastdyn_physical_gamma_31Jan2017.nc'
 
 today=Sys.Date(); today=format(today,format="%d%b%Y")
-filename.projout <- paste('../output_model/BRICK_project-lsl-surge_Annapolis_',today,'.nc',sep='')
-filename.lslout  <- paste('../output_model/BRICK_project-lsl_Annapolis_',today,'.csv', sep="")
+filename.projout <- paste('../output_model/BRICK_project-lsl-surge_Norfolk_',today,'.nc',sep='')
+filename.lslout  <- paste('../output_model/BRICK_project-lsl_Norfolk_',today,'.csv', sep="")
 
 # unless other data sets are quite different, below here likely does not need
 # to be modified

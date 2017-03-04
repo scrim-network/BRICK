@@ -89,7 +89,7 @@ brick_lsl <- function(  lat.in = 0,
   }
 
   # read the sea-level fingerprints in only one
-	filename.fingerprints = "../fingerprints/FINGERPRINTS_SLANGEN_Bakker.nc"
+  filename.fingerprints = "../fingerprints/FINGERPRINTS_SLANGEN_Bakker.nc"
 
   ncdata <- nc_open(filename.fingerprints)
     lat = ncvar_get(ncdata, 'lat')
