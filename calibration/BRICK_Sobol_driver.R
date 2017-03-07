@@ -41,9 +41,9 @@ map.range <- function(X, lbin, ubin, lbout, ubout){
 ## Setup packages and libraries
 #install.packages('compiler')
 #install.packages('pscl')
-library(pscl) # install inverse gamma distribution
-library(compiler)
-enableJIT(3)
+#library(pscl) # install inverse gamma distribution
+#library(compiler)
+#enableJIT(3)
 
 ## Set the seed (for reproducibility)
 set.seed(1234)
@@ -170,7 +170,8 @@ if(length(irem)>0) {parameters.brick <- parameters.brick[-irem,]}
 # restrict to the bounds of the posterior parameter estimates. Permits values
 # outside the posterior range observed by drawing from the Gaussian kernels, but
 # will restrict to the prior ranges still (to avoid unreasonable model output).
-
+# 3. Note that 'nnode' is only for visualization purposes - the actual KDE
+# object is fit to the *data* not the nodes.
 kerntype <- 'gaussian'
 
 kde.brick <- vector('list', length(parnames.brick))
@@ -208,7 +209,7 @@ for (pp in 1:length(parnames.brick)) {
 ## Sample the parameters to create an ensemble of BRICK model parameters
 ## n.ensemble gives the size of each of the two Sobol' samples
 
-n.sample <- 10000
+n.sample <- 50000
 
 ## Sample BRICK parameters
 ## And note that the kernel here is the box of width 'dx', so to draw from the
@@ -224,10 +225,10 @@ isample2 <- sample(x=seq(1,n.ensemble), size=n.sample, replace=TRUE)
 
 print(paste('Sampling ',n.sample,' BRICK parameters from ',kerntype,' kernels...',sep=''))
 pb <- txtProgressBar(min=0,max=n.sample,initial=0,style=3)
-for (i in 1:n.sample) {
-    p1.brick <- as.numeric(parameters.brick[isample1[i],])
-    p2.brick <- as.numeric(parameters.brick[isample2[i],])
-    if(kerntype=='box') {
+if(kerntype=='box') {
+    for (i in 1:n.sample) {
+        p1.brick <- as.numeric(parameters.brick[isample1[i],])
+        p2.brick <- as.numeric(parameters.brick[isample2[i],])
         for (pp in 1:length(p1.brick)) {
             # find which bin each parameter of this set is in
             ibin1 <- which.min(abs(as.numeric(p1.brick[pp]) - kde.brick[[pp]]$mids))
@@ -251,7 +252,12 @@ for (i in 1:n.sample) {
                                                     lbout=0,
                                                     ubout=1)
         }
-    } else if(kerntype=='gaussian') {
+        setTxtProgressBar(pb, i)
+    }
+} else if(kerntype=='gaussian') {
+    for (i in 1:n.sample) {
+        p1.brick <- as.numeric(parameters.brick[isample1[i],])
+        p2.brick <- as.numeric(parameters.brick[isample2[i],])
         for (pp in 1:length(p1.brick)) {
             # draw sample distributed normally with standard deviation = bandwidth
             # from density estimation (above), and centered at the sampled parameter
@@ -288,8 +294,8 @@ for (i in 1:n.sample) {
                                                         lbout=0,
                                                         ubout=1)
         }
+        setTxtProgressBar(pb, i)
     }
-    setTxtProgressBar(pb, i)
 }
 close(pb)
 print('... done.')
@@ -299,8 +305,9 @@ print('... done.')
 ## call.
 bound.lower.surge <- 0
 bound.upper.surge <- 2
-parameters.sample1.surge <- runif(n=n.sample, 0, 1)
-parameters.sample2.surge <- runif(n=n.sample, 0, 1)
+# Draw the parameters as part of Latin hypercube with RCP later
+#parameters.sample1.surge <- runif(n=n.sample, 0, 1)
+#parameters.sample2.surge <- runif(n=n.sample, 0, 1)
 
 ## Add to these the Van Dantzig parameters. Draw from [0,1] and map to assumed
 ## distributions during function call.
@@ -319,14 +326,18 @@ bound.upper.subs <- Inf
 #parameters.sample1.vd <- randomLHS(n.sample, 6)
 #parameters.sample2.vd <- randomLHS(n.sample, 6)
 #parnames.vd <- c("p0.vd", "alpha.vd", "V0.vd", "delta.vd", "Iunc.vd", "sub_rate.vd")
-parameters.sample1.subs <- runif(n=n.sample, 0, 1)
-parameters.sample2.subs <- runif(n=n.sample, 0, 1)
+# Draw the parameters as part of Latin hypercube with RCP later
+#parameters.sample1.subs <- runif(n=n.sample, 0, 1)
+#parameters.sample2.subs <- runif(n=n.sample, 0, 1)
 
 ## Add GEV parameter fits for storm surge (stationary)
 ## draw quantiles from U[0,1], 3D Latin hypercube (to get good coverage) and map
 ## to the parameter estimates corresponding to those quantiles within the
 ## BRICK_sobol call
-filename.gevstat <- '../output_calibration/BRICK_estimateGEV-AnnMean_07Feb2017.nc'
+
+library(ncdf4)
+
+filename.gevstat <- '../output_calibration/BRICK_estimateGEV-AnnMean_07Mar2017.nc'
 ncdata <- nc_open(filename.gevstat)
 parnames.gev <- ncvar_get(ncdata, 'GEV_names')
 gev.mcmc <- t(ncvar_get(ncdata, 'GEV_parameters'))
@@ -336,18 +347,49 @@ colnames(gev.mcmc) <- parnames.gev
 ## Don't allow shape (xi) < 0, because that changes the fundamental behavior
 irem <- which(gev.mcmc[,'shape'] <= 0)
 gev.mcmc <- gev.mcmc[-irem,]
+bound.lower.gev <- apply(gev.mcmc, 2, min)
+bound.upper.gev <- apply(gev.mcmc, 2, max)
+iloc <- match('location',parnames.gev)
+isha <- match('shape',parnames.gev)
+isca <- match('scale',parnames.gev)
 
-parameters.sample1.gev <- randomLHS(n.sample, 3)
-parameters.sample2.gev <- randomLHS(n.sample, 3)
-bound.lower.gev <- c(-Inf,  0 , -Inf)
-bound.upper.gev <- c( Inf, Inf, Inf )
+# Do not draw as LHS - this misses the correlation structure that was obtained
+# by calibrating using extRemes package MCMC.
+isample1 <- sample(seq(1, nrow(gev.mcmc)), size=n.sample, replace=TRUE)
+isample2 <- sample(seq(1, nrow(gev.mcmc)), size=n.sample, replace=TRUE)
+parameters.sample1.gev <- gev.mcmc[isample1,]
+parameters.sample2.gev <- gev.mcmc[isample2,]
+# Map parameters to [0,1] for Sobol
+for (pp in 1:3) {
+    parameters.sample1.gev[,pp] <- map.range(parameters.sample1.gev[,pp],
+                                             lbin =bound.lower.gev[pp],
+                                             ubin =bound.upper.gev[pp],
+                                             lbout=0,
+                                             ubout=1)
+    parameters.sample2.gev[,pp] <- map.range(parameters.sample2.gev[,pp],
+                                             lbin =bound.lower.gev[pp],
+                                             ubin =bound.upper.gev[pp],
+                                             lbout=0,
+                                             ubout=1)
+}
 
 ## Finally, add RCP scenario to parameters and bounds. Sample from [0,1], and
 ## each 1/4 gives different scenario (2.6, 4.5, 6.0, 8.5).
 bound.lower.rcp <- 0
 bound.upper.rcp <- 1
-parameters.sample1.rcp <- runif(n=n.sample, 0, 1)
-parameters.sample2.rcp <- runif(n=n.sample, 0, 1)
+
+# Draw the surge and subsidence parameters as part of Latin hypercube with RCP
+
+library(lhs)
+
+lhs.sample1 <- randomLHS(n.sample, 3)
+lhs.sample2 <- randomLHS(n.sample, 3)
+parameters.sample1.rcp <- lhs.sample1[,1]
+parameters.sample2.rcp <- lhs.sample2[,1]
+parameters.sample1.surge <- lhs.sample1[,2]
+parameters.sample2.surge <- lhs.sample2[,2]
+parameters.sample1.subs <- lhs.sample1[,3]
+parameters.sample2.subs <- lhs.sample2[,3]
 
 ## add Van Dantzig, surge, and RCP to parnames and bounds
 parameters.sobol1 <- cbind(parameters.sample1.brick, parameters.sample1.surge,
@@ -438,9 +480,12 @@ brick_sobol <- function(dataframe.in){
     parameters.rcp <- dataframe.in[,ind.rcp]
 
     parameters.gev <- dataframe.in[,ind.gev]
-    parameters.gev[,match('location',parnames.gev)] <- quantile(gev.mcmc[,'location'], parameters.gev[,match('location',parnames.gev)])
-    parameters.gev[,match('shape',parnames.gev)]    <- quantile(gev.mcmc[,'shape']   , parameters.gev[,match('shape',parnames.gev)])
-    parameters.gev[,match('scale',parnames.gev)]    <- quantile(gev.mcmc[,'scale']   , parameters.gev[,match('scale',parnames.gev)])
+#    parameters.gev[,match('location',parnames.gev)] <- quantile(gev.mcmc[,'location'], parameters.gev[,match('location',parnames.gev)])
+#    parameters.gev[,match('shape',parnames.gev)]    <- quantile(gev.mcmc[,'shape']   , parameters.gev[,match('shape',parnames.gev)])
+#    parameters.gev[,match('scale',parnames.gev)]    <- quantile(gev.mcmc[,'scale']   , parameters.gev[,match('scale',parnames.gev)])
+    parameters.gev[,iloc] <- map.range(parameters.gev[,iloc], 0, 1, bound.lower.gev[iloc], bound.upper.gev[iloc])
+    parameters.gev[,isha] <- map.range(parameters.gev[,isha], 0, 1, bound.lower.gev[isha], bound.upper.gev[isha])
+    parameters.gev[,isca] <- map.range(parameters.gev[,isca], 0, 1, bound.lower.gev[isca], bound.upper.gev[isca])
 
     # make sea-level rise projections
     print(paste('Starting ',nr,' model projections...',sep=''))
@@ -456,7 +501,7 @@ brick_sobol <- function(dataframe.in){
         } else if(parameters.rcp[i] > 0.75 & parameters.rcp[i] <= 1) {
             forcing <- forcing.rcp85
         }
-        brick.out[[i]] <- brick_model(parameters.in      = as.numeric(parameters.brick[i,]),
+        brick.out[[i]] <- brick_model(parameters.in     = as.numeric(parameters.brick[i,]),
                                      parnames.in        = parnames.brick,
 									 forcing.in         = forcing,
 									 l.project		    = TRUE,
@@ -488,7 +533,7 @@ brick_sobol <- function(dataframe.in){
         H_eff <- H0 - lsl.norm.subs
 
         # failure probability is the survival function of the storm surge GEV at effective dike height
-        p_fail <- as.numeric(1-pgev(q=1000*H_eff, xi=parameters.gev[i,'shape'], mu=parameters.gev[i,'location'], beta=parameters.gev[i,'scale']))
+        p_fail <- as.numeric(1-pgev(q=1000*H_eff, xi=parameters.gev[i,isha], mu=parameters.gev[i,iloc], beta=parameters.gev[i,isca]))
 
         # using average annual exceedance probability as the response
         output[i] <- mean(p_fail)
@@ -499,6 +544,11 @@ brick_sobol <- function(dataframe.in){
     print(paste(' ... done.'))
 
     # for Sobol, output must be centered at 0
+    # ... use log10(return period) = -log10(AEP) as response?
+    # (might be better-behaved - much more (skew)normally-distributed, as opposed to
+    # the AEP, which is strictly > 0 and extremely right-skewed)
+    output <- -log10(output)
+
     output <- output - mean(output)
     return(output)
 }
@@ -514,25 +564,20 @@ brick_sobol <- function(dataframe.in){
 ## variable and all interactions between that variable and others, regardless
 ## of the order.
 
-# get first-order and total-order indices, MCMC-generated
-system.time(s.total <- sobolmartinez(model=brick_sobol,
-                             parameters.sobol1[1:100,],
-                             parameters.sobol2[1:100,],
-                             nboot=0))
+# get first-, second- and total-order indices
+system.time(s.out <- sobolSalt(model=brick_sobol,
+                             parameters.sobol1[1:5000,],
+                             parameters.sobol2[1:5000,],
+                             scheme='B',
+                             nboot=100))
 
-s.total$T[rev(order(s.total$T[,1])),]
 
-s.total$S[rev(order(s.total$S[,1])),]
+#s.total$T[rev(order(s.total$T[,1])),]
+#s.total$S[rev(order(s.total$S[,1])),]
 
-# get first- and second-order indices, MCMC-generated
-system.time(s.inter <- sobol(model=brick_sobol,
-                            parameters.sobol1[1:100,],
-                            parameters.sobol2[1:100,],
-                            order=2,
-                            nboot=0))
+plot(s.out, choice=1)
 
-print(s.out)
-plot(s.out)
+#save.image(file = "BRICK_Sobol.RData")
 ##==============================================================================
 
 
@@ -540,39 +585,65 @@ plot(s.out)
 ##==============================================================================
 ## Write an output file like the modified code from Perry will expect
 
+##TODO
+##TODO -- modify for sobolSalt output
+##TODO
+
+##TODO
+##TODO -- check how 'Sx_conf' is used; make sure you feed it in correctly
+##TODO
+
 today=Sys.Date(); today=format(today,format="%d%b%Y")
 file.sobolout1 <- paste('../output_calibration/BRICK_Sobol-1-tot_',today,'.txt',sep='')
 file.sobolout2 <- paste('../output_calibration/BRICK_Sobol-2_',today,'.txt',sep='')
 
-headers.1st.tot <- matrix(c('Parameter', 'S1', 'S1_conf', 'ST', 'ST_conf'), nrow=1)
-output.1st.tot  <- data.frame(cbind( parnames.sobol             ,
-                                     s.total$S[,1]              ,
-                                     s.total$S[,5]-s.total$S[,1],
-                                     s.total$T[,1]              ,
-                                     s.total$T[,5]-s.total$T[,1] ))
+headers.1st.tot <- matrix(c('Parameter', 'S1', 'S1_conf_low', 'S1_conf_high',
+                            'ST', 'ST_conf_low', 'ST_conf_high'), nrow=1)
+output.1st.tot  <- data.frame(cbind( parnames.sobol,
+                                     s.out$S[,1],
+                                     s.out$S[,4],
+                                     s.out$S[,5],
+                                     s.out$T[,1],
+                                     s.out$T[,4],
+                                     s.out$T[,5]))
 write.table(headers.1st.tot, file=file.sobolout1, append=FALSE, sep = " ",
             quote=FALSE    , row.names = FALSE , col.names=FALSE)
 write.table(output.1st.tot , file=file.sobolout1, append=TRUE , sep = " ",
             quote=FALSE    , row.names = FALSE , col.names=FALSE)
 
-headers.2nd     <- matrix(c('Parameter_1', 'Parameter_2', 'S2', 'S2_conf'), nrow=1)
-output2.indices <- s.inter$S[(length(parnames.sobol)+1):nrow(s.inter$S),1]
-output2.conf    <- s.inter$S[(length(parnames.sobol)+1):nrow(s.inter$S),1] -
-                   s.inter$S[(length(parnames.sobol)+1):nrow(s.inter$S),1]
+headers.2nd     <- matrix(c('Parameter_1', 'Parameter_2', 'S2', 'S2_conf_low',
+                            'S2_conf_high'), nrow=1)
+output2.indices <- s.out$S2[,1]
+output2.conf1   <- s.out$S2[,4]
+output2.conf2   <- s.out$S2[,5]
 
-names2  <- rownames(s.inter$S)[(length(parnames.sobol)+1):nrow(s.inter$S)]
+# 2nd order index names ordered as:
+# 1. parnames.sobol[1]-parnames.sobol[2]
+# 2. parnames.sobol[1]-parnames.sobol[3]
+# 3. parnames.sobol[1]-parnames.sobol[4]
+# ... etc ...
+# 38. parnames.sobol[1]-parnames.sobol[39] << N=2:39 => p1-p[N]
+# 39. parnames.sobol[2]-parnames.sobol[3]
+# 40. parnames.sobol[2]-parnames.sobol[4]
+# 38+37. parnames.sobol[2]-parnames.sobol[39] << N=3:39 => p2-p[N]
+# ... etc ...
+names2  <- rownames(s.out$S2)
 names2a <- rep(NA, length(names2))
 names2b <- rep(NA, length(names2))
-for (i in 1:length(names2)) {
-    iast       <- regexpr('[*]', names2[i])[1]
-    names2a[i] <- substr(names2[i], start=1, stop=(iast-1))
-    names2b[i] <- substr(names2[i], start=(iast+1), stop=nchar(names2[i]))
+cnt <- 1
+for (i in seq(from=1, to=38, by=1)) {           # i = index of first name
+    for (j in seq(from=(i+1), to=39, by=1)) {   # j = index of second name
+        names2a[cnt] <- parnames.sobol[i]
+        names2b[cnt] <- parnames.sobol[j]
+        cnt <- cnt+1
+    }
 }
 
 output.2nd <- data.frame(cbind( names2a,
                                 names2b,
                                 output2.indices,
-                                output2.conf ))
+                                output2.conf1,
+                                output2.conf2 ))
 write.table(headers.2nd    , file=file.sobolout2, append=FALSE , sep = " ",
             quote=FALSE    , row.names = FALSE , col.names=FALSE)
 write.table(output.2nd     , file=file.sobolout2, append=TRUE , sep = " ",
@@ -585,7 +656,8 @@ write.table(output.2nd     , file=file.sobolout2, append=TRUE , sep = " ",
 ## Radial plots
 
 ## Code history:
-# this on by Tony Wong, 6 March 2017, Penn State
+# this one by Tony Wong, 6 March 2017, Penn State. Modified a bit realtive to
+# the previous versions listed below.
 ###################################
 # Adapted from 'radialPlot_vanDantzig.R'
 # Originally authored by: Perry Oddo
@@ -614,8 +686,8 @@ source('../calibration/BRICK_Sobol_functions.R')
 n_params <- 39
 
 # Set Sobol indices file name
-Sobol_file_1 <- "../output_calibration/BRICK_Sobol-1-tot_06Mar2017.txt"
-Sobol_file_2 <- "../output_calibration/BRICK_Sobol-2_06Mar2017.txt"
+Sobol_file_1 <- "../output_calibration/BRICK_Sobol-1-tot_07Mar2017.txt"
+Sobol_file_2 <- "../output_calibration/BRICK_Sobol-2_07Mar2017.txt"
 
 ####################################
 # Import data from sensitivity analysis
@@ -625,50 +697,57 @@ s1st <- read.csv(Sobol_file_1,
                   sep=' ',
                   header=TRUE,
                   nrows = n_params,
-                  as.is=c(TRUE,rep(FALSE,4)))
+                  as.is=c(TRUE,rep(FALSE,5)))
 
 # Import second-order indices
 s2_table <- read.csv(Sobol_file_2,
                sep=' ',
                header=TRUE,
                nrows = n_params*(n_params-1)/2,
-               as.is=c(TRUE,rep(FALSE,3)))
+               as.is=c(TRUE,rep(FALSE,4)))
 
 # Convert second-order to upper-triangular matrix
-s2 <- matrix(nrow=n_params, ncol = n_params, byrow = FALSE)
+s2 <- matrix(nrow=n_params, ncol=n_params, byrow=FALSE)
 s2[1:(n_params-1), 2:n_params] = upper.diag(s2_table$S2)
 s2 <- as.data.frame(s2)
 colnames(s2) <- rownames(s2) <- s1st$Parameter
 
 # Convert confidence intervals to upper-triangular matrix
-s2_conf <- matrix(nrow=n_params, ncol = n_params, byrow = FALSE)
-s2_conf[1:(n_params-1), 2:n_params] = upper.diag(s2_table$S2_conf)
-s2_conf <- as.data.frame(s2_conf)
-colnames(s2_conf) <- rownames(s2_conf) <- s1st$Parameter
+s2_conf_low <- matrix(nrow=n_params, ncol=n_params, byrow=FALSE)
+s2_conf_high <- matrix(nrow=n_params, ncol=n_params, byrow=FALSE)
+s2_conf_low[1:(n_params-1), 2:n_params] = upper.diag(s2_table$S2_conf_low)
+s2_conf_high[1:(n_params-1), 2:n_params] = upper.diag(s2_table$S2_conf_high)
+
+s2_conf_low <- as.data.frame(s2_conf_low)
+s2_conf_high <- as.data.frame(s2_conf_high)
+colnames(s2_conf_low) <- rownames(s2_conf_low) <- s1st$Parameter
+colnames(s2_conf_high) <- rownames(s2_conf_high) <- s1st$Parameter
 
 ####################################
 # Determine which indices are statistically significant
-# S1 & ST: using the confidence intervals
-#s1st1 <- stat_sig_s1st(s1st
-#                      ,method="sig"
-#                      ,sigCri='either')
 
-# S1 & ST: using greater than a given value
+# S1 & ST: using the confidence intervals
 s1st1 <- stat_sig_s1st(s1st
-                      ,method="gtr"
-                      ,greater=0.01
+                      ,method="con"
                       ,sigCri='either')
 
+# S1 & ST: using greater than a given value
+#s1st1 <- stat_sig_s1st(s1st
+#                      ,method="gtr"
+#                      ,greater=0.01
+#                      ,sigCri='either')
+
 # S2: using the confidence intervals
-#s2_sig1 <- stat_sig_s2(s2
-#                       ,s2_conf
-#                       ,method='sig')
+s2_sig1 <- stat_sig_s2(s2
+                       ,s2_conf_low
+                       ,s2_conf_high
+                       ,method='con')
 
 # S2: using greater than a given value
-s2_sig1 <- stat_sig_s2(s2
-                       ,s2_conf
-                       ,greater=0.01
-                       ,method='gtr')
+#s2_sig1 <- stat_sig_s2(s2
+#                       ,s2_conf
+#                       ,greater=0.02
+#                       ,method='gtr')
 
 ####################################
 # Define groups for the variables and the color schemes
@@ -677,10 +756,11 @@ s2_sig1 <- stat_sig_s2(s2
 #                   'Storm Surge' = parnames.sobol[c(ind.surge, ind.gev)],
 #                   'Emissions' = parnames.sobol[c(ind.rcp)])
 name_list1 <- list('Temperature' = parnames.sobol[c(ind.brick[1:5])],
-                   'Sea Level: GSIC' = parnames.sobol[6:9],
-                   'Sea Level: TE' = parnames.sobol[10:13],
-                   'Sea Level: GIS' = parnames.sobol[14:18],
-                   'Sea Level: AIS' = parnames.sobol[19:33],
+                   'Sea Level:\n   Glaciers & Ice Caps' = parnames.sobol[6:9],
+                   'Sea Level:\nThermal Expansion' = parnames.sobol[10:13],
+                   'Sea Level:\nGreenland Ice Sheet' = parnames.sobol[14:18],
+                   'Sea Level:\nAntarctic Ice Sheet' = parnames.sobol[19:33],
+                   'Land\nSubsidence' = parnames.sobol[ind.subs],
                    'Storm Surge' = parnames.sobol[c(ind.surge, ind.gev)],
                    'Emissions' = parnames.sobol[c(ind.rcp)])
 
@@ -708,18 +788,13 @@ name_symbols <- c('S', expression(kappa[D]), expression(alpha[D]),
 
 source('../Useful/colorblindPalette.R')
 
-colScheme1 <- c(myblue, "red3", mygreen)
-colScheme2 <- c(myblue, "red3", mygreen)
-
 # defining list of colors for each group
-#col_list1 <- list("Sea Level" = colScheme1[1],
-#                  "Storm Surge" = colScheme1[2],
-#                  "Emissions"=colScheme1[3])
 col_list1 <- list("Temperature"     = rgb(mycol[11,1],mycol[11,2],mycol[11,3]),
-                  "Sea Level: GSIC" = rgb(mycol[3,1],mycol[3,2],mycol[3,3]),
-                  "Sea Level: TE"   = rgb(mycol[9,1],mycol[9,2],mycol[9,3]),
-                  "Sea Level: GIS"  = rgb(mycol[2,1],mycol[2,2],mycol[2,3]),
-                  "Sea Level: AIS"  = rgb(mycol[7,1],mycol[7,2],mycol[7,3]),
+                  'Sea Level:\n   Glaciers & Ice Caps' = rgb(mycol[3,1],mycol[3,2],mycol[3,3]),
+                  'Sea Level:\nThermal Expansion'   = rgb(mycol[9,1],mycol[9,2],mycol[9,3]),
+                  'Sea Level:\nGreenland Ice Sheet'  = rgb(mycol[2,1],mycol[2,2],mycol[2,3]),
+                  'Sea Level:\nAntarctic Ice Sheet'  = rgb(mycol[7,1],mycol[7,2],mycol[7,3]),
+                  'Land\nSubsidence' = rgb(mycol[1,1],mycol[1,2],mycol[1,3]),
                   "Storm Surge"     = rgb(mycol[6,1],mycol[6,2],mycol[6,3]),
                   "Emissions"       = rgb(mycol[13,1],mycol[13,2],mycol[13,3]))
 
@@ -738,19 +813,53 @@ s1st1$symbols <- name_symbols
 
 # plotting results
 #pdf("Figures/test.pdf")
+
+# swap surge.factor and subs.rate to get all the surge parameters together
+s1st1.swap <- s1st1
+s1st1.swap[match('subs.rate',parnames.sobol),] <- s1st1[match('surge.factor',parnames.sobol),]
+s1st1.swap[match('surge.factor',parnames.sobol),] <- s1st1[match('subs.rate',parnames.sobol),]
+
+s2.swap <- s2
+s2.swap['subs.rate',] <- s2['surge.factor',]
+s2.swap['surge.factor',] <- s2['subs.rate',]
+s2.swap[,'subs.rate'] <- s2[,'surge.factor']
+s2.swap[,'surge.factor'] <- s2[,'subs.rate']
+
+s2_sig1.swap <- s2_sig1
+s2_sig1.swap[match('subs.rate',parnames.sobol),] <- s2_sig1[match('surge.factor',parnames.sobol),]
+s2_sig1.swap[match('surge.factor',parnames.sobol),] <- s2_sig1[match('subs.rate',parnames.sobol),]
+s2_sig1.swap[,match('subs.rate',parnames.sobol)] <- s2_sig1[,match('surge.factor',parnames.sobol)]
+s2_sig1.swap[,match('surge.factor',parnames.sobol)] <- s2_sig1[,match('subs.rate',parnames.sobol)]
+
 plotRadCon(df=s1st1
            ,s2=s2
            ,scaling = .45
            ,s2_sig=s2_sig1
-           ,filename = './sobol_fig_test'
+           ,filename = './sobol_fig_test2'
            ,plotType = 'EPS'
+           ,gpNameMult=1.5
+           ,RingThick=0.1
            ,legLoc = "bottomcenter",cex = .76
+           ,legFirLabs=c(.05,.85), legTotLabs=c(.10,.90), legSecLabs=c(.04,.28)
 )
 
 #dev.off()
 ##==============================================================================
 
-#Not yet modified below here
+
+
+
+
+
+##==============================================================================
+##==============================================================================
+## Scratch work below here
+##==============================================================================
+##==============================================================================
+
+
+
+
 
 
 ##==============================================================================

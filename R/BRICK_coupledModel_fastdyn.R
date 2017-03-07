@@ -281,7 +281,7 @@ brick_model = function(
 
 	## Add the SLR to the output
 	brick.out[[sum(luse.brick)+1]] = slr.out - mean(slr.out[ind.norm.sl])
-  names(brick.out)[sum(luse.brick)+1]="slr.out"
+    names(brick.out)[sum(luse.brick)+1]="slr.out"
 
 	## Check to make sure all the output made it
 	if(outcnt!=sum(luse.brick)+1) print('ERROR - missing model output!')

@@ -6,8 +6,17 @@
 ## and
 ## Perry Oddo, Penn State
 ##
-## Modified (condensed - codes are actually unchanged) for brevity by Tony Wong
-## (Penn State).
+## Modified (condensed - codes are almost entirely unchanged) for brevity by
+## Tony Wong (twong@psu.edu). The only code that was changed is the plotting
+## routine 'plotRadCon'; Tony added
+## (1) inputs for the first-, total- and second-order % values used for legend
+## (2) generate labels for first-, total- and second-order in legend
+## (3) write legend in black ink instead of gray
+## (4) include '%' sign and cut legend labels off at the decimal (whole numbers
+##     only)
+##
+## Tony also modified the 'sig' test for signifiance to be insignifcant if
+## .. TODO
 ##==============================================================================
 
 ##==============================================================================
@@ -29,30 +38,6 @@ upper.diag<-function(x){
   X[upper.tri(X, diag = FALSE)] <- NaN
   t(X)
 }
-##==============================================================================
-
-##==============================================================================
-###################################
-# file: mycolors.R
-###################################
-# Author and copyright: Perry Oddo
-# Pennsylvania State University
-# poddo@psu.edu
-###################################
-# Color codes for easy plotting
-####################################
-
-mygreen <- rgb(44/255, 185/255, 95/255, 1)
-myblue <- rgb(0/255, 128/255, 1, 1)
-myred <- rgb(1, 102/255, 102/255, 1)
-
-mygreenalpha1 <- rgb(44/255, 185/255, 95/255, 0.1)
-mybluealpha1 <- rgb(0/255, 128/255, 1, 0.1)
-myredalpha1 <- rgb(1, 102/255, 102/255, 0.1)
-
-mygreenalpha05 <- rgb(44/255, 185/255, 95/255, 0.05)
-mybluealpha05 <- rgb(0/255, 128/255, 1, 0.05)
-myredalpha05 <- rgb(1, 102/255, 102/255, 0.05)
 ##==============================================================================
 
 ##==============================================================================
@@ -119,7 +104,7 @@ gp_name_col <- function(name_list  # list of variables names for each group
 #             'ST' parameter is significant if ST (or S1 and ST) is significant
 
 #####################################################
-# function for testing significance of S1 and ST
+# (Tony-modified) -- function for testing significance of S1 and ST
 # functions assume the confidence are for already defined type I error
 stat_sig_s1st <- function(df
                      ,greater = 0.01
@@ -135,14 +120,16 @@ stat_sig_s1st <- function(df
   if(method == 'sig'){
     # testing for statistical significance using the confidence intervals
     df$s1_sig[which(abs(s1st$S1) - s1st$S1_conf > 0)] <- 1
-    df$s1_sig[which(abs(s1st$ST) - s1st$ST_conf > 0)] <- 1
+    df$st_sig[which(abs(s1st$ST) - s1st$ST_conf > 0)] <- 1
   }
   else if(method == 'gtr'){
     # finding indicies that are greater than the specified values
     df$s1_sig[which(abs(s1st$S1) > greater)] <- 1
     df$st_sig[which(abs(s1st$ST) > greater)] <- 1
-  }
-  else{
+  } else if(method == 'con') {
+    df$s1_sig[which(s1st$S1_conf_low * s1st$S1_conf_high > 0)] <- 1
+    df$st_sig[which(s1st$ST_conf_low * s1st$ST_conf_high > 0)] <- 1
+  } else {
     print('Not a valid parameter for method')
   }
 
@@ -169,7 +156,8 @@ stat_sig_s1st <- function(df
 #####################################################
 # function to test statistical significane of S2 indices
 stat_sig_s2 <- function(dfs2
-                          ,dfs2Conf
+                          ,dfs2Conf_low
+                          ,dfs2Conf_high
                           ,greater = 0.01
                           ,method='sig'){
 
@@ -185,6 +173,9 @@ stat_sig_s2 <- function(dfs2
     # finding indicies that are greater than the specified values
     s2_sig[which(abs(s2) > greater)] <- 1
   }
+  else if(method == 'con'){
+    s2_sig[which(dfs2Conf_low * dfs2Conf_high > 0)] <- 1
+  }
   else{
     print('Not a valid parameter for method')
   }
@@ -194,8 +185,11 @@ stat_sig_s2 <- function(dfs2
 }
 ##==============================================================================
 
+
 ##==============================================================================
 ## Original routine: plotRadSAinds.R
+
+# legFirLabs, legSecLabs and legTotLabs added by Tony Wong (twong@psu.edu)
 
 # function for plotting the radial convergence plots
 # function takes input data frame
@@ -221,6 +215,9 @@ plotRadCon <- function(df                   # dataframe with S1 and ST indices
                        ,legThick=c(0.1,0.5) # legend thickensses
                        ,legPos=1.9         # legend relative position
                        ,cex = 1
+                       ,legFirLabs=NULL     # legend labels for first order
+                       ,legSecLabs=NULL     # legend labels for second order
+                       ,legTotLabs=NULL     # legend labels for total order
                        ){
 
   # Shift plot up
@@ -274,8 +271,7 @@ plotRadCon <- function(df                   # dataframe with S1 and ST indices
     savePlot <- TRUE
     setEPS()
     postscript(fname)
-  }
- else{
+  } else {
     print('Plot not automatically saved')
     savePlot <- FALSE
 
@@ -311,12 +307,12 @@ plotRadCon <- function(df                   # dataframe with S1 and ST indices
 
   # plotting all lines that were significant----
   if(plotS2 == TRUE){
-    for(i in 1:nrow(s2_sig)){
-      for(j in 1:nrow(s2_sig)){
+    for(i in 1:ncol(s2_sig)){       # i indexes across the rows
+      for(j in 1:nrow(s2_sig)){     # j indexes down the column
 
         # only plot second order when the two indices are significant
         if(s2_sig[j,i]*(df$sig[i]*df$sig[j]) == 1){
-
+#        if(s2_sig[j,i] == 1){
           # coordinates of the center line
           clx <- c(df$x_val[i],df$x_val[j])
           cly <- c(df$y_val[i],df$y_val[j])
@@ -426,7 +422,7 @@ plotRadCon <- function(df                   # dataframe with S1 and ST indices
   for(i in 1:length(num_sig_gp)){
 
     angle_gp <- mean(angles[seq(counter+1,counter+num_sig_gp[i],1)])
-    print(angle_gp[i] * 360/(2*pi))
+    #print(angle_gp[i] * 360/(2*pi))
     counter <- counter + num_sig_gp[i]
 
     if((angle_gp*360/(2*pi)) >= 0 & (angle_gp*360/(2*pi)) <= 180){
@@ -454,31 +450,31 @@ plotRadCon <- function(df                   # dataframe with S1 and ST indices
   if(legLoc == 'topleft'){
     xloc <- rep(-legPos*radSc ,length(legThick))
     yloc <- seq(legPos*radSc ,1*radSc ,by=-0.3*radSc )
-  }
-  else if(legLoc=='topright'){
+  } else if(legLoc=='topright'){
     xloc <- rep(legPos*radSc ,length(legThick))
     yloc <- seq(legPos*radSc ,1*radSc ,by=-0.3*radSc )
-  }
-  else if(legLoc=='bottomleft'){
+  } else if(legLoc=='bottomleft'){
     xloc <- rep(-legPos*radSc ,length(legThick))
     yloc <- seq(-legPos*radSc ,-1*radSc ,by=0.3*radSc )
-  }
-  else if(legLoc=='bottomcenter'){
+  } else if(legLoc=='bottomcenter'){
     xloc <- rep(-legPos*radSc*0.85 ,length(legThick))
     yloc <- seq(-legPos*radSc ,-1*radSc ,by=0.3*radSc )
-
-  }
-  else{
+  } else{
     xloc <- rep(legPos*radSc ,length(legThick))
     yloc <- seq(-legPos*radSc ,-1*radSc ,by=0.3*radSc )
   }
 
   # gray circle for legend (1st Order)
   for(i in 1:length(xloc)){
-    legend_max = max(df$S1)#scaling*(max(df$S1)^widthSc)/2
-    legend_min = min(df$S1[df$S1>0])#scaling*(min(df$S1[df$S1>0])^widthSc)/2
-    if(legend_max==legend_min){
-      legend_min <- 0
+    if(is.null(legFirLabs)) {
+      legend_max = max(df$S1)#scaling*(max(df$S1)^widthSc)/2
+      legend_min = min(df$S1[df$S1>0])#scaling*(min(df$S1[df$S1>0])^widthSc)/2
+      if(legend_max==legend_min){
+        legend_min <- 0
+      }
+    } else {
+      legend_min = legFirLabs[1]
+      legend_max = legFirLabs[2]
     }
     legend_scale = c(legend_max, legend_min)
 
@@ -491,17 +487,25 @@ plotRadCon <- function(df                   # dataframe with S1 and ST indices
                 )
     text(-2#xloc[i]*0.65,
          ,yloc[i]
-         ,as.character(formatC((legend_scale[i]*100), digits = 2, format = "f"))#legThick[i])
-         ,col=s1_col
+#         ,as.character(formatC((legend_scale[i]*100), digits = 2, format = "f"))#legThick[i])
+         ,paste(as.character(formatC((legend_scale[i]*100), digits = 0, format = "f")),'%',sep='')
+         ,col='black'
          ,adj = c(1,0.5))
     }
 
+text(-2.7, -2.7,'First-order', cex=0.9)
+
   # white circle for legend (Total Order)
   for(i in 1:length(xloc)){
-    legend_max = max(df$ST)#scaling*(max(df$S1)^widthSc)/2
-    legend_min = min(df$ST[df$ST>0])#scaling*(min(df$S1[df$S1>0])^widthSc)/2
-    if(legend_max==legend_min){
-      legend_min <- 0
+    if(is.null(legTotLabs)) {
+      legend_max = max(df$ST)#scaling*(max(df$S1)^widthSc)/2
+      legend_min = min(df$ST[df$ST>0])#scaling*(min(df$S1[df$S1>0])^widthSc)/2
+      if(legend_max==legend_min){
+        legend_min <- 0
+      }
+    } else {
+      legend_min = legTotLabs[1]
+      legend_max = legTotLabs[2]
     }
     legend_scale = c(legend_max, legend_min)
 
@@ -514,17 +518,25 @@ plotRadCon <- function(df                   # dataframe with S1 and ST indices
     )
     text(scaling*(legend_max^widthSc)/2 + 0.5
          ,yloc[i]
-         ,as.character(formatC((legend_scale[i]*100), digits = 2, format = "f"))#legThick[i])
-         ,col=s1_col
+#         ,as.character(formatC((legend_scale[i]*100), digits = 2, format = "f"))#legThick[i])
+         ,paste(as.character(formatC((legend_scale[i]*100), digits = 0, format = "f")),'%',sep='')
+         ,col='black'
          ,adj = c(1,0.5))
     }
 
+text(0, -2.7,'Total-order', cex=0.9)
+
   # Lines (Second Order)
   for(i in 1:length(xloc)){
-    line_max = abs(max(s2_table[,3]))
-    line_min = abs(min(s2_table[,3]))
+    if(is.null(legSecLabs)) {
+      line_max = abs(max(s2_table[,3]))
+      line_min = abs(min(s2_table[,3]))
       if(line_max==line_min){
-      line_min <- 0
+        line_min <- 0
+      }
+    } else {
+      line_min = legSecLabs[1]
+      line_max = legSecLabs[2]
     }
     line_scale = c(line_max, line_min)
     line_hw[i] <- scaling*(line_scale[i]^widthSc)/2
@@ -548,11 +560,14 @@ plotRadCon <- function(df                   # dataframe with S1 and ST indices
             ,col=line_col)
 
     text((xloc[i]*0.65) + 6, yloc[i]
-         ,as.character(formatC((line_scale[i]*100), digits = 2, format = "f"))#legThick[i])
-         ,col=s1_col
+#         ,as.character(formatC((line_scale[i]*100), digits = 2, format = "f"))#legThick[i])
+         ,paste(as.character(formatC((line_scale[i]*100), digits = 0, format = "f")),'%',sep='')
+         ,col='black'
          ,adj = c(1,0.5))
 
   }
+
+text(3.0, -2.7,'Second-order', cex=0.9)
 
   # closing plot if save to external file
   if(savePlot == TRUE){
