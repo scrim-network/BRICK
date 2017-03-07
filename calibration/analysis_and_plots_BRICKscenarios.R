@@ -42,7 +42,7 @@ filename.vandantzig.gamma = '../output_model/VanDantzig_fd-gamma_2065_07Feb2017.
 ## File name for the BRICK post-calibrated parameters (netcdf) (the BRICK output came from these guys)
 filename.parameters.nofd = '../output_calibration/BRICK-model_postcalibratedParameters_fd-none_08Dec2016.nc'
 filename.parameters.uniform = '../output_calibration/BRICK-model_postcalibratedParameters_fd-uniform_08Dec2016.nc'
-filename.parameters.gamma = '../output_calibration/BRICK-model_drawcalibratedParameters_fd-gamma_08Dec2016.nc'
+filename.parameters.gamma = '../output_calibration/BRICK-model_postcalibratedParameters_fd-gamma_08Dec2016.nc'
 
 ## Other files
 filename.rho_simple_fixed = "../output_calibration/rho_simple_fixed_01Nov2016.csv"
