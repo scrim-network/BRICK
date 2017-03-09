@@ -369,14 +369,15 @@ plotRadCon <- function(df                   # dataframe with S1 and ST indices
                   ,col=st_col
                   )
 
-      # white circle to make total-order an outline
-      draw.circle(df$x_val[i]#*0.95
-                  ,df$y_val[i]#*0.95
-                  ,radius <- (1-STthick)*scaling*(df$ST[i]^widthSc)/2
-                  ,nv=200
-                  ,border=NA
-                  ,col="white"
-                  )
+# Commented out by Tony 9 March 2017 to highlight the importance of total order
+#      # white circle to make total-order an outline
+#      draw.circle(df$x_val[i]#*0.95
+#                  ,df$y_val[i]#*0.95
+#                  ,radius <- (1-STthick)*scaling*(df$ST[i]^widthSc)/2
+#                  ,nv=200
+#                  ,border=NA
+#                  ,col="white"
+#                  )
 
       # gray circle for first-order
       draw.circle(df$x_val[i]#*0.95
@@ -513,8 +514,9 @@ text(-2.7, -2.7,'First-order', cex=0.9)
                 ,yloc[i]
                 ,radius <- scaling*(legend_scale[i]^widthSc)/2#scaling*(legThick[i]^widthSc)/2
                 ,nv=200
-                ,border="black"
-                ,col="white"
+                ,border=st_col
+                #,col="white"
+                ,col=st_col
     )
     text(scaling*(legend_max^widthSc)/2 + 0.5
          ,yloc[i]
