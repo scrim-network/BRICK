@@ -696,33 +696,38 @@ brick_sobol_ser <- function(dataframe.in){
 
 library(sensitivity)
 
+n.use <- 100
+if(n.use > nrow(parameters.sobol1)) {print('ERROR - asking to use more samples than you drew')}
+
 # get first-, second- and total-order indices
-system.time(s.out <- sobolSalt(model=brick_sobol_par,
-                             parameters.sobol1[1:100,],
-                             parameters.sobol2[1:100,],
+print(paste('Starting Sobol analysis using samples of size ',n.use,sep=''))
+
+t.out <- system.time(s.out <- sobolSalt(model=brick_sobol_par,
+                             parameters.sobol1[1:n.use,],
+                             parameters.sobol2[1:n.use,],
                              scheme='B',
                              nboot=100))
 
+print(paste('Sobol analysis took ',as.numeric(t.out[3]/60),' minutes to complete.',sep=''))
 
-system.time(s.out <- sobol(model=brick_sobol_ser,
-                             parameters.sobol1[1:1000,],
-                             parameters.sobol2[1:1000,],
-                             order=2,
-                             nboot=100))
+#system.time(s.out <- sobol(model=brick_sobol_ser,
+#                             parameters.sobol1[1:1000,],
+#                             parameters.sobol2[1:1000,],
+#                             order=2,
+#                             nboot=100))
 
 #s.total$T[rev(order(s.total$T[,1])),]
 #s.total$S[rev(order(s.total$S[,1])),]
 
-plot(s.out, choice=1)
+#plot(s.out, choice=1)
 
-#save.image(file = "BRICK_Sobol.RData")
+save.image(file = "BRICK_Sobol_tmp.RData")
 ##==============================================================================
 
 
 
 ##==============================================================================
 ## Write an output file like the modified code from Perry will expect
-
 
 ##TODO
 ##TODO -- check how 'Sx_conf' is used; make sure you feed it in correctly
@@ -752,7 +757,7 @@ output2.indices <- s.out$S2[,1]
 output2.conf1   <- s.out$S2[,4]
 output2.conf2   <- s.out$S2[,5]
 
-# 2nd order index names ordered as:
+# 2nd order index names ordered as: (assuming 39 parameters)
 # 1. parnames.sobol[1]-parnames.sobol[2]
 # 2. parnames.sobol[1]-parnames.sobol[3]
 # 3. parnames.sobol[1]-parnames.sobol[4]
@@ -766,8 +771,8 @@ names2  <- rownames(s.out$S2)
 names2a <- rep(NA, length(names2))
 names2b <- rep(NA, length(names2))
 cnt <- 1
-for (i in seq(from=1, to=38, by=1)) {           # i = index of first name
-    for (j in seq(from=(i+1), to=39, by=1)) {   # j = index of second name
+for (i in seq(from=1, to=(length(parnames.sobol)-2), by=1)) {           # i = index of first name
+    for (j in seq(from=(i+1), to=(length(parnames.sobol)-1), by=1)) {   # j = index of second name
         names2a[cnt] <- parnames.sobol[i]
         names2b[cnt] <- parnames.sobol[j]
         cnt <- cnt+1
@@ -785,7 +790,8 @@ write.table(output.2nd     , file=file.sobolout2, append=TRUE , sep = " ",
             quote=FALSE    , row.names = FALSE , col.names=FALSE)
 ##==============================================================================
 
-
+# skip this stuff on HPC
+if(FALSE) {
 
 ##==============================================================================
 ## Radial plots
@@ -818,11 +824,11 @@ library(plotrix)      # used when plotting circles
 source('../calibration/BRICK_Sobol_functions.R')
 
 # Set number of parameters being analyzed
-n_params <- 39
+n_params <- 40
 
 # Set Sobol indices file name
-Sobol_file_1 <- "../output_calibration/BRICK_Sobol-1-tot_08Mar2017.txt"
-Sobol_file_2 <- "../output_calibration/BRICK_Sobol-2_08Mar2017.txt"
+Sobol_file_1 <- "../output_calibration/BRICK_Sobol-1-tot_10Mar2017.txt"
+Sobol_file_2 <- "../output_calibration/BRICK_Sobol-2_10Mar2017.txt"
 
 ####################################
 # Import data from sensitivity analysis
@@ -890,14 +896,16 @@ s2_sig1 <- stat_sig_s2(s2
 #name_list1 <- list('Sea Level' = parnames.sobol[c(ind.brick,ind.subs)],
 #                   'Storm Surge' = parnames.sobol[c(ind.surge, ind.gev)],
 #                   'Emissions' = parnames.sobol[c(ind.rcp)])
-name_list1 <- list('Temperature' = parnames.sobol[c(ind.brick[1:5])],
-                   'Sea Level:\n   Glaciers & Ice Caps' = parnames.sobol[6:9],
-                   'Sea Level:\nThermal Expansion' = parnames.sobol[10:13],
-                   'Sea Level:\nGreenland Ice Sheet' = parnames.sobol[14:18],
-                   'Sea Level:\nAntarctic Ice Sheet' = parnames.sobol[19:33],
-                   'Land\nSubsidence' = parnames.sobol[ind.subs],
-                   'Storm Surge' = parnames.sobol[c(ind.surge, ind.gev)],
-                   'Emissions' = parnames.sobol[c(ind.rcp)])
+name_list1 <- list('Temperature' = parnames.sobol[c(ind.brick[1:5])]
+                   ,'Sea Level:\n   Glaciers & Ice Caps' = parnames.sobol[6:9]
+                   ,'Sea Level:\nThermal Expansion' = parnames.sobol[10:13]
+                   ,'Sea Level:\nGreenland Ice Sheet' = parnames.sobol[14:18]
+                   ,'Sea Level:\nAntarctic Ice Sheet' = parnames.sobol[19:33]
+                   ,'Land\nSubsidence' = parnames.sobol[ind.subs]
+                   ,'Storm Surge' = parnames.sobol[c(ind.surge, ind.gev)]
+                   ,'Emissions' = parnames.sobol[c(ind.rcp)]
+                   ,'Protection' = parnames.sobol[c(ind.build)]
+                   )
 
 # add Parameter symbols to plot
 name_symbols <- c('S', expression(kappa[D]), expression(alpha[D]),
@@ -914,7 +922,7 @@ name_symbols <- c('S', expression(kappa[D]), expression(alpha[D]),
                   expression('h'[0]), 'c', expression('b'[0]), 'slope',
                   expression(lambda), expression('T'['crit']),
                   expression('C'['surge']), 'subs', expression(mu),
-                  expression(sigma), expression(xi), 'RCP')
+                  expression(sigma), expression(xi), 'RCP', 'build')
 
 # Parameter descriptions
 #param_desc <- c("Value of goods", "Discount rate", "Construction cost",
@@ -924,14 +932,16 @@ name_symbols <- c('S', expression(kappa[D]), expression(alpha[D]),
 source('../Useful/colorblindPalette.R')
 
 # defining list of colors for each group
-col_list1 <- list("Temperature"     = rgb(mycol[11,1],mycol[11,2],mycol[11,3]),
-                  'Sea Level:\n   Glaciers & Ice Caps' = rgb(mycol[3,1],mycol[3,2],mycol[3,3]),
-                  'Sea Level:\nThermal Expansion'   = rgb(mycol[9,1],mycol[9,2],mycol[9,3]),
-                  'Sea Level:\nGreenland Ice Sheet'  = rgb(mycol[2,1],mycol[2,2],mycol[2,3]),
-                  'Sea Level:\nAntarctic Ice Sheet'  = rgb(mycol[7,1],mycol[7,2],mycol[7,3]),
-                  'Land\nSubsidence' = rgb(mycol[1,1],mycol[1,2],mycol[1,3]),
-                  "Storm Surge"     = rgb(mycol[6,1],mycol[6,2],mycol[6,3]),
-                  "Emissions"       = rgb(mycol[13,1],mycol[13,2],mycol[13,3]))
+col_list1 <- list("Temperature"     = rgb(mycol[11,1],mycol[11,2],mycol[11,3])
+                  ,'Sea Level:\n   Glaciers & Ice Caps' = rgb(mycol[3,1],mycol[3,2],mycol[3,3])
+                  ,'Sea Level:\nThermal Expansion'   = rgb(mycol[9,1],mycol[9,2],mycol[9,3])
+                  ,'Sea Level:\nGreenland Ice Sheet'  = rgb(mycol[2,1],mycol[2,2],mycol[2,3])
+                  ,'Sea Level:\nAntarctic Ice Sheet'  = rgb(mycol[7,1],mycol[7,2],mycol[7,3])
+                  ,'Land\nSubsidence' = rgb(mycol[1,1],mycol[1,2],mycol[1,3])
+                  ,"Storm Surge"     = rgb(mycol[6,1],mycol[6,2],mycol[6,3])
+                  ,"Emissions"       = rgb(mycol[13,1],mycol[13,2],mycol[13,3])
+                  ,"Protection"      = rgb(mycol[12,1],mycol[12,2],mycol[12,3])
+                  )
 
 # using function to assign variables and colors based on group
 s1st1 <- gp_name_col(name_list1
@@ -971,7 +981,7 @@ plotRadCon(df=s1st1.swap
            ,scaling = .45
            ,s2_sig=s2_sig1.swap
            ,filename = '~/Box\ Sync/Wong-Projects/BRICK_scenarios/figures/sobol_spider'
-           #,filename = './sobol_fig_test2'
+           #,filename = './sobol_fig_test3'
            ,plotType = 'EPS'
            ,gpNameMult=1.5
            ,RingThick=0.1
@@ -1063,65 +1073,4 @@ nc_close(outnc)
 ## End
 ##==============================================================================
 
-
-## Extra code snippets
-
-
-##==============================================================================
-## Latin Hypercube to get parameters to send into Sobol
-## Could fit to distributions from Wong et al 2017 instead of the uniforms.
-
-require(lhs)
-
-# Draw LHS samples (need two)
-# Okay to leave on U[0,1] because brick_sobol function will scale up to the
-# parameter ranges.
-n.lhs = 1e2
-parameters.lhs1 <- randomLHS(n.lhs, length(parnames))
-parameters.lhs2 <- randomLHS(n.lhs, length(parnames))
-colnames(parameters.lhs1) <- parnames
-colnames(parameters.lhs2) <- parnames
-parameters.lhs1 <- data.frame(parameters.lhs1)
-parameters.lhs2 <- data.frame(parameters.lhs2)
-##==============================================================================
-
-
-
-##==============================================================================
-## Map to [0,1]
-parameters.sample1 <- parameters.sample.orig1
-parameters.sample2 <- parameters.sample.orig2
-for (j in 1:ncol(parameters.sample)) {
-    parameters.sample1[,j] <- map.range(parameters.sample.orig1[,j], bound.lower[j], bound.upper[j], 0, 1)
-    parameters.sample2[,j] <- map.range(parameters.sample.orig2[,j], bound.lower[j], bound.upper[j], 0, 1)
 }
-##==============================================================================
-
-
-
-##==============================================================================
-# Some of the parameter combinations will yield complete melt, and NaNs.
-# Filter these out.
-dais.lhs1 <- dais_sobol(parameters.lhs01.1)
-dais.lhs2 <- dais_sobol(parameters.lhs01.2)
-
-ibad1 <- which(is.na(dais.lhs1))
-ibad2 <- which(is.na(dais.lhs2))
-
-parameters.lhs01.1 <- parameters.lhs01.1[-ibad1,]
-parameters.lhs01.2 <- parameters.lhs01.2[-ibad2,]
-
-nmax <- min(nrow(parameters.lhs01.1), nrow(parameters.lhs01.2))
-parameters.lhs01.1 <- parameters.lhs01.1[1:nmax,]
-parameters.lhs01.2 <- parameters.lhs01.2[1:nmax,]
-##==============================================================================
-
-
-
-## Check the samples
-par(mfrow=c(2,2))
-pp <- 12
-hist(parameters.brick[,pp], xlab=parnames.brick[pp], xlim=quantile(parameters.brick[,pp], c(0,1)))
-plot(kde.brick[[pp]]$x, kde.brick[[pp]]$y, type='l', xlim=quantile(parameters.brick[,pp], c(0,1)))
-hist(map.range(parameters.sample1.brick[,pp], lbin=0, ubin=1, lbout=bound.lower.brick[pp], ubout=bound.upper.brick[pp]), xlim=quantile(parameters.brick[,pp], c(0,1)))
-hist(map.range(parameters.sample1.brick[,pp], lbin=0, ubin=1, lbout=min(parameters.brick[pp]), ubout=max(parameters.brick[pp])), xlim=quantile(parameters.brick[,pp], c(0,1)))

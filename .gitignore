@@ -3,6 +3,7 @@ lobj/
 *.dll
 .Rhistory
 *.RData
+*.Rout
 *.mod
 output/
 output_calibration/
