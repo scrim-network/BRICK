@@ -1,3 +1,4 @@
+
 ##==============================================================================
 ## Sobol sensitvity analysis for drivers of flood risk.
 ## Need to set up the design matrix with each of the three levers of RCP
@@ -24,6 +25,14 @@
 ##==============================================================================
 
 rm(list =ls()) #Clear global environment
+
+##########################################
+# setting things here, not to be touched #
+N.sample000 <- 12200
+N.use000    <- 12200
+N.boot000   <- 1000
+setwd('/home/scrim/axw322/codes/BRICK/calibration')
+##########################################
 
 ##==============================================================================
 ## Need preliminary function to map ranges from [0,1] and back
@@ -209,7 +218,8 @@ for (pp in 1:length(parnames.brick)) {
 ## Sample the parameters to create an ensemble of BRICK model parameters
 ## n.ensemble gives the size of each of the two Sobol' samples
 
-n.sample <- 500
+#n.sample <- 500
+n.sample <- N.sample000
 
 ## Sample BRICK parameters
 ## And note that the kernel here is the box of width 'dx', so to draw from the
@@ -696,19 +706,21 @@ brick_sobol_ser <- function(dataframe.in){
 
 library(sensitivity)
 
-n.use <- 100
+#n.use <- 100
+n.use <- N.use000
 if(n.use > nrow(parameters.sobol1)) {print('ERROR - asking to use more samples than you drew')}
 
 # get first-, second- and total-order indices
 print(paste('Starting Sobol analysis using samples of size ',n.use,sep=''))
+print(paste('  will require ',n.use*(2*ncol(parameters.sobol1)+2),' simulations',sep=''))
 
 t.out <- system.time(s.out <- sobolSalt(model=brick_sobol_par,
                              parameters.sobol1[1:n.use,],
                              parameters.sobol2[1:n.use,],
                              scheme='B',
-                             nboot=100))
+                             nboot=N.boot000))
 
-print(paste('Sobol analysis took ',as.numeric(t.out[3]/60),' minutes to complete.',sep=''))
+print(paste('Sobol analysis took ',signif(as.numeric(t.out[3]/60),4),' minutes to complete.',sep=''))
 
 #system.time(s.out <- sobol(model=brick_sobol_ser,
 #                             parameters.sobol1[1:1000,],
