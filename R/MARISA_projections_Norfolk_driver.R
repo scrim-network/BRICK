@@ -184,6 +184,203 @@ write.table(lsl.out, file=filename.lslout, sep=",", qmethod="double", row.names=
 ##==============================================================================
 
 
+
+
+
+##==============================================================================
+## Plot --  akin to NOAA 2017 GMSL/US coastal report
+
+## round up all of the GMSL projections, and LSL (already fingerprinted, so
+## no need to screw around with the slr_xxx)
+ns <- length(gmsl)
+nt <- nrow(gmsl[[1]])
+ne <- ncol(gmsl[[1]])
+gmsl.all <- mat.or.vec(nt,ns*ne)
+lsl.all  <- mat.or.vec(nt,ns*ne)
+for (i in 1:ns) {
+    gmsl.all[,((i-1)*ne+1):(i*ne)] <- gmsl[[i]]
+    lsl.all[,((i-1)*ne+1):(i*ne)]  <- lsl_proj[[i]]
+}
+
+## normalize relative to 1991-2009 mean
+ind.norm <- which(t.proj==1991):which(t.proj==2009)
+gmsl.all <- gmsl.all - t(replicate(nrow(gmsl.all),apply(gmsl.all[ind.norm,],2,mean)))
+lsl.all  <- lsl.all  - t(replicate(nrow(lsl.all) ,apply(lsl.all[ind.norm,] ,2,mean)))
+
+## bin into those that hit the targets from NOAA 2017 report for the 6 scenarios
+## 1. low                 28-32 cm GMSL rise in 2100
+## 2. intermediate-low    48-52
+## 3. intermediate        98-102
+## 4. intermediate-high   145-155
+## 5. high                195-205
+## 6. extreme             235-265
+
+scen.slr <- c('Low','Intermediate-low','Intermediate','Intermediate-high','High','Extreme')
+windows <- data.frame( cbind( c(.28, .48,  .98, 1.45, 1.95, 2.35)   # lower bounds
+                             ,c(.32, .52, 1.02, 1.55, 2.05, 2.65))) # upper bounds
+windows.low <- data.frame( cbind( c(2030, 2050, 2100),
+                                  c( .08,  .13,  .28),
+                                  c( .10,  .17,  .32) ))
+i2030 <- which(t.proj==2030)
+i2050 <- which(t.proj==2050)
+i2100 <- which(t.proj==2100)
+ind.bin <- vector('list',length(scen.slr))
+for (i in 1:length(ind.bin)) {
+#    if(scen.slr[i]=='Low') {
+#        ind.bin[[i]] <- which( gmsl.all[i2030] >= windows.low[1,2] &
+#                               gmsl.all[i2030] <= windows.low[1,3] &
+#                               gmsl.all[i2050] >= windows.low[2,2] &
+#                               gmsl.all[i2050] <= windows.low[2,3] &
+#                               gmsl.all[i2100] >= windows.low[3,2] &
+#                               gmsl.all[i2100] <= windows.low[3,3] )
+#    } else {
+        ind.bin[[i]] <- which( gmsl.all[i2100,] >= windows[i,1] &
+                               gmsl.all[i2100,] <= windows[i,2] )
+#    }
+}
+
+## pick out the LSL projections that fit each scenario
+lsl.scen <- vector('list',length(scen.slr)); names(lsl.scen) <- scen.slr
+for (i in 1:length(scen.slr)) {
+    lsl.scen[[i]] <- lsl.all[,ind.bin[[i]]]
+}
+
+## plot
+source('../Useful/colorblindPalette.R')
+
+plot(t.proj, apply(lsl.scen[[6]], 1, mean), type='l', lwd=2,
+     xlim=c(1960, 2060), ylim=c(-.4,1.2), col=mycol.rgb[11],
+     xlab='Year', ylab='Regional sea level [meters]')
+lines(t.proj, apply(lsl.scen[[5]], 1, mean), lwd=2, col=mycol.rgb[13])
+lines(t.proj, apply(lsl.scen[[4]], 1, mean), lwd=2, col=mycol.rgb[15])
+lines(t.proj, apply(lsl.scen[[3]], 1, mean), lwd=2, col=mycol.rgb[9])
+lines(t.proj, apply(lsl.scen[[2]], 1, mean), lwd=2, col=mycol.rgb[2])
+lines(t.proj, apply(lsl.scen[[1]], 1, mean), lwd=2, col=mycol.rgb[6])
+##==============================================================================
+
+##==============================================================================
+## Plot -- pdf and survival functions
+
+## And set the IPCC RCP colors
+col26 <- c(0, 0, 255)/255
+col45 <- c(121, 188, 255)/255
+col60 <- c(255, 130, 45)/255
+col85 <- c(255, 0, 0)/255
+
+i2100 = which(t.proj==2100)
+
+slr2100.rcp26 <- lsl_proj$rcp26[i2100,]
+slr2100.rcp45 <- lsl_proj$rcp45[i2100,]
+slr2100.rcp85 <- lsl_proj$rcp85[i2100,]
+
+pdf.slr2100.rcp26 <- density(slr2100.rcp26,from=0,to=4,na.rm=TRUE)
+pdf.slr2100.rcp45 <- density(slr2100.rcp45,from=0,to=4,na.rm=TRUE)
+pdf.slr2100.rcp85 <- density(slr2100.rcp85,from=0,to=4,na.rm=TRUE)
+
+cdf.slr2100.rcp26 <- rep(0,length(pdf.slr2100.rcp26$x))
+cdf.slr2100.rcp45 <- rep(0,length(pdf.slr2100.rcp45$x))
+cdf.slr2100.rcp85 <- rep(0,length(pdf.slr2100.rcp85$x))
+
+# empirical CDF
+ecdf.vals  <- seq(from=0, to=1, length.out=length(slr2100.rcp26))
+ecdf.rcp26 <- slr2100.rcp26[order(slr2100.rcp26)]
+ecdf.rcp45 <- slr2100.rcp45[order(slr2100.rcp45)]
+ecdf.rcp85 <- slr2100.rcp85[order(slr2100.rcp85)]
+
+# empirical survival function
+esf.vals <- 1-ecdf.vals
+
+#pdf(paste(plotdir,'distributions_SLR2100_pdf+sf.pdf',sep=''),width=5,height=7,colormodel='cmyk')
+par(mfrow=c(2,1), mai=c(.85,.74,.1,.15))
+
+plot(x,pdf.slr2100.rcp85$y, type='l', xlim=c(0,3), ylim=c(0,4.7), lty=1,
+     col=rgb(col85[1],col85[2],col85[3]), lwd=1.5, xlab='', ylab='', xaxt='n', yaxt='n', xaxs='i', yaxs='i',axes=FALSE);
+  axis(1,seq(0,3,0.5),lab=c("0","0.5","1","1.5","2","2.5","3"))
+  u <- par("usr")
+  arrows(0, u[3],0, u[4], code = 2, xpd = TRUE)
+  mtext('Probability density', side=2, line=1.3);
+  mtext('Projected sea level in 2100\nrelative to 1986-2005 average [m]', side=1, line=3);
+  mtext(side=3, text=expression(bold('   a')), line=-1, cex=.9, adj=0);
+
+  lines(x,pdf.slr2100.rcp45$y, type='l', col=rgb(col45[1],col45[2],col45[3]), lwd=1.5);
+  lines(x,pdf.slr2100.rcp26$y, type='l', col=rgb(col26[1],col26[2],col26[3]), lwd=1.5);
+
+  legend(1.1,4.7,c("RCP2.6","RCP4.5","RCP8.5","including fast dynamics","neglecting fast dynamics"),
+        lty=c(1,1,1,1,2), lwd=2, col=c(rgb(col26[1],col26[2],col26[3]),rgb(col45[1],col45[2],col45[3]),rgb(col85[1],col85[2],col85[3]),'black','black'),
+        bty='n')
+
+plot(ecdf.rcp85,log10(esf.vals),type='l', xlim=c(0,3), ylim=c(-3.3,0), lty=1,
+     col=rgb(col85[1],col85[2],col85[3]), lwd=1.5, xlab='', ylab='', xaxt='n', yaxt='n', xaxs='i', yaxs='i');
+  axis(1,seq(0,3,0.5),lab=c("0","0.5","1","1.5","2","2.5","3"))
+  mtext('Survival function [1-CDF]', side = 2, line=2.6);
+  mtext('Projected sea level in 2100\nrelative to 1986-2005 average [m]', side=1, line=3);
+  mtext(side=3, text=expression(bold('   b')), line=-1.1, cex=.9, adj=0);
+
+	axis(2, at=seq(-4,0), label=parse(text=paste("10^", seq(-4,0), sep="")), las=1)
+
+  lines(ecdf.rcp45,log10(esf.vals),type='l',lty=1, col=rgb(col45[1],col45[2],col45[3]), lwd=1.5);
+  lines(ecdf.rcp26,log10(esf.vals),type='l',lty=1, col=rgb(col26[1],col26[2],col26[3]), lwd=1.5);
+
+	lines(c(-4,4),c(-2,-2),lty=2,col='black'); text(0.35,-1.85,"1:100 level");
+	lines(c(-4,4),c(-3,-3),lty=2,col='black'); text(0.35,-2.85,"1:1000 level");
+
+#dev.off()
+##==============================================================================
+
+##==============================================================================
+## Plot -- projections
+
+## Get quantiles to plot
+iproj <- which(t.proj==2000):which(t.proj==2100)
+iend <- iproj[length(iproj)]
+lsl_proj$q05$rcp26 <- rep(0,length(t.proj))
+lsl_proj$q50$rcp26 <- rep(0,length(t.proj))
+lsl_proj$q95$rcp26 <- rep(0,length(t.proj))
+lsl_proj$q05$rcp45 <- rep(0,length(t.proj))
+lsl_proj$q50$rcp45 <- rep(0,length(t.proj))
+lsl_proj$q95$rcp45 <- rep(0,length(t.proj))
+lsl_proj$q05$rcp85 <- rep(0,length(t.proj))
+lsl_proj$q50$rcp85 <- rep(0,length(t.proj))
+lsl_proj$q95$rcp85 <- rep(0,length(t.proj))
+for (t in 1:length(t.proj)) {
+    lsl_proj$q50$rcp26[t] <- quantile(lsl_proj$rcp26[t,], 0.5)
+    lsl_proj$q05$rcp26[t] <- quantile(lsl_proj$rcp26[t,], .05)
+    lsl_proj$q95$rcp26[t] <- quantile(lsl_proj$rcp26[t,], .95)
+    lsl_proj$q50$rcp45[t] <- quantile(lsl_proj$rcp45[t,], 0.5)
+    lsl_proj$q05$rcp45[t] <- quantile(lsl_proj$rcp45[t,], .05)
+    lsl_proj$q95$rcp45[t] <- quantile(lsl_proj$rcp45[t,], .95)
+    lsl_proj$q50$rcp85[t] <- quantile(lsl_proj$rcp85[t,], 0.5)
+    lsl_proj$q05$rcp85[t] <- quantile(lsl_proj$rcp85[t,], .05)
+    lsl_proj$q95$rcp85[t] <- quantile(lsl_proj$rcp85[t,], .95)
+}
+
+par(mfrow=c(1,1))
+par(mai=c(.3,.83,.20,.2))
+plot(t.proj[iproj],lsl_proj$q50$rcp85[iproj],type='l',col=rgb(col85[1],col85[2],col85[3]),lwd=2, ann='',
+		 xlim=c(2000,2100), ylim=c(0,2.1), xaxt='n', yaxt='n', xaxs='i', yaxs='i');
+		 axis(1, seq(2000,2100,by=20)); axis(2, seq(0,2,by=.25), lab=c('0','','0.5','','1','','1.5','','2'));
+		 mtext(side=2, text='Local sea level [m]', line=2.2, cex=1);
+     mtext(side=3, text=expression(bold(' a')), line=-1, cex=1, adj=0);
+  polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(lsl_proj$q95$rcp85[iproj],rev(lsl_proj$q05$rcp85[iproj])),
+          col=rgb(col85[1],col85[2],col85[3],.5), border=NA);
+lines(t.proj[iproj],lsl_proj$q50$rcp45[iproj],type='l',col=rgb(col45[1],col45[2],col45[3]),lwd=2);
+  polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(lsl_proj$q95$rcp45[iproj],rev(lsl_proj$q05$rcp45[iproj])),
+          col=rgb(col45[1],col45[2],col45[3],.5), border=NA);
+lines(t.proj[iproj],lsl_proj$q50$rcp26[iproj],type='l',col=rgb(col26[1],col26[2],col26[3]),lwd=2);
+  polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(lsl_proj$q95$rcp26[iproj],rev(lsl_proj$q05$rcp26[iproj])),
+          col=rgb(col26[1],col26[2],col26[3],.5), border=NA);
+# + legend
+  legend(t.proj[iproj[1]]+10,2,c("5-95% range,",
+        "RCP2.6", "RCP4.5",	"RCP8.5"),
+        lty=c(NA,1,1,1), lwd=3,
+        col=c(NA,rgb(col26[1],col26[2],col26[3]),rgb(col45[1],col45[2],col45[3]),rgb(col85[1],col85[2],col85[3])), bty='n', cex=1)
+##==============================================================================
+
+
+
+
+
+
 ##==============================================================================
 # get an ensemble of projections of GEV parameters
 
