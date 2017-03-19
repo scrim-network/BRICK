@@ -176,6 +176,10 @@ stat_sig_s2 <- function(dfs2
   else if(method == 'con'){
     s2_sig[which(dfs2Conf_low * dfs2Conf_high > 0)] <- 1
   }
+  else if(method == 'congtr'){
+    s2_sig[which(dfs2Conf_low * dfs2Conf_high > 0 &
+                 abs(s2) > greater)] <- 1
+  }
   else{
     print('Not a valid parameter for method')
   }
@@ -218,6 +222,7 @@ plotRadCon <- function(df                   # dataframe with S1 and ST indices
                        ,legFirLabs=NULL     # legend labels for first order
                        ,legSecLabs=NULL     # legend labels for second order
                        ,legTotLabs=NULL     # legend labels for total order
+                       ,lBuildRCPhoriz=FALSE # horizontal legends for Emissions and Protection?
                        ){
 
   # Shift plot up
@@ -350,7 +355,9 @@ plotRadCon <- function(df                   # dataframe with S1 and ST indices
           # making polygons
           polygon(polyx,polyy
                   ,density=300
-                  ,border=NA
+                  #,border=NA
+                  ,border='black'
+                  ,lwd=.3
                   ,col=line_col)
         }
       }
@@ -426,6 +433,17 @@ plotRadCon <- function(df                   # dataframe with S1 and ST indices
     #print(angle_gp[i] * 360/(2*pi))
     counter <- counter + num_sig_gp[i]
 
+if(lBuildRCPhoriz) {
+  if(sig_gps[i]=='Emissions' | sig_gps[i]=='Protection') {
+      text(gpNameMult*radSc*cos(angle_gp), gpNameMult*radSc*sin(angle_gp) + shift
+           , sig_gps[i]
+           , col = df$gp_col[which(df$gp_name %in% sig_gps[i])]#[i]]
+           , cex = cex
+           , srt = 0# angle_gp*360/(2*pi) + 90
+           , adj = 0.1 # for centering
+           , font = 1
+      )
+  } else {
     if((angle_gp*360/(2*pi)) >= 0 & (angle_gp*360/(2*pi)) <= 180){
       text(gpNameMult*radSc*cos(angle_gp), gpNameMult*radSc*sin(angle_gp) + shift
            , sig_gps[i]
@@ -446,6 +464,28 @@ plotRadCon <- function(df                   # dataframe with S1 and ST indices
       )
     }
   }
+} else {
+    if((angle_gp*360/(2*pi)) >= 0 & (angle_gp*360/(2*pi)) <= 180){
+      text(gpNameMult*radSc*cos(angle_gp), gpNameMult*radSc*sin(angle_gp) + shift
+           , sig_gps[i]
+           , col = df$gp_col[which(df$gp_name %in% sig_gps[i])]#[i]]
+           , cex = cex
+           , srt =  angle_gp*360/(2*pi) - 90
+           , adj = 0.5 # for centering
+           , font = 1
+      )
+    } else {
+      text(gpNameMult*radSc*cos(angle_gp), gpNameMult*radSc*sin(angle_gp) + shift
+           , sig_gps[i]
+           , col = df$gp_col[which(df$gp_name %in% sig_gps[i])]#[i]]
+           , cex = cex
+           , srt =  angle_gp*360/(2*pi) + 90
+           , adj = 0.5 # for centering
+           , font = 1
+      )
+    }
+  }
+}
 
   ## adding legend
   if(legLoc == 'topleft'){
@@ -558,7 +598,9 @@ text(0, -2.7,'Total-order', cex=0.9)
 
     polygon(line_x, line_y,
             density=200
-            ,border=NA
+            #,border=NA
+            ,border='black'
+            ,lwd=.3
             ,col=line_col)
 
     text((xloc[i]*0.65) + 6, yloc[i]
