@@ -1,4 +1,3 @@
-
 ##==============================================================================
 ## Sobol sensitvity analysis for drivers of flood risk.
 ## Need to set up the design matrix with each of the three levers of RCP
@@ -28,9 +27,9 @@ rm(list =ls()) #Clear global environment
 
 ##########################################
 # setting things here, not to be touched #
-N.sample000 <- 12200
-N.use000    <- 12200
-N.boot000   <- 1000
+N.sample000 <- 122
+N.use000    <- 122
+N.boot000   <- 100
 setwd('/home/scrim/axw322/codes/BRICK/calibration')
 ##########################################
 
