@@ -818,11 +818,11 @@ library(plotrix)      # used when plotting circles
 source('../calibration/BRICK_Sobol_functions.R')
 
 # Set number of parameters being analyzed
-n_params <- 39
+n_params <- 40
 
 # Set Sobol indices file name
-Sobol_file_1 <- "../output_calibration/BRICK_Sobol-1-tot_08Mar2017.txt"
-Sobol_file_2 <- "../output_calibration/BRICK_Sobol-2_08Mar2017.txt"
+Sobol_file_1 <- "../output_calibration/BRICK_Sobol-1-tot_19Mar2017-Build-AIS-GEV-2100.txt"
+Sobol_file_2 <- "../output_calibration/BRICK_Sobol-2_19Mar2017-Build-AIS-GEV-2100.txt"
 
 ####################################
 # Import data from sensitivity analysis
@@ -833,6 +833,8 @@ s1st <- read.csv(Sobol_file_1,
                   header=TRUE,
                   nrows = n_params,
                   as.is=c(TRUE,rep(FALSE,5)))
+
+parnames.sobol <- s1st[,1]
 
 # Import second-order indices
 s2_table <- read.csv(Sobol_file_2,
@@ -876,7 +878,7 @@ s1st1 <- stat_sig_s1st(s1st
 s2_sig1 <- stat_sig_s2(s2
                        ,s2_conf_low
                        ,s2_conf_high
-                       ,method='con')
+                       ,method='congtr')
 
 # S2: using greater than a given value
 #s2_sig1 <- stat_sig_s2(s2
@@ -890,14 +892,16 @@ s2_sig1 <- stat_sig_s2(s2
 #name_list1 <- list('Sea Level' = parnames.sobol[c(ind.brick,ind.subs)],
 #                   'Storm Surge' = parnames.sobol[c(ind.surge, ind.gev)],
 #                   'Emissions' = parnames.sobol[c(ind.rcp)])
-name_list1 <- list('Temperature' = parnames.sobol[c(ind.brick[1:5])],
-                   'Sea Level:\n   Glaciers & Ice Caps' = parnames.sobol[6:9],
-                   'Sea Level:\nThermal Expansion' = parnames.sobol[10:13],
-                   'Sea Level:\nGreenland Ice Sheet' = parnames.sobol[14:18],
-                   'Sea Level:\nAntarctic Ice Sheet' = parnames.sobol[19:33],
-                   'Land\nSubsidence' = parnames.sobol[ind.subs],
-                   'Storm Surge' = parnames.sobol[c(ind.surge, ind.gev)],
-                   'Emissions' = parnames.sobol[c(ind.rcp)])
+name_list1 <- list('Temperature' = parnames.sobol[1:5]
+                   ,'Sea Level:\n   Glaciers & Ice Caps' = parnames.sobol[6:9]
+                   ,'Sea Level:\nThermal Expansion' = parnames.sobol[10:13]
+                   ,'Sea Level:\nGreenland Ice Sheet' = parnames.sobol[14:18]
+                   ,'Sea Level:\nAntarctic Ice Sheet' = parnames.sobol[19:33]
+                   ,'Land\nSubsidence' = parnames.sobol[35]
+                   ,'Storm Surge' = parnames.sobol[c(34,36:38)]
+                   ,'Emissions' = parnames.sobol[39]
+                   ,'Protection' = parnames.sobol[40]
+                   )
 
 # add Parameter symbols to plot
 name_symbols <- c('S', expression(kappa[D]), expression(alpha[D]),
@@ -914,7 +918,9 @@ name_symbols <- c('S', expression(kappa[D]), expression(alpha[D]),
                   expression('h'[0]), 'c', expression('b'[0]), 'slope',
                   expression(lambda), expression('T'['crit']),
                   expression('C'['surge']), 'subs', expression(mu),
-                  expression(sigma), expression(xi), 'RCP')
+                  expression(sigma), expression(xi), 'RCP'
+                  , 'build'
+                  )
 
 # Parameter descriptions
 #param_desc <- c("Value of goods", "Discount rate", "Construction cost",
@@ -924,14 +930,16 @@ name_symbols <- c('S', expression(kappa[D]), expression(alpha[D]),
 source('../Useful/colorblindPalette.R')
 
 # defining list of colors for each group
-col_list1 <- list("Temperature"     = rgb(mycol[11,1],mycol[11,2],mycol[11,3]),
-                  'Sea Level:\n   Glaciers & Ice Caps' = rgb(mycol[3,1],mycol[3,2],mycol[3,3]),
-                  'Sea Level:\nThermal Expansion'   = rgb(mycol[9,1],mycol[9,2],mycol[9,3]),
-                  'Sea Level:\nGreenland Ice Sheet'  = rgb(mycol[2,1],mycol[2,2],mycol[2,3]),
-                  'Sea Level:\nAntarctic Ice Sheet'  = rgb(mycol[7,1],mycol[7,2],mycol[7,3]),
-                  'Land\nSubsidence' = rgb(mycol[1,1],mycol[1,2],mycol[1,3]),
-                  "Storm Surge"     = rgb(mycol[6,1],mycol[6,2],mycol[6,3]),
-                  "Emissions"       = rgb(mycol[13,1],mycol[13,2],mycol[13,3]))
+col_list1 <- list("Temperature"     = rgb(mycol[11,1],mycol[11,2],mycol[11,3])
+                  ,'Sea Level:\n   Glaciers & Ice Caps' = rgb(mycol[3,1],mycol[3,2],mycol[3,3])
+                  ,'Sea Level:\nThermal Expansion'   = rgb(mycol[9,1],mycol[9,2],mycol[9,3])
+                  ,'Sea Level:\nGreenland Ice Sheet'  = rgb(mycol[2,1],mycol[2,2],mycol[2,3])
+                  ,'Sea Level:\nAntarctic Ice Sheet'  = rgb(mycol[7,1],mycol[7,2],mycol[7,3])
+                  ,'Land\nSubsidence' = rgb(mycol[1,1],mycol[1,2],mycol[1,3])
+                  ,"Storm Surge"     = rgb(mycol[6,1],mycol[6,2],mycol[6,3])
+                  ,"Emissions"       = rgb(mycol[13,1],mycol[13,2],mycol[13,3])
+                  ,"Protection"      = rgb(mycol[12,1],mycol[12,2],mycol[12,3])
+                  )
 
 # using function to assign variables and colors based on group
 s1st1 <- gp_name_col(name_list1
@@ -970,16 +978,18 @@ plotRadCon(df=s1st1.swap
            ,s2=s2.swap
            ,scaling = .45
            ,s2_sig=s2_sig1.swap
-           ,filename = '~/Box\ Sync/Wong-Projects/BRICK_scenarios/figures/sobol_spider'
-           #,filename = './sobol_fig_test2'
+           ,filename = '~/Box\ Sync/Wong-Projects/BRICK_scenarios/figures/sobol_spider_2100Build'
+           #,filename = './sobol_fig_test3'
            ,plotType = 'EPS'
            ,gpNameMult=1.5
            ,RingThick=0.1
            ,legLoc = "bottomcenter",cex = .76
-           ,s1_col = rgb(mycol[4,1],mycol[4,2],mycol[4,3])
-           ,st_col = rgb(mycol[9,1],mycol[9,2],mycol[9,3])
+           ,s1_col = rgb(mycol[3,1],mycol[3,2],mycol[3,3])
+           ,st_col = rgb(mycol[6,1],mycol[6,2],mycol[6,3])
+           ,line_col = rgb(mycol[10,1],mycol[10,2],mycol[10,3])
            ,STthick = 0.5
-           ,legFirLabs=c(.05,.85), legTotLabs=c(.10,.90), legSecLabs=c(.04,.28)
+           ,legFirLabs=c(.05,.85), legTotLabs=c(.10,.90), legSecLabs=c(.02,.1)
+           ,lBuildRCPhoriz=TRUE
 )
 
 ##==============================================================================
