@@ -129,11 +129,18 @@ stat_sig_s1st <- function(df
   } else if(method == 'con') {
     df$s1_sig[which(s1st$S1_conf_low * s1st$S1_conf_high > 0)] <- 1
     df$st_sig[which(s1st$ST_conf_low * s1st$ST_conf_high > 0)] <- 1
+  } else if(method == 'congtr'){
+    df$s1_sig[which(s1st$S1_conf_low * s1st$S1_conf_high > 0 &
+                    abs(s1st$S1) > greater)] <- 1
+    df$st_sig[which(s1st$ST_conf_low * s1st$ST_conf_high > 0 &
+                    abs(s1st$ST) > greater)] <- 1
+  }
+
   } else {
     print('Not a valid parameter for method')
   }
 
-  # determining whether the parameter is signficiant
+  # determining whether the parameter is significant
   if(sigCri == 'either'){
     for(i in 1:nrow(df)){
       df$sig[i] <- max(df$s1_sig[i],df$st_sig[i])

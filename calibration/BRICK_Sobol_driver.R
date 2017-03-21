@@ -878,7 +878,9 @@ s1st1 <- stat_sig_s1st(s1st
 s2_sig1 <- stat_sig_s2(s2
                        ,s2_conf_low
                        ,s2_conf_high
-                       ,method='congtr')
+                       ,method='congtr'
+                       ,greater=0.02
+                       )
 
 # S2: using greater than a given value
 #s2_sig1 <- stat_sig_s2(s2
