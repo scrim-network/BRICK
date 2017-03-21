@@ -27,9 +27,17 @@ rm(list =ls()) #Clear global environment
 
 ##########################################
 # setting things here, not to be touched #
-N.sample000 <- 122
-N.use000    <- 122
-N.boot000   <- 100
+N.sample000 <- 30000#122000
+N.use000    <- 30000#122000
+N.boot000   <- 1000#1000
+N.core000   <- 15     # number of cores for parallel Sobol analysis
+lbuild      <- TRUE
+lfullAIS    <- TRUE   # full prior range from Wong et al 2017 (fast dynamics) for h0 and c? (fixed if FALSE)
+lfullGEV    <- TRUE   # full uncertainty in GEV parameters? (fixed if FALSE)
+begyear     <- 1850   # this is just beginning of the projections; assessment begins in 2015
+endyear     <- 2100   # must be equal to end year of flood risk assessment 
+appen       <- '-Build-AIS-GEV-2100'
+name.output.rdata <- 'BRICK_Sobol_tmp.RData'
 setwd('/home/scrim/axw322/codes/BRICK/calibration')
 ##########################################
 
@@ -75,7 +83,7 @@ irem <- c(match('sigma.T',parnames.brick),
           match('sigma.gsic',parnames.brick),
           match('rho.gsic',parnames.brick),
           match('sigma.simple',parnames.brick),
-           match('var.dais',parnames.brick))
+          match('var.dais',parnames.brick))
 parnames.brick <- parnames.brick[-irem]
 parameters.brick <- parameters.brick[,-irem]
 
@@ -98,12 +106,12 @@ luse.brick = cbind(luse.doeclim, luse.gsic, luse.te, luse.simple, luse.dais)
 ## Source some useful functions for manipulating data
 source('../R/forcing_total.R')			# function to add up the total forcing
 source('../R/compute_indices.R')		# function to determine the model and
-										# data indices for comparison
+						# data indices for comparison
 
 ## Set up the models
 l.project = TRUE
-begyear = 1850
-endyear = 2065; #if(!l.project & endyear>2009) print('l.project and endyear not compatible')
+#begyear = 1850
+#endyear = 2065; #if(!l.project & endyear>2009) print('l.project and endyear not compatible')
 mod.time= begyear:endyear
 begyear.norm = 1961
 endyear.norm = 1990
@@ -159,6 +167,18 @@ for (pp in 1:length(parnames.brick)) {
     itmp <- match(parnames.brick[pp], parnames)
     bound.lower.brick[pp] <- bound.lower[itmp]
     bound.upper.brick[pp] <- bound.upper[itmp]
+}
+
+# remove h0 and c to test sensitivity
+if (!lfullAIS) {
+  bound.lower.brick <- bound.lower.brick[-match('h0',parnames.brick)]
+  bound.upper.brick <- bound.upper.brick[-match('h0',parnames.brick)]
+  parameters.brick  <- parameters.brick[,-match('h0',parnames.brick)]
+  parnames.brick    <- parnames.brick[-match('h0',parnames.brick)]
+  bound.lower.brick <- bound.lower.brick[-match('c',parnames.brick)]
+  bound.upper.brick <- bound.upper.brick[-match('c',parnames.brick)]
+  parameters.brick  <- parameters.brick[,-match('c',parnames.brick)]
+  parnames.brick    <- parnames.brick[-match('c',parnames.brick)]
 }
 
 # gamma priors might be outside of the prior range. cut them
@@ -382,9 +402,9 @@ for (pp in 1:3) {
                                              ubout=1)
 }
 
-## Add build scenario to parameters and bounds. Sample from [-3,3]
-bound.lower.build <- -3
-bound.upper.build <- 3
+## Add build scenario to parameters and bounds. Sample from [-3,3] feet
+bound.lower.build <- -3*.3048
+bound.upper.build <- 3*.3048
 
 ## Finally, add RCP scenario to parameters and bounds. Sample from [0,1], and
 ## each 1/4 gives different scenario (2.6, 4.5, 6.0, 8.5).
@@ -408,24 +428,43 @@ parameters.sample2.subs <- lhs.sample2[,3]
 parameters.sample1.build <- lhs.sample1[,4]
 parameters.sample2.build <- lhs.sample2[,4]
 
-## add Van Dantzig, surge, and RCP to parnames and bounds
-parameters.sobol1 <- cbind(parameters.sample1.brick, parameters.sample1.surge,
+## add Van Dantzig, surge, and RCP to parnames and bounds (and optionally build)
+if (lbuild) {
+  parameters.sobol1 <- cbind(parameters.sample1.brick, parameters.sample1.surge,
                            parameters.sample1.subs , parameters.sample1.gev  ,
                            parameters.sample1.rcp  , parameters.sample1.build)
-parameters.sobol2 <- cbind(parameters.sample2.brick, parameters.sample2.surge,
+  parameters.sobol2 <- cbind(parameters.sample2.brick, parameters.sample2.surge,
                            parameters.sample2.subs , parameters.sample2.gev  ,
                            parameters.sample2.rcp  , parameters.sample2.build)
-bound.lower.sobol <- c(bound.lower.brick, bound.lower.surge, bound.lower.subs,
+  bound.lower.sobol <- c(bound.lower.brick, bound.lower.surge, bound.lower.subs,
                        bound.lower.gev  , bound.lower.rcp  , bound.lower.build)
-bound.upper.sobol <- c(bound.upper.brick, bound.upper.surge, bound.upper.subs,
+  bound.upper.sobol <- c(bound.upper.brick, bound.upper.surge, bound.upper.subs,
                        bound.upper.gev  , bound.upper.rcp  , bound.upper.build)
-parnames.sobol <- c(parnames.brick, 'surge.factor', 'subs.rate', parnames.gev, 'rcp','build')
-ind.brick <- 1:length(parnames.brick)
-ind.surge <- match('surge.factor',parnames.sobol)
-ind.subs  <- match('subs.rate'   ,parnames.sobol)
-ind.gev   <- match(parnames.gev[1], parnames.sobol):match(parnames.gev[3], parnames.sobol)
-ind.rcp   <- length(parnames.sobol)-1
-ind.build <- length(parnames.sobol)
+  parnames.sobol <- c(parnames.brick, 'surge.factor', 'subs.rate', parnames.gev, 'rcp','build')
+  ind.brick <- 1:length(parnames.brick)
+  ind.surge <- match('surge.factor',parnames.sobol)
+  ind.subs  <- match('subs.rate'   ,parnames.sobol)
+  ind.gev   <- match(parnames.gev[1], parnames.sobol):match(parnames.gev[3], parnames.sobol)
+  ind.rcp   <- length(parnames.sobol)-1
+  ind.build <- length(parnames.sobol)
+} else {
+  parameters.sobol1 <- cbind(parameters.sample1.brick, parameters.sample1.surge,
+                           parameters.sample1.subs , parameters.sample1.gev  ,
+                           parameters.sample1.rcp  )#, parameters.sample1.build)
+  parameters.sobol2 <- cbind(parameters.sample2.brick, parameters.sample2.surge,
+                           parameters.sample2.subs , parameters.sample2.gev  ,
+                           parameters.sample2.rcp  )#, parameters.sample2.build)
+  bound.lower.sobol <- c(bound.lower.brick, bound.lower.surge, bound.lower.subs,
+                       bound.lower.gev  , bound.lower.rcp  )#, bound.lower.build)
+  bound.upper.sobol <- c(bound.upper.brick, bound.upper.surge, bound.upper.subs,
+                       bound.upper.gev  , bound.upper.rcp  )#, bound.upper.build)
+  parnames.sobol <- c(parnames.brick, 'surge.factor', 'subs.rate', parnames.gev, 'rcp')#,'build')
+  ind.brick <- 1:length(parnames.brick)
+  ind.surge <- match('surge.factor',parnames.sobol)
+  ind.subs  <- match('subs.rate'   ,parnames.sobol)
+  ind.gev   <- match(parnames.gev[1], parnames.sobol):match(parnames.gev[3], parnames.sobol)
+  ind.rcp   <- length(parnames.sobol)#-1
+}
 
 parameters.sobol1 <- data.frame(parameters.sobol1)
 parameters.sobol2 <- data.frame(parameters.sobol2)
@@ -444,8 +483,8 @@ colnames(parameters.sobol2) <- parnames.sobol
 ## Define some global variables to use within the BRICK_sobol function calls
 # response over 2015-2065
 i2015 <- which(mod.time==2015)
-i2065 <- which(mod.time==2065)
-nt    <- 0:(i2065-i2015)
+imodend <- which(mod.time==endyear)
+nt    <- 0:(imodend-i2015)
 
 # Fingerprints of sea-level rise sources on local sea-level rise
 lat.fp = 29.95			# latitude of location to fingerprint local sea level rise (>0 is North, <0 is South)
@@ -485,8 +524,9 @@ export.names <- c('brick_model', 'doeclimF', 'gsic_magiccF', 'simpleF',
                   'brick_te_F', 'daisanto_fastdynF', 'anto', 'forcing_total',
                   'flux.to.heat', 'parnames.brick', 'slope.Ta2Tg',
                   'intercept.Ta2Tg','mod.time','ind.norm.data', 'i2015',
-                  'i2065', 'fp.loc', 'nt', 'H0', 'isca', 'iloc', 'isha',
-                  'ind.norm','luse.brick','i0','forcing.rcp26', 'forcing.rcp45',
+                  'imodend', 'fp.loc', 'nt', 'H0', 'isca', 'iloc', 'isha',
+                  'ind.norm','luse.brick','i0','lbuild',
+                  'forcing.rcp26', 'forcing.rcp45',
                   'forcing.rcp60', 'forcing.rcp85')
 
 
@@ -522,7 +562,11 @@ brick_sobol_par <- function(dataframe.in){
     parameters.gev[,isha] <- map.range(parameters.gev[,isha], 0, 1, bound.lower.gev[isha], bound.upper.gev[isha])
     parameters.gev[,isca] <- map.range(parameters.gev[,isca], 0, 1, bound.lower.gev[isca], bound.upper.gev[isca])
 
-    parameters.build <- map.range(dataframe.in[,ind.build], 0, 1, bound.lower.build, bound.upper.build)
+    if (lbuild) {
+      parameters.build <- map.range(dataframe.in[,ind.build], 0, 1, bound.lower.build, bound.upper.build)
+    } else {
+      parameters.build <- rep(0,nr)
+    }
 
     # testing in parallel
     #install.packages('foreach')
@@ -530,8 +574,9 @@ brick_sobol_par <- function(dataframe.in){
     library(foreach)
     library(doParallel)
     cores=detectCores()
-    cl <- makeCluster(cores[1]-1) #not to overload your computer
-    print(paste('Starting cluster with ',cores[1]-1,' cores', sep=''))
+#    cl <- makeCluster(cores[1]-1) #not to overload your computer
+    cl <- makeCluster(N.core000)
+    print(paste('Starting cluster with ',N.core000,' cores', sep=''))
     registerDoParallel(cl)
 
     # make sea-level rise projections
@@ -559,19 +604,19 @@ brick_sobol_par <- function(dataframe.in){
         }
         brick.out <- brick_model(parameters.in      = as.numeric(parameters.brick[i,]),
                                  parnames.in        = parnames.brick,
-								 forcing.in         = forcing,
-								 l.project          = TRUE,
-								 slope.Ta2Tg.in     = slope.Ta2Tg,
-								 intercept.Ta2Tg.in = intercept.Ta2Tg,
-								 mod.time           = mod.time,
-								 ind.norm.data      = ind.norm.data,
-								 ind.norm.sl        = ind.norm,
-								 luse.brick         = luse.brick,
-								 i0                 = i0)
-        slr.gsic <- brick.out$gsic.out[i2015:i2065]           - brick.out$gsic.out[i2015]
-        slr.te   <- brick.out$te.out[i2015:i2065]             - brick.out$te.out[i2015]
-        slr.gis  <- brick.out$simple.out$sle.gis[i2015:i2065] - brick.out$simple.out$sle.gis[i2015]
-        slr.ais  <- brick.out$dais.out$Vais[i2015:i2065]      - brick.out$dais.out$Vais[i2015]
+				 forcing.in         = forcing,
+				 l.project          = TRUE,
+				 slope.Ta2Tg.in     = slope.Ta2Tg,
+				 intercept.Ta2Tg.in = intercept.Ta2Tg,
+				 mod.time           = mod.time,
+				 ind.norm.data      = ind.norm.data,
+				 ind.norm.sl        = ind.norm,
+				 luse.brick         = luse.brick,
+				 i0                 = i0)
+        slr.gsic <- brick.out$gsic.out[i2015:imodend]           - brick.out$gsic.out[i2015]
+        slr.te   <- brick.out$te.out[i2015:imodend]             - brick.out$te.out[i2015]
+        slr.gis  <- brick.out$simple.out$sle.gis[i2015:imodend] - brick.out$simple.out$sle.gis[i2015]
+        slr.ais  <- brick.out$dais.out$Vais[i2015:imodend]      - brick.out$dais.out$Vais[i2015]
         lsl.proj <- fp.loc$gsic*slr.gsic + fp.loc$te  *slr.te  +
                     fp.loc$gis *slr.gis  + fp.loc$ais *slr.ais
         surge.rise <- surge.factor[i] * lsl.proj
@@ -627,7 +672,11 @@ brick_sobol_ser <- function(dataframe.in){
     parameters.gev[,isha] <- map.range(parameters.gev[,isha], 0, 1, bound.lower.gev[isha], bound.upper.gev[isha])
     parameters.gev[,isca] <- map.range(parameters.gev[,isca], 0, 1, bound.lower.gev[isca], bound.upper.gev[isca])
 
-    parameters.build <- map.range(dataframe.in[,ind.build], 0, 1, bound.lower.build, bound.upper.build)
+    if(lbuild){
+      parameters.build <- map.range(dataframe.in[,ind.build], 0, 1, bound.lower.build, bound.upper.build)
+    } else {
+      parameters.build <- rep(0, nr)
+    }
 
     # make sea-level rise projections
     print(paste('Starting ',nr,' model projections (inluding flood risk)...',sep=''))
@@ -655,10 +704,10 @@ brick_sobol_ser <- function(dataframe.in){
 								 ind.norm.sl        = ind.norm,
 								 luse.brick         = luse.brick,
 								 i0                 = i0)
-        slr.gsic <- brick.out$gsic.out[i2015:i2065]           - brick.out$gsic.out[i2015]
-        slr.te   <- brick.out$te.out[i2015:i2065]             - brick.out$te.out[i2015]
-        slr.gis  <- brick.out$simple.out$sle.gis[i2015:i2065] - brick.out$simple.out$sle.gis[i2015]
-        slr.ais  <- brick.out$dais.out$Vais[i2015:i2065]      - brick.out$dais.out$Vais[i2015]
+        slr.gsic <- brick.out$gsic.out[i2015:imodend]           - brick.out$gsic.out[i2015]
+        slr.te   <- brick.out$te.out[i2015:imodend]             - brick.out$te.out[i2015]
+        slr.gis  <- brick.out$simple.out$sle.gis[i2015:imodend] - brick.out$simple.out$sle.gis[i2015]
+        slr.ais  <- brick.out$dais.out$Vais[i2015:imodend]      - brick.out$dais.out$Vais[i2015]
         lsl.proj <- fp.loc$gsic*slr.gsic + fp.loc$te  *slr.te  +
                     fp.loc$gis *slr.gis  + fp.loc$ais *slr.ais
         surge.rise <- surge.factor[i] * lsl.proj
@@ -732,7 +781,8 @@ print(paste('Sobol analysis took ',signif(as.numeric(t.out[3]/60),4),' minutes t
 
 #plot(s.out, choice=1)
 
-save.image(file = "BRICK_Sobol_tmp.RData")
+if(is.null(name.output.rdata)) {name.output.rdata <- 'BRICK_Sobol_tmp.RData'}
+save.image(file = name.output.rdata)
 ##==============================================================================
 
 
@@ -745,8 +795,8 @@ save.image(file = "BRICK_Sobol_tmp.RData")
 ##TODO
 
 today=Sys.Date(); today=format(today,format="%d%b%Y")
-file.sobolout1 <- paste('../output_calibration/BRICK_Sobol-1-tot_',today,'.txt',sep='')
-file.sobolout2 <- paste('../output_calibration/BRICK_Sobol-2_',today,'.txt',sep='')
+file.sobolout1 <- paste('../output_calibration/BRICK_Sobol-1-tot_',today,appen,'.txt',sep='')
+file.sobolout2 <- paste('../output_calibration/BRICK_Sobol-2_',today,appen,'.txt',sep='')
 
 headers.1st.tot <- matrix(c('Parameter', 'S1', 'S1_conf_low', 'S1_conf_high',
                             'ST', 'ST_conf_low', 'ST_conf_high'), nrow=1)
@@ -782,8 +832,8 @@ names2  <- rownames(s.out$S2)
 names2a <- rep(NA, length(names2))
 names2b <- rep(NA, length(names2))
 cnt <- 1
-for (i in seq(from=1, to=(length(parnames.sobol)-2), by=1)) {           # i = index of first name
-    for (j in seq(from=(i+1), to=(length(parnames.sobol)-1), by=1)) {   # j = index of second name
+for (i in seq(from=1, to=(length(parnames.sobol)-1), by=1)) {           # i = index of first name
+    for (j in seq(from=(i+1), to=(length(parnames.sobol)), by=1)) {   # j = index of second name
         names2a[cnt] <- parnames.sobol[i]
         names2b[cnt] <- parnames.sobol[j]
         cnt <- cnt+1
