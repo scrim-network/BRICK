@@ -1,9 +1,9 @@
 ##==============================================================================
-##  File = "BRICK_DEoptim.R"
+##  File = "BRICK_DEoptim_slr.R"
 ##
 ## Input:
 ##	parameters.in     parameters over which to optimize the coupled BRICK model
-##  parnames.in    		standard names of the parameters (see README file)
+##  parnames.in       standard names of the parameters (see README file)
 ##  l.project         making projections using RCP8.5 forcing (TRUE) or historical
 ##                    forcing data (FALSE)?
 ##
@@ -16,6 +16,7 @@
 ##
 ##  Author: Tony Wong <twong@psu.edu>
 ##	modified for BRICK v0.2 (fully-forward version) Tony Wong, 15 Feb 2017
+##  modified for BRICK v0.2 (forward, SLR modules only) 22 Mar 2017
 ##==============================================================================
 ## Copyright 2016 Tony Wong, Alexander Bakker
 ## This file is part of BRICK (Building blocks for Relevant Ice and Climate
@@ -53,15 +54,10 @@ minimize_residuals_brick = function(
 	luse.brick
 ){
 
-    brick.out <- brickF(tstep=tstep,
+    brick.out <- brick_slrF(tstep=tstep,
                         mod.time=mod.time,
-                        forcing.raw = forcing.raw,
+                        temp.forcing = forcing.raw,
 						l.project = l.project,
-                        S.doeclim = parameters.in[match("S.doeclim",parnames.in)],
-                        kappa.doeclim = parameters.in[match("kappa.doeclim",parnames.in)],
-						alpha.doeclim = parameters.in[match("alpha.doeclim",parnames.in)],
-                        T0.doeclim = parameters.in[match("T0.doeclim",parnames.in)],
-                        H0.doeclim = parameters.in[match("H0.doeclim",parnames.in)],
                         beta0.gsic = parameters.in[match("beta0.gsic",parnames.in)],
 						V0.gsic = parameters.in[match("V0.gsic",parnames.in)],
                         n.gsic = parameters.in[match("n.gsic",parnames.in)],
@@ -93,29 +89,11 @@ minimize_residuals_brick = function(
                         alpha.dais = parameters.in[match("alpha.dais",parnames.in)]
                         )
 
-	doeclim.norm.resid <- 0
 	gsic.norm.resid <- 0
 	simple.norm.resid <- 0
 	te.norm.resid <- 0
 	ais.norm.resid <- 0
 	sl.norm.resid <- 0
-
-	# Temperature/ocean heat uptake contributions
-	if(luse.brick[,"luse.doeclim"]) {
-  		if(!is.null(oidx$temp)) {
-			itmp <- ind.norm.data[which(ind.norm.data[,1]=='temp'),2]:ind.norm.data[which(ind.norm.data[,1]=='temp'),3]
-			temperature.model <- brick.out$temp_out - mean(brick.out$temp_out[itmp])
-			doeclim.norm.resid <- doeclim.norm.resid +
-						mean(abs( (obs$temp[oidx$temp]-(temperature.model[midx$temp])        )/
-    											obs.err$temp[oidx$temp]     ))
-		}
-		if(!is.null(oidx$ocheat)) {
-			# ocean heat uptake does not need to be normalized
-			doeclim.norm.resid <- doeclim.norm.resid +
-						mean(abs( (obs$ocheat[oidx$ocheat]-(brick.out$ocheat[midx$ocheat]))/
-											  	obs.err$ocheat[oidx$ocheat] ))
-		}
-	}
 
 	# GSIC contribution
 	if(!is.null(oidx$gsic) & luse.brick[,"luse.gsic"]) {
@@ -208,8 +186,8 @@ minimize_residuals_brick = function(
 	sl.norm.resid = sl.norm.resid + resid.sl_lw.1900 + resid.sl_lw.1970 + resid.sl_lw.1992
 
 	# Tally up the total normalized residual.
-	err.sum = doeclim.norm.resid + gsic.norm.resid + simple.norm.resid +
-			  te.norm.resid      + ais.norm.resid  + sl.norm.resid
+	err.sum = gsic.norm.resid + simple.norm.resid +
+			  te.norm.resid   + ais.norm.resid    + sl.norm.resid
 
 	if(is.nan(err.sum)) err.sum=Inf
 	return(err.sum)

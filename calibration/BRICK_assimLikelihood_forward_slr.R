@@ -155,6 +155,7 @@ log.lik = function( parameters.in,
     # Grab the GSIC statistical parameters
 	sigma.gsic=parameters.in[match("sigma.gsic",parnames.in)]
     rho.gsic  =parameters.in[match("rho.gsic"  ,parnames.in)]
+#rho.gsic <- .9
 
     # Normalize GSIC
 	itmp <- ind.norm.data[which(ind.norm.data[,1]=='gsic'),2]:ind.norm.data[which(ind.norm.data[,1]=='gsic'),3]
@@ -236,7 +237,7 @@ if(TRUE){
 
         llik.instr <- sum(dnorm(ais.instr.resid, mean=0, sd=sqrt(var.dais + obs.err$ais[oidx$ais]^2), log=TRUE))
 
-if(FALSE){
+if(TRUE){
         # Second part is from IPCC trends
         trends.mod = rep(0, nrow(trends.ais))
         for (i in 1:nrow(trends.ais)) {
@@ -287,7 +288,7 @@ if(FALSE){
 #  llik.sl      <- llik.sl.1900
 
   # Assume residual time series are independent
-  llik = llik.temp + llik.ocheat + llik.gsic + llik.te + llik.simple + llik.dais + llik.sl
+  llik = llik.gsic + llik.te + llik.simple + llik.sl + llik.dais
 
   return(llik)
 }
@@ -300,7 +301,8 @@ log.pri = function(parameters.in,
                    invtau.prior.fit,
                    vdais.prior.fit,
                    vgmsl.prior.fit,
-                   anto.prior.fit)
+                   anto.prior.fit,
+                   dais.prior.fit)
 {
 
     # Get the model and statistical parameters (only ones without uniform prior)
@@ -312,24 +314,25 @@ log.pri = function(parameters.in,
     lpri.anto      <- 0
     lpri.vdais     <- 0
     lpri.vgmsl     <- 0
+    lpri.dais      <- 0
 
     # some of the parameters have infinite support in one or both directions
-    ind.inf.up <- c(ind.vdais, ind.vgmsl)
-    ind.inf.dn <- c()
-    #in.range <- all(parameters.in > bound.lower) &
-    #            all(parameters.in < bound.upper)
-	in.range <- all(parameters.in > bound.lower) &
-                all(parameters.in[-ind.inf.up] < bound.upper[-ind.inf.up])
+    #ind.inf.dn <- c()
+    #ind.inf.up <- c(ind.vdais, ind.vgmsl)
+    in.range <- all(parameters.in > bound.lower) &
+                all(parameters.in < bound.upper)
+	#in.range <- all(parameters.in > bound.lower) &
+    #            all(parameters.in[-ind.inf.up] < bound.upper[-ind.inf.up])
 
 	if(in.range){
         lpri.uni = 0									# Sum of all uniform priors (log(1)=0)
 
         # Mechanistically-motivated priors
         lpri.invtau    <- dgamma( parameters.in[ind.invtau], shape=invtau.prior.fit[1], scale=invtau.prior.fit[2], log=TRUE )
-        lpri.vdais     <- vdais.prior.fit[1]*log(vdais.prior.fit[2])- log(gamma(vdais.prior.fit[1])) +
-                        (-vdais.prior.fit[1]-1)*log(parameters.in[ind.vdais]) - vdais.prior.fit[2]/parameters.in[ind.vdais]
-        lpri.vgmsl     <- vgmsl.prior.fit[1]*log(vgmsl.prior.fit[2])- log(gamma(vgmsl.prior.fit[1])) +
-                        (-vgmsl.prior.fit[1]-1)*log(parameters.in[ind.vgmsl]) - vgmsl.prior.fit[2]/parameters.in[ind.vgmsl]
+#        lpri.vdais     <- vdais.prior.fit[1]*log(vdais.prior.fit[2])- log(gamma(vdais.prior.fit[1])) +
+#                        (-vdais.prior.fit[1]-1)*log(parameters.in[ind.vdais]) - vdais.prior.fit[2]/parameters.in[ind.vdais]
+#        lpri.vgmsl     <- vgmsl.prior.fit[1]*log(vgmsl.prior.fit[2])- log(gamma(vgmsl.prior.fit[1])) +
+#                        (-vgmsl.prior.fit[1]-1)*log(parameters.in[ind.vgmsl]) - vgmsl.prior.fit[2]/parameters.in[ind.vgmsl]
         lpri.anto      <- log(dmsn( parameters.in[ind.anto], anto.prior.fit$beta, anto.prior.fit$Omega, anto.prior.fit$alpha)/anto.prior.fit$cnorm)
 
         # Other priors you might use
@@ -347,12 +350,13 @@ log.pri = function(parameters.in,
 #        lpri.te        <- log(dmsn( parameters.in[ind.te], te.prior.fit$beta, te.prior.fit$Omega, te.prior.fit$alpha)/te.prior.fit$cnorm)
 #        lpri.doeclim   <- log(dmsn( parameters.in[ind.doeclim], doeclim.prior.fit$beta, doeclim.prior.fit$Omega, doeclim.prior.fit$alpha)/doeclim.prior.fit$cnorm)
 #        lpri.simple    <- log(dmsn( parameters.in[ind.simple], simple.prior.fit$beta, simple.prior.fit$Omega, simple.prior.fit$alpha)/simple.prior.fit$cnorm)
-#        lpri.dais      <- log(dmsn( parameters.in[ind.dais], dais.prior.fit$beta, dais.prior.fit$Omega, dais.prior.fit$alpha)/dais.prior.fit$cnorm)
+        lpri.dais      <- log(dmsn( parameters.in[dais.prior.fit$ind], dais.prior.fit$beta, dais.prior.fit$Omega, dais.prior.fit$alpha)/dais.prior.fit$cnorm)
 #        lpri = lpri.uni +
 #               lpri.doeclim + lpri.gsic + lpri.dais + lpri.te + lpri.simple + lpri.anto +
 #               lpri.vdais + lpri.vgmsl + lpri.Gs0 + lpri.V0.gsic + lpri.V0.te + lpri.V0.simple
 
-        lpri = lpri.uni + lpri.invtau + lpri.vdais + lpri.vgmsl + lpri.anto
+        lpri = lpri.uni + lpri.invtau + lpri.vdais + lpri.vgmsl + lpri.anto +
+                lpri.dais
 	} else {
         lpri = -Inf
 	}
@@ -385,6 +389,7 @@ log.post = function(  parameters.in,
                       vdais.prior.fit=NULL,
                       vgmsl.prior.fit=NULL,
                       anto.prior.fit=NULL,
+                      dais.prior.fit=NULL,
                       luse.brick
                       ){
 
@@ -396,7 +401,8 @@ log.post = function(  parameters.in,
                   invtau.prior.fit   = invtau.prior.fit,
                   vdais.prior.fit    = vdais.prior.fit,
                   vgmsl.prior.fit    = vgmsl.prior.fit,
-                  anto.prior.fit     = anto.prior.fit)
+                  anto.prior.fit     = anto.prior.fit,
+                  dais.prior.fit     = dais.prior.fit)
   if(is.finite(lpri)) { # evaluate likelihood if nonzero prior probability
     llik = log.lik( parameters.in=parameters.in,
                     parnames.in=parnames.in,
