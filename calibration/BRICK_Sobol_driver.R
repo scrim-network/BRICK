@@ -818,11 +818,11 @@ library(plotrix)      # used when plotting circles
 source('../calibration/BRICK_Sobol_functions.R')
 
 # Set number of parameters being analyzed
-n_params <- 40
+n_params <- 37
 
 # Set Sobol indices file name
-Sobol_file_1 <- "../output_calibration/BRICK_Sobol-1-tot_19Mar2017-Build-AIS-GEV-2100.txt"
-Sobol_file_2 <- "../output_calibration/BRICK_Sobol-2_19Mar2017-Build-AIS-GEV-2100.txt"
+Sobol_file_1 <- "../output_calibration/BRICK_Sobol-1-tot_26Mar2017-Build-AIS-2065.txt"
+Sobol_file_2 <- "../output_calibration/BRICK_Sobol-2_26Mar2017-Build-AIS-2065.txt"
 
 ####################################
 # Import data from sensitivity analysis
@@ -865,7 +865,8 @@ colnames(s2_conf_high) <- rownames(s2_conf_high) <- s1st$Parameter
 
 # S1 & ST: using the confidence intervals
 s1st1 <- stat_sig_s1st(s1st
-                      ,method="con"
+                      ,method="congtr"
+                      ,greater=0.01
                       ,sigCri='either')
 
 # S1 & ST: using greater than a given value
@@ -879,7 +880,7 @@ s2_sig1 <- stat_sig_s2(s2
                        ,s2_conf_low
                        ,s2_conf_high
                        ,method='congtr'
-                       ,greater=0.02
+                       ,greater=0.01
                        )
 
 # S2: using greater than a given value
@@ -900,9 +901,10 @@ name_list1 <- list('Temperature' = parnames.sobol[1:5]
                    ,'Sea Level:\nGreenland Ice Sheet' = parnames.sobol[14:18]
                    ,'Sea Level:\nAntarctic Ice Sheet' = parnames.sobol[19:33]
                    ,'Land\nSubsidence' = parnames.sobol[35]
-                   ,'Storm Surge' = parnames.sobol[c(34,36:38)]
-                   ,'Emissions' = parnames.sobol[39]
-                   ,'Protection' = parnames.sobol[40]
+                   #,'Storm Surge' = parnames.sobol[c(34,36:38)]
+                   ,'Storm Surge' = parnames.sobol[c(34)]
+                   ,'Emissions' = parnames.sobol[36]
+                   ,'Protection' = parnames.sobol[37]
                    )
 
 # add Parameter symbols to plot
@@ -919,8 +921,9 @@ name_symbols <- c('S', expression(kappa[D]), expression(alpha[D]),
                   expression(kappa['AIS']), expression('f'[0]),
                   expression('h'[0]), 'c', expression('b'[0]), 'slope',
                   expression(lambda), expression('T'['crit']),
-                  expression('C'['surge']), 'subs', expression(mu),
-                  expression(sigma), expression(xi), 'RCP'
+                  expression('C'['surge']), 'subs'
+                  #, expression(mu), expression(sigma), expression(xi)
+                  , 'RCP'
                   , 'build'
                   )
 
@@ -980,7 +983,7 @@ plotRadCon(df=s1st1.swap
            ,s2=s2.swap
            ,scaling = .45
            ,s2_sig=s2_sig1.swap
-           ,filename = '~/Box\ Sync/Wong-Projects/BRICK_scenarios/figures/sobol_spider_2100Build'
+           ,filename = '~/Box\ Sync/Wong-Projects/BRICK_scenarios/figures/sobol_spider_2065Build'
            #,filename = './sobol_fig_test3'
            ,plotType = 'EPS'
            ,gpNameMult=1.5

@@ -134,8 +134,6 @@ stat_sig_s1st <- function(df
                     abs(s1st$S1) > greater)] <- 1
     df$st_sig[which(s1st$ST_conf_low * s1st$ST_conf_high > 0 &
                     abs(s1st$ST) > greater)] <- 1
-  }
-
   } else {
     print('Not a valid parameter for method')
   }
