@@ -207,6 +207,63 @@ if(all(!unlist(l.nonstat))) {
                       data=obs, location.fun=~temp,
                       initial=init, iter=niter.gev, proposalParams=params.prop, priorParams=params.pri)
 
+if(FALSE) {
+    # fit multiple chains to get GR diagnostics - otherwise, one long chain
+    gev.bayes1 <- fevd(coredata(lsl.max), type="GEV", method="Bayesian",
+                      data=obs, location.fun=~temp,
+                      initial=init, iter=niter.gev, proposalParams=params.prop, priorParams=params.pri)
+    gev.bayes2 <- fevd(coredata(lsl.max), type="GEV", method="Bayesian",
+                      data=obs, location.fun=~temp,
+                      initial=init, iter=niter.gev, proposalParams=params.prop, priorParams=params.pri)
+    gev.bayes3 <- fevd(coredata(lsl.max), type="GEV", method="Bayesian",
+                      data=obs, location.fun=~temp,
+                      initial=init, iter=niter.gev, proposalParams=params.prop, priorParams=params.pri)
+    gev.bayes4 <- fevd(coredata(lsl.max), type="GEV", method="Bayesian",
+                      data=obs, location.fun=~temp,
+                      initial=init, iter=niter.gev, proposalParams=params.prop, priorParams=params.pri)
+    chain1 <- gev.bayes1$results[,1:4]
+    chain2 <- gev.bayes2$results[,1:4]
+    chain3 <- gev.bayes3$results[,1:4]
+    chain4 <- gev.bayes4$results[,1:4]
+    niter.test = seq(from=1000, to=nrow(chain1), by=1000)
+    gr.stat = rep(NA,length(niter.test))
+    for (i in 1:length(niter.test)){
+        mcmc1 = as.mcmc(chain1[1:niter.test[i],])
+        mcmc2 = as.mcmc(chain2[1:niter.test[i],])
+        mcmc3 = as.mcmc(chain3[1:niter.test[i],])
+        mcmc4 = as.mcmc(chain4[1:niter.test[i],])
+        mcmc_chain_list = mcmc.list(list(mcmc1, mcmc2, mcmc3, mcmc4))
+        gr.stat[i] = gelman.diag(mcmc_chain_list)[2]
+    }
+    i1 <- niter.test[which(gr.stat<1.05)[1]]+1
+    iend <- nrow(chain1)
+    gev.posterior <- rbind(chain1[i1:iend,], chain2[i1:iend,], chain3[i1:iend,], chain4[i1:iend,])
+
+    gev.est <- gev.posterior
+    i.scale <- match('log.scale',names(gev.bayes$results[1,]))
+    gev.est[,i.scale] <- exp(gev.est[,i.scale])   # account for log(scale) from MCMC
+    colnames(gev.est) <- names(gev.bayes$results[1,1:ncol(gev.est)])
+    colnames(gev.est)[i.scale] <- 'scale'
+
+    # check acceptance rates - these should be close to 0.44 (for Metropolis/Gibbs
+    # hybrid method, essentially single-variable)
+    paccept <- apply(gev.bayes$chain.info[2:nrow(gev.bayes$chain.info),],2,sum)/nrow(gev.bayes$chain.info)
+    paccept <- paccept[1:length(std.err)]
+    print(paste('Acceptance rates should be around 0.44:',paccept))
+    print('If they are not, go into BRICK_project_surge.R and tune the proposal distributions using params.prop')
+
+    # draw parameter sets
+    ind.ensemble <- sample( seq(1,nrow(gev.est)), size=n.ensemble, replace=FALSE)
+    gev.sample <- gev.est[ind.ensemble,]
+    for (i in 1:n.ensemble) {
+        for (rcp in names(temperature)) {
+            gev_proj$location[[rcp]][,i] <- gev.sample[i,'mu0'] + gev.sample[i,'mu1']*temperature[[rcp]][,i]
+            gev_proj$shape[[rcp]][,i] <- rep(gev.sample[i,'shape'], n.time)
+            gev_proj$scale[[rcp]][,i] <- rep(gev.sample[i,'scale'], n.time)
+        }
+    }
+
+} else {
     gev.est <- gev.bayes$results[(round(burnin*niter.gev)+1):niter.gev, 1:length(std.err)]
     i.scale <- match('log.scale',names(gev.bayes$results[1,]))
     gev.est[,i.scale] <- exp(gev.est[,i.scale])   # account for log(scale) from MCMC
@@ -230,6 +287,7 @@ if(all(!unlist(l.nonstat))) {
             gev_proj$scale[[rcp]][,i] <- rep(gev.sample[i,'scale'], n.time)
         }
     }
+}
 
 } else if(l.nonstat$location & l.nonstat$shape & !l.nonstat$scale) {
 
@@ -296,15 +354,15 @@ if(all(!unlist(l.nonstat))) {
 }
 
 
-# scratch
+# get projections of the 99% quantile (1:100 level) of 
 if(FALSE) {
-    tmp2000 <- rep(0,n.ensemble); i2000 <- which(mod.time==2000)
-    tmp2050 <- rep(0,n.ensemble); i2050 <- which(mod.time==2050)
-    tmp2100 <- rep(0,n.ensemble); i2100 <- which(mod.time==2100)
+    tmp2000 <- rep(0,n.ensemble); i2000 <- which(t.proj==2000)
+    tmp2050 <- rep(0,n.ensemble); i2050 <- which(t.proj==2050)
+    tmp2100 <- rep(0,n.ensemble); i2100 <- which(t.proj==2100)
     for (i in 1:n.ensemble) {
-        tmp2000[i] <- qevd(p=0.99,loc=location.rcp85[i2000,i],scale=scale.rcp85[i2000,i],shape=shape.rcp85[i2000,i])
-        tmp2050[i] <- qevd(p=0.99,loc=location.rcp85[i2050,i],scale=scale.rcp85[i2050,i],shape=shape.rcp85[i2050,i])
-        tmp2100[i] <- qevd(p=0.99,loc=location.rcp85[i2100,i],scale=scale.rcp85[i2100,i],shape=shape.rcp85[i2100,i])
+        tmp2000[i] <- qevd(p=0.99,loc=gev_proj$location$rcp85[i2000,i],scale=gev_proj$scale$rcp85[i2000,i],shape=gev_proj$shape$rcp85[i2000,i])
+        tmp2050[i] <- qevd(p=0.99,loc=gev_proj$location$rcp85[i2050,i],scale=gev_proj$scale$rcp85[i2050,i],shape=gev_proj$shape$rcp85[i2050,i])
+        tmp2100[i] <- qevd(p=0.99,loc=gev_proj$location$rcp85[i2100,i],scale=gev_proj$scale$rcp85[i2100,i],shape=gev_proj$shape$rcp85[i2100,i])
     }
 
 }

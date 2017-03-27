@@ -56,16 +56,17 @@
 # This should NOT be routinized. It is not a "one-size-fits-all" type of
 # calculation.
 
-dat.dir <- '../data/tidegauge_Annapolis/'
+dat.dir <- '../data/tidegauge_SewellsPoint/'
+plotdir <- '~/Box\ Sync/Wong-Projects/MARISSA/figures/'
 filetype <- 'txt'
 septype <- '\t'
 
 lat.proj <- 36+(56.8/60)          # Sewall Point tide gauge at 36° 56.8' N
-lon.proj <- -(76+(19.8/60))     # 76° 19.8' W (NOAA Tides and Currents website)
+lon.proj <- -(76+(19.8/60))       # 76° 19.8' W (NOAA Tides and Currents website)
 scen.rcp <- c('rcp26','rcp45','rcp85')
 
 l.nonstat <- vector('list',3); names(l.nonstat) <- c('location','shape','scale')
-l.nonstat$location <- FALSE
+l.nonstat$location <- TRUE
 l.nonstat$shape <- FALSE
 l.nonstat$scale <- FALSE
 niter.gev <- 1e4
@@ -256,6 +257,18 @@ lines(t.proj, apply(lsl.scen[[4]], 1, mean), lwd=2, col=mycol.rgb[15])
 lines(t.proj, apply(lsl.scen[[3]], 1, mean), lwd=2, col=mycol.rgb[9])
 lines(t.proj, apply(lsl.scen[[2]], 1, mean), lwd=2, col=mycol.rgb[2])
 lines(t.proj, apply(lsl.scen[[1]], 1, mean), lwd=2, col=mycol.rgb[6])
+
+## Medians in each NOAA report scenario throughout the next century
+## (Table 5/6, NOAA report)
+time.noaa <- seq(from=2000, to=2100, by=10)
+gmsl.noaa <- vector('list',6)
+names(gmsl.noaa) <- c('low','intlow','int','inthigh','high','extreme')
+gmsl.noaa$low     <- c(0, 0.03, 0.06, 0.09, 0.13, 0.16, 0.19, 0.22, 0.25, 0.28, 0.30)
+gmsl.noaa$intlow  <- c(0, 0.04, 0.08, 0.13, 0.18, 0.24, 0.29, 0.35, 0.4, 0.45, 0.50)
+gmsl.noaa$int     <- c(0, 0.04, 0.10, 0.16, 0.25, 0.34, 0.45, 0.57, 0.71, 0.85, 1.0)
+gmsl.noaa$inthigh <- c(0, 0.05, 0.10, 0.19, 0.30, 0.44, 0.60, 0.79, 1.0, 1.2, 1.5)
+gmsl.noaa$high    <- c(0, 0.05, 0.11, 0.21, 0.36, 0.54, 0.77, 1.0, 1.3, 1.7, 2.0)
+gmsl.noaa$extreme <- c(0, 0.04, 0.11, 0.24, 0.41, 0.63, 0.90, 1.2, 1.6, 2.0, 2.5)
 ##==============================================================================
 
 ##==============================================================================
@@ -267,15 +280,22 @@ col45 <- c(121, 188, 255)/255
 col60 <- c(255, 130, 45)/255
 col85 <- c(255, 0, 0)/255
 
-i2100 = which(t.proj==2100)
+i2100 <- which(t.proj==2100)
+
+## Normalize relative to 1991-2009, as in NOAA 2017 report projections
+ind.norm <- which(t.proj==1991):which(t.proj==2009)
+lsl_proj$rcp26 <- lsl_proj$rcp26 - t(replicate(nrow(lsl_proj$rcp26) ,apply(lsl_proj$rcp26[ind.norm,] ,2,mean)))
+lsl_proj$rcp45 <- lsl_proj$rcp45 - t(replicate(nrow(lsl_proj$rcp45) ,apply(lsl_proj$rcp45[ind.norm,] ,2,mean)))
+lsl_proj$rcp85 <- lsl_proj$rcp85 - t(replicate(nrow(lsl_proj$rcp85) ,apply(lsl_proj$rcp85[ind.norm,] ,2,mean)))
 
 slr2100.rcp26 <- lsl_proj$rcp26[i2100,]
 slr2100.rcp45 <- lsl_proj$rcp45[i2100,]
 slr2100.rcp85 <- lsl_proj$rcp85[i2100,]
 
-pdf.slr2100.rcp26 <- density(slr2100.rcp26,from=0,to=4,na.rm=TRUE)
-pdf.slr2100.rcp45 <- density(slr2100.rcp45,from=0,to=4,na.rm=TRUE)
-pdf.slr2100.rcp85 <- density(slr2100.rcp85,from=0,to=4,na.rm=TRUE)
+n.pdf <- 2^11       # 2^11 is largest power of 2 less than # ensemble members
+pdf.slr2100.rcp26 <- density(slr2100.rcp26,from=0,to=4,na.rm=TRUE, n=n.pdf)
+pdf.slr2100.rcp45 <- density(slr2100.rcp45,from=0,to=4,na.rm=TRUE, n=n.pdf)
+pdf.slr2100.rcp85 <- density(slr2100.rcp85,from=0,to=4,na.rm=TRUE, n=n.pdf)
 
 cdf.slr2100.rcp26 <- rep(0,length(pdf.slr2100.rcp26$x))
 cdf.slr2100.rcp45 <- rep(0,length(pdf.slr2100.rcp45$x))
@@ -290,41 +310,41 @@ ecdf.rcp85 <- slr2100.rcp85[order(slr2100.rcp85)]
 # empirical survival function
 esf.vals <- 1-ecdf.vals
 
-#pdf(paste(plotdir,'distributions_SLR2100_pdf+sf.pdf',sep=''),width=5,height=7,colormodel='cmyk')
+pdf(paste(plotdir,'distributions_SLR2100_pdf+sf_Norfolk.pdf',sep=''),width=5,height=7,colormodel='cmyk')
 par(mfrow=c(2,1), mai=c(.85,.74,.1,.15))
 
-plot(x,pdf.slr2100.rcp85$y, type='l', xlim=c(0,3), ylim=c(0,4.7), lty=1,
-     col=rgb(col85[1],col85[2],col85[3]), lwd=1.5, xlab='', ylab='', xaxt='n', yaxt='n', xaxs='i', yaxs='i',axes=FALSE);
+plot(pdf.slr2100.rcp85$x,pdf.slr2100.rcp85$y, type='l', xlim=c(0,3), ylim=c(0,5.2), lty=1,
+     col=rgb(col85[1],col85[2],col85[3]), lwd=2, xlab='', ylab='', xaxt='n', yaxt='n', xaxs='i', yaxs='i',axes=FALSE);
   axis(1,seq(0,3,0.5),lab=c("0","0.5","1","1.5","2","2.5","3"))
   u <- par("usr")
   arrows(0, u[3],0, u[4], code = 2, xpd = TRUE)
   mtext('Probability density', side=2, line=1.3);
-  mtext('Projected sea level in 2100\nrelative to 1986-2005 average [m]', side=1, line=3);
+  mtext('Projected local mean sea level in 2100\nrelative to 1991-2009 average [m]', side=1, line=3);
   mtext(side=3, text=expression(bold('   a')), line=-1, cex=.9, adj=0);
 
-  lines(x,pdf.slr2100.rcp45$y, type='l', col=rgb(col45[1],col45[2],col45[3]), lwd=1.5);
-  lines(x,pdf.slr2100.rcp26$y, type='l', col=rgb(col26[1],col26[2],col26[3]), lwd=1.5);
+  lines(pdf.slr2100.rcp45$x,pdf.slr2100.rcp45$y, type='l', col=rgb(col45[1],col45[2],col45[3]), lwd=2);
+  lines(pdf.slr2100.rcp26$x,pdf.slr2100.rcp26$y, type='l', col=rgb(col26[1],col26[2],col26[3]), lwd=2);
 
-  legend(1.1,4.7,c("RCP2.6","RCP4.5","RCP8.5","including fast dynamics","neglecting fast dynamics"),
-        lty=c(1,1,1,1,2), lwd=2, col=c(rgb(col26[1],col26[2],col26[3]),rgb(col45[1],col45[2],col45[3]),rgb(col85[1],col85[2],col85[3]),'black','black'),
+  legend(1.1,5,c("RCP2.6","RCP4.5","RCP8.5"), lty=c(1,1,1), lwd=2,
+        col=c(rgb(col26[1],col26[2],col26[3]),rgb(col45[1],col45[2],col45[3]),rgb(col85[1],col85[2],col85[3])),
         bty='n')
 
 plot(ecdf.rcp85,log10(esf.vals),type='l', xlim=c(0,3), ylim=c(-3.3,0), lty=1,
-     col=rgb(col85[1],col85[2],col85[3]), lwd=1.5, xlab='', ylab='', xaxt='n', yaxt='n', xaxs='i', yaxs='i');
+     col=rgb(col85[1],col85[2],col85[3]), lwd=2, xlab='', ylab='', xaxt='n', yaxt='n', xaxs='i', yaxs='i');
   axis(1,seq(0,3,0.5),lab=c("0","0.5","1","1.5","2","2.5","3"))
   mtext('Survival function [1-CDF]', side = 2, line=2.6);
-  mtext('Projected sea level in 2100\nrelative to 1986-2005 average [m]', side=1, line=3);
+  mtext('Projected local mean sea level in 2100\nrelative to 1991-2009 average [m]', side=1, line=3);
   mtext(side=3, text=expression(bold('   b')), line=-1.1, cex=.9, adj=0);
 
 	axis(2, at=seq(-4,0), label=parse(text=paste("10^", seq(-4,0), sep="")), las=1)
 
-  lines(ecdf.rcp45,log10(esf.vals),type='l',lty=1, col=rgb(col45[1],col45[2],col45[3]), lwd=1.5);
-  lines(ecdf.rcp26,log10(esf.vals),type='l',lty=1, col=rgb(col26[1],col26[2],col26[3]), lwd=1.5);
+  lines(ecdf.rcp45,log10(esf.vals),type='l',lty=1, col=rgb(col45[1],col45[2],col45[3]), lwd=2);
+  lines(ecdf.rcp26,log10(esf.vals),type='l',lty=1, col=rgb(col26[1],col26[2],col26[3]), lwd=2);
 
 	lines(c(-4,4),c(-2,-2),lty=2,col='black'); text(0.35,-1.85,"1:100 level");
 	lines(c(-4,4),c(-3,-3),lty=2,col='black'); text(0.35,-2.85,"1:1000 level");
 
-#dev.off()
+dev.off()
 ##==============================================================================
 
 ##==============================================================================
@@ -342,6 +362,8 @@ lsl_proj$q95$rcp45 <- rep(0,length(t.proj))
 lsl_proj$q05$rcp85 <- rep(0,length(t.proj))
 lsl_proj$q50$rcp85 <- rep(0,length(t.proj))
 lsl_proj$q95$rcp85 <- rep(0,length(t.proj))
+lsl_proj$max <- rep(0,length(t.proj))
+lsl_proj$min <- rep(0,length(t.proj))
 for (t in 1:length(t.proj)) {
     lsl_proj$q50$rcp26[t] <- quantile(lsl_proj$rcp26[t,], 0.5)
     lsl_proj$q05$rcp26[t] <- quantile(lsl_proj$rcp26[t,], .05)
@@ -352,31 +374,64 @@ for (t in 1:length(t.proj)) {
     lsl_proj$q50$rcp85[t] <- quantile(lsl_proj$rcp85[t,], 0.5)
     lsl_proj$q05$rcp85[t] <- quantile(lsl_proj$rcp85[t,], .05)
     lsl_proj$q95$rcp85[t] <- quantile(lsl_proj$rcp85[t,], .95)
+    lsl_proj$max[t]       <- max(lsl_proj$rcp85[t,])
+    lsl_proj$min[t]       <- min(lsl_proj$rcp26[t,])
 }
 
-par(mfrow=c(1,1))
-par(mai=c(.3,.83,.20,.2))
+pdf(paste(plotdir,'projections_SLR2100_Norfolk.pdf',sep=''),width=4,height=6,colormodel='cmyk')
+
+par(mfrow=c(2,1), mai=c(.5,.65,.20,.3))
 plot(t.proj[iproj],lsl_proj$q50$rcp85[iproj],type='l',col=rgb(col85[1],col85[2],col85[3]),lwd=2, ann='',
-		 xlim=c(2000,2100), ylim=c(0,2.1), xaxt='n', yaxt='n', xaxs='i', yaxs='i');
-		 axis(1, seq(2000,2100,by=20)); axis(2, seq(0,2,by=.25), lab=c('0','','0.5','','1','','1.5','','2'));
-		 mtext(side=2, text='Local sea level [m]', line=2.2, cex=1);
-     mtext(side=3, text=expression(bold(' a')), line=-1, cex=1, adj=0);
-  polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(lsl_proj$q95$rcp85[iproj],rev(lsl_proj$q05$rcp85[iproj])),
-          col=rgb(col85[1],col85[2],col85[3],.5), border=NA);
-lines(t.proj[iproj],lsl_proj$q50$rcp45[iproj],type='l',col=rgb(col45[1],col45[2],col45[3]),lwd=2);
-  polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(lsl_proj$q95$rcp45[iproj],rev(lsl_proj$q05$rcp45[iproj])),
-          col=rgb(col45[1],col45[2],col45[3],.5), border=NA);
+     xlim=c(2000,2100), ylim=c(0,3), xaxt='n', yaxt='n', xaxs='i', yaxs='i');
+axis(1, seq(2000,2100,by=20));
+axis(2, seq(0,3,by=.5), lab=c('0','','1','','2','','3'), las=1);
+mtext(side=1, text='Year', line=2.2, cex=1);
+mtext(side=2, text='Local mean sea level [m]', line=2.2, cex=1);
+#mtext(side=3, text=expression(bold(' a')), line=-1, cex=1, adj=0);
+polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(lsl_proj$q95$rcp85[iproj],rev(lsl_proj$q05$rcp85[iproj])),
+        col=rgb(col85[1],col85[2],col85[3],.5), border=NA);
+lines(t.proj[iproj],lsl_proj$q50$rcp45[iproj],type='l',col=rgb(col45[1],col45[2],col45[3]),lwd=2.5);
+polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(lsl_proj$q95$rcp45[iproj],rev(lsl_proj$q05$rcp45[iproj])),
+        col=rgb(col45[1],col45[2],col45[3],.5), border=NA);
 lines(t.proj[iproj],lsl_proj$q50$rcp26[iproj],type='l',col=rgb(col26[1],col26[2],col26[3]),lwd=2);
-  polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(lsl_proj$q95$rcp26[iproj],rev(lsl_proj$q05$rcp26[iproj])),
-          col=rgb(col26[1],col26[2],col26[3],.5), border=NA);
-# + legend
-  legend(t.proj[iproj[1]]+10,2,c("5-95% range,",
-        "RCP2.6", "RCP4.5",	"RCP8.5"),
-        lty=c(NA,1,1,1), lwd=3,
-        col=c(NA,rgb(col26[1],col26[2],col26[3]),rgb(col45[1],col45[2],col45[3]),rgb(col85[1],col85[2],col85[3])), bty='n', cex=1)
+polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(lsl_proj$q95$rcp26[iproj],rev(lsl_proj$q05$rcp26[iproj])),
+        col=rgb(col26[1],col26[2],col26[3],.5), border=NA);
+# max/min of our ensemble
+polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(lsl_proj$max[iproj],rev(lsl_proj$min[iproj])),
+        col=rgb(.5,.5,.5,.23), border=NA);
+
+# superimpose the NOAA scenarios
+lines(time.noaa, gmsl.noaa$low,     lty=2, lwd=2, col=mycol.rgb[6] )
+lines(time.noaa, gmsl.noaa$intlow,  lty=2, lwd=2, col=mycol.rgb[2] )
+lines(time.noaa, gmsl.noaa$int,     lty=2, lwd=2, col=mycol.rgb[9] )
+lines(time.noaa, gmsl.noaa$inthigh, lty=2, lwd=2, col=mycol.rgb[15])
+lines(time.noaa, gmsl.noaa$high,    lty=2, lwd=2, col=mycol.rgb[13])
+lines(time.noaa, gmsl.noaa$extreme, lty=2, lwd=2, col=mycol.rgb[11])
+
+# legend in second panel
+par(mai=c(.05,.05,.05,.05))
+# stationary
+plot( 9, 9, xaxt='n', yaxt='n', xaxs='i', yaxs='i', axes=FALSE, xlim=c(0,1),ylim=c(0,1), xlab='', ylab='')
+
+legend(0.15, 0.75,
+    c("RCP2.6, 5-95% range", "RCP4.5, 5-95% range", "RCP8.5, 5-95% range", "Ensemble max/min range",
+        "NOAA, Low", "NOAA, Intermediate-Low", "NOAA, Intermediate", "NOAA, Intermediate-High", "NOAA, High", "NOAA, Extreme"),
+    lty=c(1,1,1,1,2,2,2,2,2,2), lwd=c(9,9,9,9,3,3,3,3,3,3), , bty='n', cex=1,
+    col=c(rgb(col26[1],col26[2],col26[3]),rgb(col45[1],col45[2],col45[3]),rgb(col85[1],col85[2],col85[3]),rgb(.5,.5,.5),
+        mycol.rgb[6],mycol.rgb[2],mycol.rgb[9],mycol.rgb[15],mycol.rgb[13],mycol.rgb[11]))
+
+dev.off()
 ##==============================================================================
 
 
+plot(t.proj, apply(lsl.scen[[6]], 1, mean), type='l', lwd=2,
+     xlim=c(1960, 2060), ylim=c(-.4,1.2), col=mycol.rgb[11],
+     xlab='Year', ylab='Regional sea level [meters]')
+lines(t.proj, apply(lsl.scen[[5]], 1, mean), lwd=2, col=mycol.rgb[13])
+lines(t.proj, apply(lsl.scen[[4]], 1, mean), lwd=2, col=mycol.rgb[15])
+lines(t.proj, apply(lsl.scen[[3]], 1, mean), lwd=2, col=mycol.rgb[9])
+lines(t.proj, apply(lsl.scen[[2]], 1, mean), lwd=2, col=mycol.rgb[2])
+lines(t.proj, apply(lsl.scen[[1]], 1, mean), lwd=2, col=mycol.rgb[6])
 
 
 
@@ -384,7 +439,7 @@ lines(t.proj[iproj],lsl_proj$q50$rcp26[iproj],type='l',col=rgb(col26[1],col26[2]
 ##==============================================================================
 # get an ensemble of projections of GEV parameters
 
-# routien for projecting storm surge (Grinsted et al 2013)
+# routine for projecting storm surge (Grinsted et al 2013)
 source('../R/BRICK_project_surge.R')
 
 gev_proj <- brick_surge_grinsted(temperature = temp,
