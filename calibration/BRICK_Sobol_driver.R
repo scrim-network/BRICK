@@ -821,8 +821,8 @@ source('../calibration/BRICK_Sobol_functions.R')
 n_params <- 37
 
 # Set Sobol indices file name
-Sobol_file_1 <- "../output_calibration/BRICK_Sobol-1-tot_26Mar2017-Build-AIS-2065.txt"
-Sobol_file_2 <- "../output_calibration/BRICK_Sobol-2_26Mar2017-Build-AIS-2065.txt"
+Sobol_file_1 <- "../output_calibration/BRICK_Sobol-1-tot_27Mar2017-Build-AIS-2065.txt"
+Sobol_file_2 <- "../output_calibration/BRICK_Sobol-2_27Mar2017-Build-AIS-2065.txt"
 
 ####################################
 # Import data from sensitivity analysis
@@ -981,9 +981,11 @@ s2_sig1.swap[,match('surge.factor',parnames.sobol)] <- s2_sig1[,match('subs.rate
 
 plotRadCon(df=s1st1.swap
            ,s2=s2.swap
-           ,scaling = .45
+           ,scaling = .33
            ,s2_sig=s2_sig1.swap
-           ,filename = '~/Box\ Sync/Wong-Projects/BRICK_scenarios/figures/sobol_spider_2065Build'
+           #,filename = '~/Box\ Sync/Wong-Projects/BRICK_scenarios/figures/sobol_spider_2065Build'
+           #,filename = '~/Box\ Sync/Wong-Projects/BRICK_scenarios/figures/sobol_spider_2065Build-noAIS'
+           ,filename = '~/Box\ Sync/Wong-Projects/BRICK_scenarios/figures/sobol_spider_2065Build-noGEV'
            #,filename = './sobol_fig_test3'
            ,plotType = 'EPS'
            ,gpNameMult=1.5
@@ -994,7 +996,8 @@ plotRadCon(df=s1st1.swap
            ,line_col = rgb(mycol[10,1],mycol[10,2],mycol[10,3])
            ,STthick = 0.5
            ,legFirLabs=c(.05,.85), legTotLabs=c(.10,.90), legSecLabs=c(.02,.1)
-           ,lBuildRCPhoriz=TRUE
+           ,lBuildRCPhoriz=FALSE
+           ,lnoGEVhoriz=TRUE
 )
 
 ##==============================================================================
