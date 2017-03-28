@@ -314,38 +314,58 @@ pdf(paste(plotdir,'distributions_SLR2100_pdf+sf_Norfolk.pdf',sep=''),width=5,hei
 par(mfrow=c(2,1), mai=c(.85,.74,.1,.15))
 
 plot(pdf.slr2100.rcp85$x,pdf.slr2100.rcp85$y, type='l', xlim=c(0,3), ylim=c(0,5.2), lty=1,
-     col=rgb(col85[1],col85[2],col85[3]), lwd=2, xlab='', ylab='', xaxt='n', yaxt='n', xaxs='i', yaxs='i',axes=FALSE);
-  axis(1,seq(0,3,0.5),lab=c("0","0.5","1","1.5","2","2.5","3"))
-  u <- par("usr")
-  arrows(0, u[3],0, u[4], code = 2, xpd = TRUE)
-  mtext('Probability density', side=2, line=1.3);
-  mtext('Projected local mean sea level in 2100\nrelative to 1991-2009 average [m]', side=1, line=3);
-  mtext(side=3, text=expression(bold('   a')), line=-1, cex=.9, adj=0);
+     col=rgb(col85[1],col85[2],col85[3]), lwd=3, xlab='', ylab='', xaxt='n', yaxt='n', xaxs='i', yaxs='i',axes=FALSE);
+axis(1,seq(0,3,0.5),lab=c("0","0.5","1","1.5","2","2.5","3"))
+u <- par("usr")
+arrows(0, u[3],0, u[4], code = 2, xpd = TRUE)
+mtext('Probability density', side=2, line=1.3);
+mtext('Projected local mean sea level in 2100\nrelative to 1991-2009 average [m]', side=1, line=3);
+mtext(side=3, text=expression(bold('   a')), line=-1, cex=.9, adj=0);
 
-  lines(pdf.slr2100.rcp45$x,pdf.slr2100.rcp45$y, type='l', col=rgb(col45[1],col45[2],col45[3]), lwd=2);
-  lines(pdf.slr2100.rcp26$x,pdf.slr2100.rcp26$y, type='l', col=rgb(col26[1],col26[2],col26[3]), lwd=2);
+lines(pdf.slr2100.rcp45$x,pdf.slr2100.rcp45$y, type='l', col=rgb(col45[1],col45[2],col45[3]), lwd=3);
+lines(pdf.slr2100.rcp26$x,pdf.slr2100.rcp26$y, type='l', col=rgb(col26[1],col26[2],col26[3]), lwd=3);
 
-  legend(1.1,5,c("RCP2.6","RCP4.5","RCP8.5"), lty=c(1,1,1), lwd=2,
-        col=c(rgb(col26[1],col26[2],col26[3]),rgb(col45[1],col45[2],col45[3]),rgb(col85[1],col85[2],col85[3])),
-        bty='n')
+# add NOAA scenarios as shaded regions/bars
+lines(c(gmsl.noaa$low[11],gmsl.noaa$low[11]),         c(-10,10), lty=2, lwd=2, col=mycol.rgb[11])
+lines(c(gmsl.noaa$intlow[11],gmsl.noaa$intlow[11]),   c(-10,10), lty=2, lwd=2, col=mycol.rgb[13])
+lines(c(gmsl.noaa$int[11],gmsl.noaa$int[11]),         c(-10,10), lty=2, lwd=2, col=mycol.rgb[15])
+lines(c(gmsl.noaa$inthigh[11],gmsl.noaa$inthigh[11]), c(-10,10), lty=2, lwd=2, col=mycol.rgb[9] )
+lines(c(gmsl.noaa$high[11],gmsl.noaa$high[11]),       c(-1,1.1), lty=2, lwd=2, col=mycol.rgb[2] )
+lines(c(gmsl.noaa$extreme[11],gmsl.noaa$extreme[11]), c(-1,1.1), lty=2, lwd=2, col=mycol.rgb[6] )
 
-plot(ecdf.rcp85,log10(esf.vals),type='l', xlim=c(0,3), ylim=c(-3.3,0), lty=1,
+legend(1.63,5.2,c("RCP2.6","RCP4.5","RCP8.5",
+                  "NOAA, Low","NOAA, Int-Low", "NOAA, Int", "NOAA, Int-High", "NOAA, High","NOAA, Extreme"),
+       lty=c(1,1,1,2,2,2,2,2,2), lwd=2,
+       col=c(rgb(col26[1],col26[2],col26[3]),rgb(col45[1],col45[2],col45[3]),rgb(col85[1],col85[2],col85[3]),
+             mycol.rgb[11], mycol.rgb[13], mycol.rgb[15], mycol.rgb[9], mycol.rgb[2], mycol.rgb[6]))
+
+plot(ecdf.rcp85,log10(esf.vals),type='l', xlim=c(0,3), ylim=c(-3.45,0), lty=1,
      col=rgb(col85[1],col85[2],col85[3]), lwd=2, xlab='', ylab='', xaxt='n', yaxt='n', xaxs='i', yaxs='i');
-  axis(1,seq(0,3,0.5),lab=c("0","0.5","1","1.5","2","2.5","3"))
-  mtext('Survival function [1-CDF]', side = 2, line=2.6);
-  mtext('Projected local mean sea level in 2100\nrelative to 1991-2009 average [m]', side=1, line=3);
-  mtext(side=3, text=expression(bold('   b')), line=-1.1, cex=.9, adj=0);
+axis(1,seq(0,3,0.5),lab=c("0","0.5","1","1.5","2","2.5","3"))
+mtext('Survival function [1-CDF]', side = 2, line=2.6);
+mtext('Projected local mean sea level in 2100\nrelative to 1991-2009 average [m]', side=1, line=3);
+mtext(side=3, text=expression(bold('   b')), line=-1.1, cex=.9, adj=0);
 
-	axis(2, at=seq(-4,0), label=parse(text=paste("10^", seq(-4,0), sep="")), las=1)
+axis(2, at=seq(-4,0), label=parse(text=paste("10^", seq(-4,0), sep="")), las=1)
 
-  lines(ecdf.rcp45,log10(esf.vals),type='l',lty=1, col=rgb(col45[1],col45[2],col45[3]), lwd=2);
-  lines(ecdf.rcp26,log10(esf.vals),type='l',lty=1, col=rgb(col26[1],col26[2],col26[3]), lwd=2);
+lines(ecdf.rcp45,log10(esf.vals),type='l',lty=1, col=rgb(col45[1],col45[2],col45[3]), lwd=2);
+lines(ecdf.rcp26,log10(esf.vals),type='l',lty=1, col=rgb(col26[1],col26[2],col26[3]), lwd=2);
 
-	lines(c(-4,4),c(-2,-2),lty=2,col='black'); text(0.35,-1.85,"1:100 level");
-	lines(c(-4,4),c(-3,-3),lty=2,col='black'); text(0.35,-2.85,"1:1000 level");
+lines(c(-4,4),c(-2,-2),lty=2,col='black'); text(0.35,-1.85,"1:100 level");
+lines(c(-4,4),c(-3,-3),lty=2,col='black'); text(0.35,-2.85,"1:1000 level");
+
+# add NOAA scenarios as shaded regions/bars
+lines(c(gmsl.noaa$low[11],gmsl.noaa$low[11]),         c(-1.6,10), lty=2, lwd=2, col=mycol.rgb[11])
+lines(c(gmsl.noaa$intlow[11],gmsl.noaa$intlow[11]),   c(-1.6,10), lty=2, lwd=2, col=mycol.rgb[13])
+lines(c(gmsl.noaa$int[11],gmsl.noaa$int[11]),         c(-10,10), lty=2, lwd=2, col=mycol.rgb[15])
+lines(c(gmsl.noaa$inthigh[11],gmsl.noaa$inthigh[11]), c(-10,10), lty=2, lwd=2, col=mycol.rgb[9] )
+lines(c(gmsl.noaa$high[11],gmsl.noaa$high[11]),       c(-10,10), lty=2, lwd=2, col=mycol.rgb[2] )
+lines(c(gmsl.noaa$extreme[11],gmsl.noaa$extreme[11]), c(-10,10), lty=2, lwd=2, col=mycol.rgb[6] )
 
 dev.off()
+
 ##==============================================================================
+
 
 ##==============================================================================
 ## Plot -- projections
