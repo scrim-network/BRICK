@@ -818,11 +818,14 @@ library(plotrix)      # used when plotting circles
 source('../calibration/BRICK_Sobol_functions.R')
 
 # Set number of parameters being analyzed
-n_params <- 37
+n_params <- 38
 
 # Set Sobol indices file name
-Sobol_file_1 <- "../output_calibration/BRICK_Sobol-1-tot_27Mar2017-Build-AIS-2065.txt"
-Sobol_file_2 <- "../output_calibration/BRICK_Sobol-2_27Mar2017-Build-AIS-2065.txt"
+Sobol_file_1 <- "../output_calibration/BRICK_Sobol-1-tot_31Mar2017-Build-GEV-2065.txt"
+Sobol_file_2 <- "../output_calibration/BRICK_Sobol-2_31Mar2017-Build-GEV-2065.txt"
+
+noGEV <- FALSE
+noHR <- TRUE
 
 ####################################
 # Import data from sensitivity analysis
@@ -892,9 +895,7 @@ s2_sig1 <- stat_sig_s2(s2
 ####################################
 # Define groups for the variables and the color schemes
 # Defining lists of the variables for each group
-#name_list1 <- list('Sea Level' = parnames.sobol[c(ind.brick,ind.subs)],
-#                   'Storm Surge' = parnames.sobol[c(ind.surge, ind.gev)],
-#                   'Emissions' = parnames.sobol[c(ind.rcp)])
+
 name_list1 <- list('Temperature' = parnames.sobol[1:5]
                    ,'Sea Level:\n   Glaciers & Ice Caps' = parnames.sobol[6:9]
                    ,'Sea Level:\nThermal Expansion' = parnames.sobol[10:13]
@@ -927,10 +928,71 @@ name_symbols <- c('S', expression(kappa[D]), expression(alpha[D]),
                   , 'build'
                   )
 
-# Parameter descriptions
-#param_desc <- c("Value of goods", "Discount rate", "Construction cost",
-#                "Subsidence rate", "Location", "Scale", "Shape",
-#                "SLR anomaly", "SLR rate", "Acceleration", "Abrupt SLR rate", "Abrupt SLR year")
+# modify the names and symbols if we are plotting one of the SOM figures
+if(noGEV) {
+    name_list1 <- list('Temperature' = parnames.sobol[1:5]
+                       ,'Sea Level:\n   Glaciers & Ice Caps' = parnames.sobol[6:9]
+                       ,'Sea Level:\nThermal Expansion' = parnames.sobol[10:13]
+                       ,'Sea Level:\nGreenland Ice Sheet' = parnames.sobol[14:18]
+                       ,'Sea Level:\nAntarctic Ice Sheet' = parnames.sobol[19:33]
+                       ,'Land\nSubsidence' = parnames.sobol[35]
+                       #,'Storm Surge' = parnames.sobol[c(34,36:38)]
+                       ,'Storm Surge' = parnames.sobol[c(34)]
+                       ,'Emissions' = parnames.sobol[36]
+                       ,'Protection' = parnames.sobol[37]
+                       )
+
+    # add Parameter symbols to plot
+    name_symbols <- c('S', expression(kappa[D]), expression(alpha[D]),
+                      expression('T'[0]), expression('H'[0]), expression(beta[0]),
+                      expression('V'['0,GSIC']), 'n', expression('G'['s,0']),
+                      expression('a'['TE']), expression('b'['TE']),
+                      expression(1/tau['TE']), expression('V'['0,TE']),
+                      expression('a'['GIS']), expression('b'['GIS']),
+                      expression(alpha['GIS']), expression(beta['GIS']),
+                      expression('V'['0,GIS']), expression('a'['ANTO']),
+                      expression('b'['ANTO']), expression(gamma), expression(alpha['AIS']),
+                      expression(mu), expression(nu), expression('P'[0]),
+                      expression(kappa['AIS']), expression('f'[0]),
+                      expression('h'[0]), 'c', expression('b'[0]), 'slope',
+                      expression(lambda), expression('T'['crit']),
+                      expression('C'['surge']), 'subs'
+                      #, expression(mu), expression(sigma), expression(xi)
+                      , 'RCP'
+                      , 'build'
+                      )
+} else if(noHR) {
+    name_list1 <- list('Temperature' = parnames.sobol[1:5]
+                       ,'Sea Level:\n   Glaciers & Ice Caps' = parnames.sobol[6:9]
+                       ,'Sea Level:\nThermal Expansion' = parnames.sobol[10:13]
+                       ,'Sea Level:\nGreenland Ice Sheet' = parnames.sobol[14:18]
+                       ,'Sea Level:\nAntarctic Ice Sheet' = parnames.sobol[19:31]
+                       ,'Land\nSubsidence' = parnames.sobol[33]
+                       ,'Storm Surge' = parnames.sobol[c(32,34:36)]
+                       ,'Emissions' = parnames.sobol[37]
+                       ,'Protection' = parnames.sobol[38]
+                       )
+
+    # add Parameter symbols to plot
+    name_symbols <- c('S', expression(kappa[D]), expression(alpha[D]),
+                      expression('T'[0]), expression('H'[0]), expression(beta[0]),
+                      expression('V'['0,GSIC']), 'n', expression('G'['s,0']),
+                      expression('a'['TE']), expression('b'['TE']),
+                      expression(1/tau['TE']), expression('V'['0,TE']),
+                      expression('a'['GIS']), expression('b'['GIS']),
+                      expression(alpha['GIS']), expression(beta['GIS']),
+                      expression('V'['0,GIS']), expression('a'['ANTO']),
+                      expression('b'['ANTO']), expression(gamma), expression(alpha['AIS']),
+                      expression(mu), expression(nu), expression('P'[0]),
+                      expression(kappa['AIS']), expression('f'[0])
+                      , expression('b'[0]), 'slope'
+                      ,expression(lambda), expression('T'['crit'])
+                      ,expression('C'['surge']), 'subs'
+                      , expression(mu), expression(sigma), expression(xi)
+                      , 'RCP'
+                      , 'build'
+                      )
+}
 
 source('../Useful/colorblindPalette.R')
 
@@ -984,8 +1046,8 @@ plotRadCon(df=s1st1.swap
            ,scaling = .33
            ,s2_sig=s2_sig1.swap
            #,filename = '~/Box\ Sync/Wong-Projects/BRICK_scenarios/figures/sobol_spider_2065Build'
-           #,filename = '~/Box\ Sync/Wong-Projects/BRICK_scenarios/figures/sobol_spider_2065Build-noAIS'
-           ,filename = '~/Box\ Sync/Wong-Projects/BRICK_scenarios/figures/sobol_spider_2065Build-noGEV'
+           ,filename = '~/Box\ Sync/Wong-Projects/BRICK_scenarios/figures/sobol_spider_2065Build-noHR'
+           #,filename = '~/Box\ Sync/Wong-Projects/BRICK_scenarios/figures/sobol_spider_2065Build-noGEV'
            #,filename = './sobol_fig_test3'
            ,plotType = 'EPS'
            ,gpNameMult=1.5
@@ -997,7 +1059,8 @@ plotRadCon(df=s1st1.swap
            ,STthick = 0.5
            ,legFirLabs=c(.05,.85), legTotLabs=c(.10,.90), legSecLabs=c(.02,.1)
            ,lBuildRCPhoriz=FALSE
-           ,lnoGEVhoriz=TRUE
+           ,lnoGEVhoriz=FALSE
+           ,lnoHRhoriz=TRUE
 )
 
 ##==============================================================================

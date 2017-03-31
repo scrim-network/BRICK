@@ -229,6 +229,7 @@ plotRadCon <- function(df                   # dataframe with S1 and ST indices
                        ,legTotLabs=NULL     # legend labels for total order
                        ,lBuildRCPhoriz=FALSE # horizontal legends for Emissions and Protection?
                        ,lnoGEVhoriz=FALSE   # horizontal legends for Emissions, Protection, Storm Surge, and Land Subsidence?
+                       ,lnoHRhoriz=FALSE   # horizontal legends for Emissions, Protection?
                        ){
 
   # Shift plot up
@@ -472,6 +473,37 @@ if(lBuildRCPhoriz) {
   }
 } else if(lnoGEVhoriz) {
   if(sig_gps[i]=='Emissions' | sig_gps[i]=='Protection' | sig_gps[i]=='Storm Surge' | sig_gps[i]=='Land\nSubsidence') {
+      text(gpNameMult*radSc*cos(angle_gp), gpNameMult*radSc*sin(angle_gp) + shift
+           , sig_gps[i]
+           , col = df$gp_col[which(df$gp_name %in% sig_gps[i])]#[i]]
+           , cex = cex
+           , srt = 0# angle_gp*360/(2*pi) + 90
+           , adj = 0.15 # for centering
+           , font = 1
+      )
+  } else {
+    if((angle_gp*360/(2*pi)) >= 0 & (angle_gp*360/(2*pi)) <= 180){
+      text(gpNameMult*radSc*cos(angle_gp), gpNameMult*radSc*sin(angle_gp) + shift
+           , sig_gps[i]
+           , col = df$gp_col[which(df$gp_name %in% sig_gps[i])]#[i]]
+           , cex = cex
+           , srt = angle_gp*360/(2*pi) - 90
+           , adj = 0.5 # for centering
+           , font = 1
+      )
+    } else {
+      text(gpNameMult*radSc*cos(angle_gp), gpNameMult*radSc*sin(angle_gp) + shift
+           , sig_gps[i]
+           , col = df$gp_col[which(df$gp_name %in% sig_gps[i])]#[i]]
+           , cex = cex
+           , srt = angle_gp*360/(2*pi) + 90
+           , adj = 0.5 # for centering
+           , font = 1
+      )
+    }
+  }
+} else if(lnoHRhoriz) {
+  if(sig_gps[i]=='Emissions' | sig_gps[i]=='Protection') {
       text(gpNameMult*radSc*cos(angle_gp), gpNameMult*radSc*sin(angle_gp) + shift
            , sig_gps[i]
            , col = df$gp_col[which(df$gp_name %in% sig_gps[i])]#[i]]
