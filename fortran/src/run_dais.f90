@@ -18,7 +18,13 @@
 !================================================================================
 
 !---------------------------------------------------------------------------------
-subroutine run_dais(ns, tstep, dais_parameters,                   &
+subroutine run_dais(ns, tstep         , dais_b0        , dais_slope     , &
+                     dais_mu          , dais_h0        , dais_c         , &
+                     dais_chr         , dais_P0        , dais_kappa     , &
+                     dais_nu          , dais_f0        , dais_gamma     , &
+                     dais_alpha       , dais_Tfrz      , dais_rho_w     , &
+                     dais_rho_i       , dais_rho_m     , dais_Toc0      , &
+                     dais_Rad0        , dais_Aoc       , dais_lf        ,&
                                Ant_Temp,           Ant_Sea_Level, &
                                Ant_Sur_Ocean_Temp, Ant_SL_rate,   &
                                AIS_Radius_out,     AIS_Volume_out)
@@ -74,7 +80,26 @@ subroutine run_dais(ns, tstep, dais_parameters,                   &
 
 ! parameters
     real(DP),     intent(IN) :: tstep
-    real(DP), dimension(21), intent(IN) :: dais_parameters
+    real(DP),     intent(IN) :: dais_b0
+    real(DP),     intent(IN) :: dais_slope
+    real(DP),     intent(IN) :: dais_mu
+    real(DP),     intent(IN) :: dais_h0
+    real(DP),     intent(IN) :: dais_c
+    real(DP),     intent(IN) :: dais_chr
+    real(DP),     intent(IN) :: dais_P0
+    real(DP),     intent(IN) :: dais_kappa
+    real(DP),     intent(IN) :: dais_nu
+    real(DP),     intent(IN) :: dais_f0
+    real(DP),     intent(IN) :: dais_gamma
+    real(DP),     intent(IN) :: dais_alpha
+    real(DP),     intent(IN) :: dais_Tfrz
+    real(DP),     intent(IN) :: dais_rho_w
+    real(DP),     intent(IN) :: dais_rho_i
+    real(DP),     intent(IN) :: dais_rho_m
+    real(DP),     intent(IN) :: dais_Toc0
+    real(DP),     intent(IN) :: dais_Rad0
+    real(DP),     intent(IN) :: dais_Aoc
+    real(DP),     intent(IN) :: dais_lf
 
 ! input variables
     real(DP), dimension(ns), intent(IN) :: Ant_Temp
@@ -91,8 +116,12 @@ subroutine run_dais(ns, tstep, dais_parameters,                   &
 
 ! Initialize dais (parameters and initial variable values)
     i = 1
-    call init_dais(tstep, dais_parameters, Ant_Sea_Level(i), &
-                   AIS_Radius_out(i), AIS_Volume_out(i) )
+    call init_dais(tstep, dais_b0, dais_slope, dais_mu, dais_h0, dais_c, &
+                    dais_chr, dais_P0, dais_kappa, dais_nu, dais_f0, &
+                    dais_gamma, dais_alpha, dais_Tfrz, dais_rho_w, &
+                    dais_rho_i, dais_rho_m, dais_Toc0, dais_Rad0, &
+                    dais_Aoc, dais_lf, &
+                   Ant_Sea_Level(i), AIS_Radius_out(i), AIS_Volume_out(i) )
 
 ! estimate outputs
     do i=2,ns

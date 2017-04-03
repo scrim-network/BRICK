@@ -23,8 +23,10 @@
 !   Toc_0     Present-day, high latitude ocean subsurface temperature [degC]
 !   Rad0      Reference ice sheet radius [m]
 !   dSLais    logical that tells if < dSL > represents contribution of
-!              - all components (including AIS)        -> dSLais = 1
-!              - all otherm components (excluding AIS) -> dSLais = 0
+!              - all components (including AIS)       -> dSLais = 1
+!              - all other components (excluding AIS) -> dSLais = 0
+!             Note: in SLR-only configuration, this should be 0 because dSL is
+!             estimated from other model compoennts before stepping DAIS forward
 !   lf        Mean AIS fingerprint at AIS shore
 !
 !   Tf        Freecing temperature sea water [degC]
@@ -94,13 +96,36 @@ contains
 
 
 !------------------------------------------------------------------------------
-subroutine init_dais(time_step, parameters, SL, Rad, Vol)
+subroutine init_dais(time_step, b0_dais_in, slope_dais_in, mu_dais_in, h0_dais_in, &
+                   c_dais_in, chr_dais_in, P0_dais_in, kappa_dais_in, nu_dais_in, &
+                   f0_dais_in, gamma_dais_in, alpha_dais_in, Tfrz_dais_in, rho_w_dais_in, &
+                   rho_i_dais_in, rho_m_dais_in, Toc0_dais_in, Rad0_dais_in, &
+                   Aoc_dais_in, lf_dais_in, SL, Rad, Vol)
 !  =========================================================================
 ! |  Initialize the DAIS parameters and initial variables.                                   |
 !  =========================================================================
 
     real(DP), intent(IN) :: time_step
-    real(DP), dimension(21), intent(IN) :: parameters
+    real(DP), intent(IN) :: b0_dais_in
+    real(DP), intent(IN) :: slope_dais_in
+    real(DP), intent(IN) :: mu_dais_in
+    real(DP), intent(IN) :: h0_dais_in
+    real(DP), intent(IN) :: c_dais_in
+    real(DP), intent(IN) :: chr_dais_in
+    real(DP), intent(IN) :: P0_dais_in
+    real(DP), intent(IN) :: kappa_dais_in
+    real(DP), intent(IN) :: nu_dais_in
+    real(DP), intent(IN) :: f0_dais_in
+    real(DP), intent(IN) :: gamma_dais_in
+    real(DP), intent(IN) :: alpha_dais_in
+    real(DP), intent(IN) :: Tfrz_dais_in
+    real(DP), intent(IN) :: rho_w_dais_in
+    real(DP), intent(IN) :: rho_i_dais_in
+    real(DP), intent(IN) :: rho_m_dais_in
+    real(DP), intent(IN) :: Toc0_dais_in
+    real(DP), intent(IN) :: Rad0_dais_in
+    real(DP), intent(IN) :: Aoc_dais_in
+    real(DP), intent(IN) :: lf_dais_in
     real(DP), intent(IN)  :: SL
     real(DP), intent(OUT) :: Rad
     real(DP), intent(OUT) :: Vol
@@ -110,27 +135,27 @@ subroutine init_dais(time_step, parameters, SL, Rad, Vol)
 
 ! Assign values to model parameters
     tstep  = time_step
-    b0     = parameters(1)
-    slope  = parameters(2)
-    mu     = parameters(3)
-    h0     = parameters(4)
-    c      = parameters(5)
-    P0     = parameters(6)
-    kappa  = parameters(7)
-    nu     = parameters(8)
-    f0     = parameters(9)
-    gamma  = parameters(10)
-    alpha  = parameters(11)
-    Tf     = parameters(12)
-    rho_w  = parameters(13)
-    rho_i  = parameters(14)
-    rho_m  = parameters(15)
-    Toc_0  = parameters(16)
-    Rad0   = parameters(17)
-    Aoc    = parameters(18)
-    lf     = parameters(19)
-    includes_dSLais = parameters(20)
-    chr    = parameters(21)
+    b0     = b0_dais_in
+    slope  = slope_dais_in
+    mu     = mu_dais_in
+    h0     = h0_dais_in
+    c      = c_dais_in
+    chr    = chr_dais_in
+    P0     = P0_dais_in
+    kappa  = kappa_dais_in
+    nu     = nu_dais_in
+    f0     = f0_dais_in
+    gamma  = gamma_dais_in
+    alpha  = alpha_dais_in
+    Tf     = Tfrz_dais_in
+    rho_w  = rho_w_dais_in
+    rho_i  = rho_i_dais_in
+    rho_m  = rho_m_dais_in
+    Toc_0  = Toc0_dais_in
+    Rad0   = Rad0_dais_in
+    Aoc    = Aoc_dais_in
+    lf     = lf_dais_in
+    includes_dSLais = 0.
 
 ! Initialize intermediate parameters
     del  = rho_w / rho_i
@@ -188,7 +213,7 @@ subroutine dais_step(Ta, SL, Toc, dSL, Rad, Vol)
     real(DP) :: c_iso
 
 ! Start model
-    hr   = chr*(h0 + c * Ta)        ! equation 5
+    hr   = chr*(h0 + c * Ta)  ! equation 5
     rc   = (b0 - SL)/slope    ! application of equation 1 (paragraph after eq3)
     P    = P0 * exp(kappa*Ta) ! equation 6
     beta = nu * P**(0.5)      ! equation 7 (corrected with respect to text)
