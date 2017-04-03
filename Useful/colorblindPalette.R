@@ -24,6 +24,10 @@ mycol=rbind(
             )
 mycol=mycol/max(mycol)
 
+mycol.rgb <- rep(0,nrow(mycol))
+for (i in 1:nrow(mycol)) {
+    mycol.rgb[i] <- rgb(mycol[i,1],mycol[i,2],mycol[i,3])
+}
 
 ##==============================================================================
 ## End
