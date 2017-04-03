@@ -15,16 +15,40 @@
  along with BRICK.  If not, see <http://www.gnu.org/licenses/>.
 ================================================================================
 
-This directory is reserved for the R interfaces between the R driver code and
-the physical models coded in Fortran.
+README file in the /BRICK/fortran/ directory
 
-The doeclimF.R model is the supported version of Fortran DOECLIM called from R.
-It has had the "total_forcing" function, which applies the "alpha.doeclim"
-aerosol scaling parameter (essentially uncertainty in the forcing data) to the
-radiative forcing, and adds it all up. This function is now "forcing_total.R" in
-the /robustslr/R directory with the rest of the R models.
+The dynamic library modules which must be loaded to run the physical models
+coded in Fortran, but called by a wrapper script in R, are  operating system-
+dependent. That is, if you "make" the models on a Mac but try to load and run
+them on a Linux machine (for example) there will be file header errors.
 
-The doeclim_classic.R model is the older version, with the "forcing_total"
-function still intact as part of the doeclim model.
+To make the models on your machine:
 
-Questions? Tony Wong (twong@psu.edu)
+cd /fortran/
+mkdir obj
+which gfortran
+vi Makefile    # edit if gfortran is different from file
+make
+
+It is possible, depending on your system, that some revisions to the Makefile
+will be needed. Possible troubleshooting tips are below. Please forward any
+issues (hopefully with solutions!) to Tony Wong (twong@psu.edu) so I can keep
+these suggestions current and extensive.
+
+Is your fortran compiler located where the Makefile is looking?
+  - In the command line, enter "which gfortran" (if the Makefile is still using
+    gfortran for compiling). Be sure the first line of the Makefile agrees
+    with the output from "which gfortran"
+
+Have you recently started a new BRICK directory?
+  - If so, your problem may be fixed by removing the old object files and
+    re-making the libraries:
+    rm *.so *.mod
+    rm -r obj/
+    mkdir obj
+    make    
+
+To make a specific model (for example, here we make doeclim.so)
+
+cd /fortran/
+make doeclim.so
