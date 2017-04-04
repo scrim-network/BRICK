@@ -2,12 +2,13 @@
 
 ## Synopsis
 
-BRICK (**B**uilding blocks for **R**elevant **I**ce and **C**limate **K**nowledge) is a modular semi-empirical modeling framework to simulate global temperature and sea-level rise. In the default model configuration, first, global mean surface temperature and ocean heat uptake are simulated by DOECLIM. Changes in global mean surface temperature drive changes in global mean sea level (GMSL). The contributions to GMSL from the Greenland and Antarctic ice sheets, thermal expansion, and glaciers and ice caps are simulated. 
+BRICK (**B**uilding blocks for **R**elevant **I**ce and **C**limate **K**nowledge) is a modular semi-empirical modeling framework to simulate global temperature and sea-level rise. In the default model configuration, first, global mean surface temperature and ocean heat uptake are simulated by DOECLIM. Changes in global mean surface temperature drive changes in global mean sea level (GMSL). The contributions to GMSL from the Greenland and Antarctic ice sheets, thermal expansion, and glaciers and ice caps are simulated.
 
 This repository contains the BRICK model source code and analysis scripts. Analysis codes and the main user interface are written in R and the main physics codes are in Fortran 90.
 
 It contains the sub-models
-* DOECLIM (climate)
+* DOECLIM (Diffusion-Ocean-Energy CLIMate model)
+* SNEASY (Simple Nonlinear EArth SYstem model)
 * DAIS (Antarctic ice sheet)
 * SIMPLE (Greenland ice sheet)
 * GSIC-MAGICC (Glaciers and small ice caps)
@@ -163,7 +164,7 @@ Suppose you are a researcher who wishes to use the sea level projections from th
 
 ## Contributors
 
-Please enjoy the code and offer us any suggestions. It is our aim to make the model accessible and usable by all. We are always interested to hear about potential improvements to the model, both in the statistical calibration framework as well as the physical sub-models for climate and contributions to sea-level rise. 
+Please enjoy the code and offer us any suggestions. It is our aim to make the model accessible and usable by all. We are always interested to hear about potential improvements to the model, both in the statistical calibration framework as well as the physical sub-models for climate and contributions to sea-level rise.
 
 Questions? Tony Wong (twong@psu.edu)
 

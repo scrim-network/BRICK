@@ -44,7 +44,7 @@ parnames.sneasy   =NULL; p0.sneasy       =NULL; bound.lower.sneasy=NULL;
 bound.upper.sneasy=NULL; step.mcmc.sneasy=NULL; index.model.sneasy=NULL;
 if (luse.sneasy) {
     parnames.sneasy   =c("S" ,"kappa.sneasy","alpha.sneasy","Q10" ,"beta.sneasy","eta","h.sneasy","T0"  ,"H0" ,"CO20","MOC0","sigma.T","sigma.H","sigma.CO2.inst","sigma.CO2.ice","rho.T","rho.H","rho.CO2.inst")
-	p0.sneasy         =c(2.7 , 2.9          , 1.0          , 4.2  , 0.9         , 23  , 0.03     , -0.06, -33 , 286  , 19.5 , 0.1     , 2.0     , 0.45           , 2.25          , 0.55  , 0.9   , 0.95         )
+	p0.sneasy         =c(3.1 , 3.5          , 1.1          , 4.2  , 0.9         , 23  , 0.03     , -0.06, -33 , 286  , 19.5 , 0.1     , 2.0     , 0.45           , 2.25          , 0.55  , 0.9   , 0.95         )
     bound.lower.sneasy=c( 0  , 0            , 0            , 0    , 0           , 0   , 0        , -Inf , -100, 280  , 10   , 0       , 0       , 0              , 0             , 0     , 0     , 0            )
     bound.upper.sneasy=c( Inf, Inf          , 3            , 5    , 1           , 200 , 0.06     ,  Inf , 0   , 295  , 30   , 0.2     , 4       , 1              , 10            , 0.99  , 0.99  , 0.99         )
     step.mcmc.sneasy  =c( 1.6, 1.7          , 0.25         , 0.75 , 0.15        , 40  , 0.015    , 0.03 , 9   , 0.7  , 1.3  , 0.005   , 0.25    , 0.045          , 0.57          , 0.07  , 0.06  , 0.11         )/10
