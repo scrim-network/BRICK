@@ -182,6 +182,8 @@ source('../R/BRICK_coupledModel.R')
 
 ##TODO
 ##TODO -- TW, YG -- need to incorporate SNEASY CO2 (and MOC data?) into optimization
+##TODO -- Also note that some of the SNEASY parameter bounds are infinite, which
+##TODO -- causes problems in optimization.
 ##TODO
 
 library(DEoptim)
