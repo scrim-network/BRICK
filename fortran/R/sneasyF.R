@@ -72,8 +72,8 @@ ntab2 = ncol(oceanomtable)
 
 #####      load SNEASY model shared library     #####
 if(.Platform$OS.type == "unix") {
-    #dyn.load("../fortran/sneasy.so")
-	dyn.load("/Users/axw322/codes/sneasy/sneasy/sneasy.so")
+    dyn.load("../fortran/sneasy.so")
+	#dyn.load("/Users/axw322/codes/sneasy/sneasy/sneasy.so")
 } else {
     dyn.load("../fortran/sneasy")
 }

@@ -70,13 +70,6 @@ brick_model = function(parameters.in,
 
     if (luse.brick[,"luse.sneasy"]) {
 
-##TODO
-##TODO -- TONY HERE NOW --
-##TODO modify from DOECLIM to SNEASY, making sure the temperature forcing is
-##TODO coupling, and the CO2 conc. output is sent to the "history" list.
-##TODO -- TONY HERE NOW --
-##TODO
-
         ## Grab the SNEASY parameters
         S            =parameters.in[match("S"           ,parnames.in)]
 		kappa.sneasy =parameters.in[match("kappa.sneasy",parnames.in)]
@@ -95,8 +88,6 @@ brick_model = function(parameters.in,
 							 init.MOC=MOC0, tstep=tstep, mod.time=mod.time,
 							 forcing.co2=forcing.in$co2, forcing.aero=forcing.in$aero,
 							 forcing.other=forcing.in$other)
-
-		#names(sneasy.out) = c("time", "forcing", "temp", "ocheat", "co2", "ocflux", "moc")
 
 		## Normalize temperature to match the observations
 		itmp = ind.norm.data[match("temp",ind.norm.data[,1]),2]:ind.norm.data[match("temp",ind.norm.data[,1]),3]
@@ -292,8 +283,8 @@ brick_model = function(parameters.in,
 
 		## Check to make sure output from other models was reasonable
 		if(any(is.na(SL.couple))) {
-			slr.out=rep(NA,length(mod.time))
-			brick.out[[outcnt]] = slr.out; names(brick.out)[outcnt]="dais.out"; outcnt=outcnt+1;
+          slr.out=rep(NA,length(mod.time))
+          brick.out[[outcnt]] = slr.out; names(brick.out)[outcnt]="dais.out"; outcnt=outcnt+1;
 		} else {
 
   		  dais.out = daisantoF(

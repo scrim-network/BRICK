@@ -179,7 +179,11 @@ source('../R/BRICK_coupledModel.R')
 ##==============================================================================
 ## Use differential optimization (DEoptim) algorithm to find suitable initial
 ## parameters for the MCMC chains
-require('DEoptim')
+
+##TODO
+##TODO -- TW, YG -- need to incorporate SNEASY CO2 (and MOC data?) into optimization
+##TODO
+
 library(DEoptim)
 source('../calibration/BRICK_DEoptim.R')
 p0.deoptim=p0													# initialize optimized initial parameters
@@ -211,6 +215,7 @@ brick.out = brick_model(parameters.in=p0.deoptim,
 						luse.brick = luse.brick,
 						i0 = i0)
 
+##TODO -- TW -- modify plotting for only the components that are used (incl SNEASY)
 par(mfrow=c(3,2))
 	# plot 1 -- DOECLIM, temperature match
 plot(obs.temp.time[oidx.temp], obs.temp[oidx.temp], pch=20, ylab='surface temperature anomaly [deg C]', xlab='year')
@@ -275,6 +280,7 @@ if(luse.simple) {
 ## excellent approximation of the distribution of 1/tau (or tau)
 
 if(luse.te) {
+
   invtau.hat = 1/200     # preliminary guess at what the expected value of 1/tau should be
                          # (The timescale and extent of thermal expansion of the oceans due to climate change, Marcelja, 2009)
   q05 = 1/1290           # 82-1290 y are bounds given by Mengel et al (2015) for tau
@@ -328,6 +334,10 @@ if(luse.te) {
 ##	-- With DOECLIM+GSIC+TE+SIMPLE, all R models, requires ~1900s for 1e6 iterations.
 ##==============================================================================
 ## Set up and run the MCMC calibration
+
+##TODO
+##TODO -- TW, YG -- need to incorporate SNEASY CO2 (and MOC data?) into calibration
+##TODO
 
 ## Source the statistical models
 source('../calibration/BRICK_assimLikelihood.R')
