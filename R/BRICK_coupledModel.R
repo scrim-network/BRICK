@@ -14,7 +14,7 @@
 ##	obs.temp							mean global surface temperature anomalies, used if no climate module
 ##	ind.norm.data					indices within the model output for setting zero anomaly of calibration data fields
 ##	ind.norm.sl						indices within model output for setting zero sea level
-##	timestep							model timestep [years]
+##	tstep							model tstep [years]
 ##	i0										index of reference year, within mod.time. For initial conditions to sub-models.
 ##
 ## Requires:
@@ -46,12 +46,12 @@ brick_model = function(parameters.in,
 					   l.project = FALSE,
 					   slope.Ta2Tg.in = 1,
 					   intercept.Ta2Tg.in = 0,
+					   tstep = 1,
 					   mod.time,
 					   obs.temp = NULL,
 					   ind.norm.data = NULL,
 					   ind.norm.sl = NULL,
 					   luse.brick,
-					   timestep = 1,
 					   i0
 ){
 
@@ -90,8 +90,12 @@ brick_model = function(parameters.in,
 		CO20         =parameters.in[match("CO20"        ,parnames.in)]
 		MOC0         =parameters.in[match("MOC0"        ,parnames.in)]
 
-        sneasy.out = sneasy(S, kappa.sneasy, alpha.sneasy, Q10, beta.sneasy,
-		                    eta, h.sneasy, CO20, MOC0, endyear)
+        sneasy.out = sneasy(S=S, kappa=kappa.sneasy, alpha=alpha.sneasy, Q10=Q10,
+		                     beta=beta.sneasy, eta=eta, hydsens=h.sneasy, init.CO2=CO20,
+							 init.MOC=MOC0, tstep=tstep, mod.time=mod.time,
+							 forcing.co2=forcing.in$co2, forcing.aero=forcing.in$aero,
+							 forcing.other=forcing.in$other)
+
 		#names(sneasy.out) = c("time", "forcing", "temp", "ocheat", "co2", "ocflux", "moc")
 
 		## Normalize temperature to match the observations
@@ -138,7 +142,12 @@ brick_model = function(parameters.in,
 		temp.couple = doeclim.out$temp + T0
 		brick.out[[outcnt]] = doeclim.out; names(brick.out)[outcnt]="doeclim.out"; outcnt=outcnt+1;
 
-	} else {temp.couple=obs.temp}
+	}
+
+	#=============================================================================
+	# Establish coupling if there is no module to estimate global mean surface temperature
+
+	if (!luse.brick[,"luse.doeclim"] & !luse.brick[,"luse.sneasy"]) {temp.couple=obs.temp}
 
 	#=============================================================================
 	# GSIC-MAGICC - glaciers and small ice caps
@@ -266,9 +275,9 @@ brick_model = function(parameters.in,
 			dSL.gsic= diff(gsic.out)
 			dSL.te	= diff(te.out)
 			for (i in 2:length(mod.time)) {
-				SL.couple[i] = SL.couple[i-1] + timestep*(	1.1*dSL.gis[i] +
-                                                            1.1*dSL.gsic[i]+
-															1.0*dSL.te[i]  )
+				SL.couple[i] = SL.couple[i-1] + tstep*(	1.1*dSL.gis[i] +
+                                                        1.1*dSL.gsic[i]+
+														1.0*dSL.te[i]  )
 			}
 		}
 

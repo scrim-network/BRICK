@@ -25,12 +25,9 @@
 ## along with BRICK.  If not, see <http://www.gnu.org/licenses/>.
 ##==============================================================================
 
-#setwd('~/robustslr_new/calibration')
+setwd('~/codes/BRICK/calibration')
 
 rm(list=ls())												# Clear all previous variables
-
-## Install packages/get libraries
-library(DEoptim)
 
 ## Set the seed (for reproducibility)
 #set.seed(1234)
@@ -40,38 +37,47 @@ set.seed(as.double(Sys.time())) # should yield same distributions...
 ## Or do you want to use historical data to make hindcasts? (l.project=FALSE)
 ## Note -- l.project=FALSE => Kriegler (2005) data, same as Urban and Keller (2010)
 l.project = FALSE
-begyear = 1850
-endyear = 2009; #if(!l.project & endyear>2009) print('l.project and endyear not compatible')
-mod.time= begyear:endyear
+begyear = 1765  # SNEASY start date
+#begyear = 1850  # DOECLIM start date
+endyear = 2009
+tstep   = 1
+mod.time= seq(from=begyear, to=endyear, by=tstep)
 begyear.norm = 1961
 endyear.norm = 1990
 ind.norm = which(mod.time==begyear.norm):which(mod.time==endyear.norm)
 
 ## Source the models
+source('../fortran/R/sneasyF.R')        # the SNEASY model (includes DOECLIM, and carbon cycle)
 source('../fortran/R/doeclimF.R')       # the DOECLIM model
 source('../fortran/R/GSIC_magiccF.R')   # the GSIC model
 source('../fortran/R/brick_te_F.R')     # TE (thermosteric expansion) model
 source('../fortran/R/simpleF.R')        # GIS (Greenland Ice Sheet) model
-source('../fortran/R/daisantoF.R')			# DAIS (Antarctic Ice Sheet) model
-
-## Source the R versions too, just in case
-source('../R/GSIC_magicc.R')					# the GSIC model
-source('../R/brick_te.R')							# TE (thermosteric expansion) model
-source('../R/simple.R')								# GIS (Greenland Ice Sheet) model
-source('../R/daisanto.R')							# DAIS (Antarctic Ice Sheet) model
+source('../fortran/R/daisantoF.R')      # DAIS (Antarctic Ice Sheet) model
 
 ## Source some useful functions for manipulating data
-source('../R/forcing_total.R')					# function to add up the total forcing
-source('../R/compute_indices.R')				# function to determine the model and
-																				# data indices for comparisons
+source('../R/forcing_total.R')          # function to add up the total forcing
+source('../R/compute_indices.R')        # function to determine the model and
+                                        # data indices for comparisons
 ##==============================================================================
 
 ## Read the model calibration data sets
-source('../calibration/DOECLIM_readData.R')		# read DOECLIM calibration data
-source('../calibration/GSIC_readData.R')			# read GSIC calibration data
+
+	## TODO
+	## TODO -- revise SNEASY_readData.R to match other components
+	## TODO
+
+source('../calibration/SNEASY_readData.R')    # read SNEASY calibration data
+source('../calibration/DOECLIM_readData.R')   # read DOECLIM calibration data
+source('../calibration/GSIC_readData.R')      # read GSIC calibration data
 source('../calibration/TE_readData.R')        # read TE data
-source('../calibration/SIMPLE_readData.R')		# GIS data, and trends in mass balance
-#source('../calibration/DAIS_readData.R')			# DAIS forcing data (if at all uncoupled)
+source('../calibration/SIMPLE_readData.R')    # GIS data, and trends in mass balance
+#source('../calibration/DAIS_readData.R')     # DAIS forcing data (if at all uncoupled)
+
+
+	## TODO
+	## TODO -- add SNEASY calibration data to midx, oidx, obs, obs.err,
+	## TODO -- ind.norm.data, and i0
+	## TODO
 
 ## Gather up all the data/model indices for comparisons. use lists to avoid
 ## enormous amounts of input to the MCMC functions
@@ -104,31 +110,66 @@ i0$gsic = which(mod.time==1990)
 i0$gis = which(mod.time==1961)
 
 ##==============================================================================
-
-## Get the forcing data
-if(l.project) {
-  forcing = read.csv( '../data/forcing_rcp85.csv', header=TRUE )
-} else {
-  forcing = read.csv( '../data/forcing_hindcast.csv', header=TRUE )
-}
-
-##==============================================================================
 ## Which model(s) will you use?
 ## If you want to plug in your own model, insert the relevant "luse.XXX" line
 ## below, as well as into the "luse.brick = ..." command.
-luse.doeclim  = TRUE    # diffusion-ocean-energy balance climate model
+luse.sneasy   = TRUE    # Simple Nonlinear EArth SYstem model (DOECLIM+CCM)
+luse.doeclim  = FALSE    # diffusion-ocean-energy balance climate model
 luse.gsic     = TRUE    # glaciers and small ice caps contribution to SLR
 luse.te       = TRUE    # thermosteric expansion contribution to SLR
 luse.simple   = TRUE    # Greenland ice sheet model
 luse.dais     = FALSE    # Antarctic ice sheet model
-luse.mymodel  = FALSE   # Example of adding your own model component
-luse.brick = cbind(luse.doeclim, luse.gsic, luse.te, luse.simple, luse.dais)
+luse.brick = cbind(luse.sneasy, luse.doeclim, luse.gsic, luse.te, luse.simple, luse.dais)
 
 ##==============================================================================
 ## Define parameters and their prior ranges
 ## -> Note: 'parnames' is defined here, which establishes how the parameters
 ##    are passed around into DEoptim, MCMC, likelihood functions, and the models
 source('../calibration/BRICK_parameterSetup.R')
+
+##==============================================================================
+## Get the forcing data
+
+if(luse.sneasy) {
+
+  ## SNEASY
+  setup.sneasy() # call this to initialize SNEASY
+
+## TODO
+## TODO -- (YG, TW) likely will need modified, to make sure forcing is as we want it
+## TODO
+
+  forcing <- vector('list',3)
+  names(forcing) <- c('co2','aero','other')
+
+  # load emissions data time series.
+  rcp8.5.emis = read.csv("../data/sneasy_tmp/RCP85_EMISSIONS.csv")
+  ibeg = which(rcp8.5.emis[,1]==begyear)
+  iend = which(rcp8.5.emis[,1]==endyear)
+  if(length(iend)*length(ibeg)==0) {print('ERROR - emissions data does not span mod.time')}
+  emis = rcp8.5.emis[ibeg:iend,2] + rcp8.5.emis[ibeg:iend,3] # fossil + land use
+  emisdata = data.frame(cbind(mod.time, emis))
+  colnames(emisdata) = c("year","co2")
+  forcing$co2 = emisdata$co2
+
+  forcing.dat = read.table("../data/sneasy_tmp/forcing_rcp85.txt", header=TRUE)
+  ibeg = which(forcing.dat[,1]==begyear)
+  iend = which(forcing.dat[,1]==endyear)
+  if(length(iend)*length(ibeg)==0) {print('ERROR - other radiative forcing data does not span mod.time')}
+  aero.tmp  <- forcing.dat$aerosol.direct + forcing.dat$aerosol.indirect # aerosol radiative forcing
+  other.tmp <- forcing.dat$ghg.nonco2 + forcing.dat$solar + forcing.dat$volcanic + forcing.dat$other
+  forcing$aero  <- aero.tmp[ibeg:iend]
+  forcing$other <- other.tmp[ibeg:iend]
+
+} else {
+
+  if(l.project) {
+    forcing = read.csv( '../data/forcing_rcp85.csv', header=TRUE )
+  } else {
+    forcing = read.csv( '../data/forcing_hindcast.csv', header=TRUE )
+  }
+
+}
 
 ##==============================================================================
 ## Define the coupled model
@@ -151,25 +192,24 @@ outDEoptim <- DEoptim(minimize_residuals_brick, bound.lower[index.model], bound.
 				parnames.in=parnames[index.model], forcing.in=forcing        , l.project=l.project      ,
 				#slope.Ta2Tg.in=slope.Ta2Tg       , intercept.Ta2Tg.in=intercept.Ta2Tg,
 				ind.norm.data=ind.norm.data      , ind.norm.sl=ind.norm      , mod.time=mod.time        ,
-				oidx = oidx.all                  , midx = midx.all           , obs=obs.all              ,
-				obs.err = obs.err.all            , trends.te = trends.te     , luse.brick = luse.brick	,
-				i0 = i0
-				)
+				timestep=tstep                   , oidx = oidx.all           , midx = midx.all          ,
+				obs=obs.all                      , obs.err = obs.err.all     , trends.te = trends.te    ,
+				luse.brick = luse.brick	         , i0 = i0)
 p0.deoptim[index.model] = outDEoptim$optim$bestmem
 
 ## Run the model and examine output at these parameter values
 brick.out = brick_model(parameters.in=p0.deoptim,
-												parnames.in=parnames,
-												forcing.in=forcing,
-												l.project=l.project,
-												#slope.Ta2Tg.in=slope.Ta2Tg,
-												#intercept.Ta2Tg.in=intercept.Ta2Tg,
-												mod.time=mod.time,
-												ind.norm.data = ind.norm.data,
-												ind.norm.sl = ind.norm,
-												luse.brick = luse.brick,
-												i0 = i0
-												)
+                        parnames.in=parnames,
+						forcing.in=forcing,
+						l.project=l.project,
+						#slope.Ta2Tg.in=slope.Ta2Tg,
+						#intercept.Ta2Tg.in=intercept.Ta2Tg,
+						mod.time=mod.time,
+						tstep=tstep,
+						ind.norm.data = ind.norm.data,
+						ind.norm.sl = ind.norm,
+						luse.brick = luse.brick,
+						i0 = i0)
 
 par(mfrow=c(3,2))
 	# plot 1 -- DOECLIM, temperature match
@@ -195,13 +235,15 @@ lines(brick.out$doeclim.out$time[midx.sl], brick.out$slr.out[midx.sl], col="purp
 ## in the GIS residuals. The sigma.simple parameter also was trouble, but not
 ## anymore (if convergence issues arise, this might be why).
 
-sigma.simple.fixed = NULL
-rho.simple.fixed   = NULL
+if(luse.simple) {
 
-## Read an old rho.simple.fixed?
-if(TRUE){
+  sigma.simple.fixed = NULL
+  rho.simple.fixed   = NULL
+
+  ## Read an old rho.simple.fixed?
+  if(TRUE){
 	rho.simple.fixed = as.numeric(read.csv('../output_calibration/rho_simple_fixed_01Nov2016.csv'))
-} else {
+  } else {
 	## If rho/sigma.simple.fixed = NULL, then will be calibrated
 	resid = brick.out$simple.out$sle.gis[midx.gis] - obs.gis[oidx.gis]
 	ac = acf(resid, lag.max=5, plot=FALSE, main="")
@@ -218,9 +260,10 @@ if(TRUE){
 	today=Sys.Date(); today=format(today,format="%d%b%Y")
 	filename=paste('../output_calibration/rho_simple_fixed_',today,'.csv', sep="")
 	write.table(rho.simple.fixed, file=filename, sep=",", qmethod="double", row.names=FALSE)
-}
+  }
+  print(paste('rho.simple.fixed=',rho.simple.fixed))
 
-print(paste('rho.simple.fixed=',rho.simple.fixed))
+}
 
 ##==============================================================================
 ## Establish a gamma prior for drawing 1/tau.
@@ -231,47 +274,50 @@ print(paste('rho.simple.fixed=',rho.simple.fixed))
 ## previous testing with uniform priors on 1/tau confirm) that the gamma is an
 ## excellent approximation of the distribution of 1/tau (or tau)
 
-invtau.hat = 1/200   # preliminary guess at what the expected value of 1/tau should be
-                     # (The timescale and extent of thermal expansion of the oceans due to climate change, Marcelja, 2009)
-q05 = 1/1290         # 82-1290 y are bounds given by Mengel et al (2015) for tau
-q95 = 1/82           # use them as the 5-95% bounds for our 1/tau
-shape.invtau = NULL	 # initialize
-scale.invtau = NULL	 # initialize
+if(luse.te) {
+  invtau.hat = 1/200     # preliminary guess at what the expected value of 1/tau should be
+                         # (The timescale and extent of thermal expansion of the oceans due to climate change, Marcelja, 2009)
+  q05 = 1/1290           # 82-1290 y are bounds given by Mengel et al (2015) for tau
+  q95 = 1/82             # use them as the 5-95% bounds for our 1/tau
+  shape.invtau = NULL    # initialize
+  scale.invtau = NULL    # initialize
 
-## Gamma distribution has only 2 degrees of freedom. So can only fit 2 of these
-## 3 requirements.
+  ## Gamma distribution has only 2 degrees of freedom. So can only fit 2 of these
+  ## 3 requirements.
 
-## Fit the quantiles -- it naturally arises that the mean/median of the resulting
-## gamma distribution for 1/tau is around tau=200 y anyhow
-rmse.quantiles <- function(parameters,q05.in,q95.in){
-  shape.in=parameters[1]
-  scale.in=parameters[2]
-  q05.hat = qgamma(0.05, shape=shape.in, scale=scale.in, lower.tail=TRUE)
-  q95.hat = qgamma(0.95, shape=shape.in, scale=scale.in, lower.tail=TRUE)
-  rmse = sqrt(0.5*((q05.hat-q05.in)^2 + (q95.hat-q95.in)^2))
-  return(rmse)
+  ## Fit the quantiles -- it naturally arises that the mean/median of the resulting
+  ## gamma distribution for 1/tau is around tau=200 y anyhow
+  rmse.quantiles <- function(parameters,q05.in,q95.in){
+    shape.in=parameters[1]
+    scale.in=parameters[2]
+    q05.hat = qgamma(0.05, shape=shape.in, scale=scale.in, lower.tail=TRUE)
+    q95.hat = qgamma(0.95, shape=shape.in, scale=scale.in, lower.tail=TRUE)
+    rmse = sqrt(0.5*((q05.hat-q05.in)^2 + (q95.hat-q95.in)^2))
+    return(rmse)
+  }
+
+  niter.deoptim=1000        # number of iterations for DE optimization
+  NP.deoptim=50             # population size for DEoptim (do at least 10*[N parameters])
+  F.deoptim=0.8             # as suggested by Storn et al (2006)
+  CR.deoptim=0.9            # as suggested by Storn et al (2006)
+  outDEoptim <- DEoptim(rmse.quantiles, c(0,0), c(100,100),
+                        DEoptim.control(NP=NP.deoptim,itermax=niter.deoptim,F=F.deoptim,
+						CR=CR.deoptim,trace=FALSE),	q05.in=q05, q95.in=q95)
+  shape.invtau = outDEoptim$optim$bestmem[1]
+  scale.invtau = outDEoptim$optim$bestmem[2]
+  print(paste('shape.invtau=',shape.invtau,' (1.81?)'))
+  print(paste('scale.invtau=',scale.invtau,' (0.00275?)'))
+
+  ## This should yield results somewhere in the ballpark of
+  ##
+  ##     shape.invtau = 1.81    and     scale.invtau = 0.00275
+  ##
+  ## If yours does not, check whether the gamma distribution defined by your
+  ## shape and scale fit the invtau.hat=1/200, q05=1/1290 and q95=1/82
+  ## requirements above. If not, try re-running, possibly with more population
+  ## members (NP.deoptim) or more iterations (niter.deoptim).
+
 }
-
-niter.deoptim=1000		   	# number of iterations for DE optimization
-NP.deoptim=50	      		# population size for DEoptim (do at least 10*[N parameters])
-F.deoptim=0.8						# as suggested by Storn et al (2006)
-CR.deoptim=0.9					# as suggested by Storn et al (2006)
-outDEoptim <- DEoptim(rmse.quantiles, c(0,0), c(100,100),
-				DEoptim.control(NP=NP.deoptim,itermax=niter.deoptim,F=F.deoptim,CR=CR.deoptim,trace=FALSE),
-				q05.in=q05, q95.in=q95)
-shape.invtau = outDEoptim$optim$bestmem[1]
-scale.invtau = outDEoptim$optim$bestmem[2]
-print(paste('shape.invtau=',shape.invtau,' (1.81?)'))
-print(paste('scale.invtau=',scale.invtau,' (0.00275?)'))
-
-## This should yield results somewhere in the ballpark of
-##
-##     shape.invtau = 1.81    and     scale.invtau = 0.00275
-##
-## If yours does not, check whether the gamma distribution defined by your
-## shape and scale fit the invtau.hat=1/200, q05=1/1290 and q95=1/82
-## requirements above. If not, try re-running, possibly with more population
-## members (NP.deoptim) or more iterations (niter.deoptim).
 ##==============================================================================
 
 ##==============================================================================
@@ -288,12 +334,12 @@ source('../calibration/BRICK_assimLikelihood.R')
 
 ## MCMC calibration
 require('adaptMCMC')
-library(adaptMCMC)										# use robust adaptive Metropolis
-accept.mcmc = 0.234										# Optimal as # parameters->infinity
-																			#	(Gelman et al, 1996; Roberts et al, 1997)
-niter.mcmc = 1e6											# number of iterations for MCMC
-gamma.mcmc = 0.5											# rate of adaptation (between 0.5 and 1, lower is faster adaptation)
-burnin = round(niter.mcmc*0.5)				# remove first ?? of chains for burn-in
+library(adaptMCMC)                # use robust adaptive Metropolis
+accept.mcmc = 0.234               # Optimal as # parameters->infinity
+                                  # (Gelman et al, 1996; Roberts et al, 1997)
+niter.mcmc = 1e6                  # number of iterations for MCMC
+gamma.mcmc = 0.5                  # rate of adaptation (between 0.5 and 1, lower is faster adaptation)
+burnin = round(niter.mcmc*0.5)    # remove first ?? of chains for burn-in (not used)
 stopadapt.mcmc = round(niter.mcmc*1.0)# stop adapting after ?? iterations? (niter*1 => don't stop)
 
 ##==============================================================================
@@ -301,16 +347,16 @@ stopadapt.mcmc = round(niter.mcmc*1.0)# stop adapting after ?? iterations? (nite
 if(FALSE){
 t.beg=proc.time()											# save timing (running millions of iterations so best to have SOME idea...)
 amcmc.out1 = MCMC(log.post, niter.mcmc, p0.deoptim, scale=step.mcmc, adapt=TRUE, acc.rate=accept.mcmc,
-									gamma=gamma.mcmc               , list=TRUE                  , n.start=round(0.01*niter.mcmc)    ,
-									parnames.in=parnames           , forcing.in=forcing         , l.project=l.project            		,
-									#slope.Ta2Tg.in=slope.Ta2Tg    , intercept.Ta2Tg.in=intercept.Ta2Tg,
-									ind.norm.data=ind.norm.data    , ind.norm.sl=ind.norm       , mod.time=mod.time                 ,
-									oidx = oidx.all                , midx = midx.all            , obs=obs.all                       ,
-									obs.err = obs.err.all          , trends.te = trends.te      , bound.lower.in=bound.lower        ,
-									bound.upper.in=bound.upper     , shape.in=shape.invtau      , scale.in=scale.invtau             ,
-									rho.simple.in=rho.simple.fixed , sigma.simple.in=sigma.simple.fixed, luse.brick=luse.brick			,
-									i0=i0
-									)
+                  gamma=gamma.mcmc               , list=TRUE                  , n.start=round(0.01*niter.mcmc),
+				  parnames.in=parnames           , forcing.in=forcing         , l.project=l.project           ,
+				  #slope.Ta2Tg.in=slope.Ta2Tg    , intercept.Ta2Tg.in=intercept.Ta2Tg,
+				  ind.norm.data=ind.norm.data    , ind.norm.sl=ind.norm       , mod.time=mod.time             ,
+				  oidx = oidx.all                , midx = midx.all            , obs=obs.all                   ,
+				  obs.err = obs.err.all          , trends.te = trends.te      , bound.lower.in=bound.lower    ,
+				  bound.upper.in=bound.upper     , shape.in=shape.invtau      , scale.in=scale.invtau         ,
+				  rho.simple.in=rho.simple.fixed , sigma.simple.in=sigma.simple.fixed, luse.brick=luse.brick  ,
+				  i0=i0
+				  )
 t.end=proc.time()											# save timing
 chain1 = amcmc.out1$samples
 }
@@ -319,15 +365,15 @@ chain1 = amcmc.out1$samples
 if(FALSE){
 t.beg=proc.time()
 amcmc.extend1 = MCMC.add.samples(amcmc.out1, niter.mcmc,
-									parnames.in=parnames           , forcing.in=forcing         , l.project=l.project            		,
-									#slope.Ta2Tg.in=slope.Ta2Tg    , intercept.Ta2Tg.in=intercept.Ta2Tg,
-									ind.norm.data=ind.norm.data    , ind.norm.sl=ind.norm       , mod.time=mod.time                 ,
-									oidx = oidx.all                , midx = midx.all            , obs=obs.all                       ,
-									obs.err = obs.err.all          , trends.te = trends.te      , bound.lower.in=bound.lower        ,
-									bound.upper.in=bound.upper     , shape.in=shape.invtau      , scale.in=scale.invtau             ,
-									rho.simple.in=rho.simple.fixed , sigma.simple.in=sigma.simple.fixed, luse.brick=luse.brick			,
-									i0=i0
-									)
+				  parnames.in=parnames           , forcing.in=forcing         , l.project=l.project            ,
+				  #slope.Ta2Tg.in=slope.Ta2Tg    , intercept.Ta2Tg.in=intercept.Ta2Tg,
+				  ind.norm.data=ind.norm.data    , ind.norm.sl=ind.norm       , mod.time=mod.time              ,
+				  oidx = oidx.all                , midx = midx.all            , obs=obs.all                    ,
+				  obs.err = obs.err.all          , trends.te = trends.te      , bound.lower.in=bound.lower     ,
+				  bound.upper.in=bound.upper     , shape.in=shape.invtau      , scale.in=scale.invtau          ,
+				  rho.simple.in=rho.simple.fixed , sigma.simple.in=sigma.simple.fixed, luse.brick=luse.brick   ,
+				  i0=i0
+				  )
 t.end=proc.time()
 chain1 = amcmc.extend1$samples
 }
@@ -336,24 +382,26 @@ chain1 = amcmc.extend1$samples
 if(TRUE){
 t.beg=proc.time()										# save timing (running millions of iterations so best to have SOME idea...)
 amcmc.par1 = MCMC.parallel(log.post, niter.mcmc, p0.deoptim, n.chain=4, n.cpu=4,
-									dyn.libs=c('../fortran/doeclim.so','../fortran/brick_te.so','../fortran/gsic_magicc.so','../fortran/simple.so'),
-									scale=step.mcmc, adapt=TRUE, acc.rate=accept.mcmc,
-									gamma=gamma.mcmc, list=TRUE, n.start=round(0.01*niter.mcmc),
-									parnames.in=parnames           , forcing.in=forcing         , l.project=l.project            		,
-									#slope.Ta2Tg.in=slope.Ta2Tg    , intercept.Ta2Tg.in=intercept.Ta2Tg,
-									ind.norm.data=ind.norm.data    , ind.norm.sl=ind.norm       , mod.time=mod.time                 ,
-									oidx = oidx.all                , midx = midx.all            , obs=obs.all                       ,
-									obs.err = obs.err.all          , trends.te = trends.te      , bound.lower.in=bound.lower        ,
-									bound.upper.in=bound.upper     , shape.in=shape.invtau      , scale.in=scale.invtau             ,
-									rho.simple.in=rho.simple.fixed , sigma.simple.in=sigma.simple.fixed, luse.brick=luse.brick			,
-									i0=i0
-									)
+                  dyn.libs=c('../fortran/doeclim.so','../fortran/brick_te.so','../fortran/gsic_magicc.so','../fortran/simple.so'),
+				  scale=step.mcmc, adapt=TRUE, acc.rate=accept.mcmc,
+				  gamma=gamma.mcmc, list=TRUE, n.start=round(0.01*niter.mcmc),
+				  parnames.in=parnames           , forcing.in=forcing         , l.project=l.project           ,
+				  #slope.Ta2Tg.in=slope.Ta2Tg    , intercept.Ta2Tg.in=intercept.Ta2Tg,
+				  ind.norm.data=ind.norm.data    , ind.norm.sl=ind.norm       , mod.time=mod.time             ,
+				  oidx = oidx.all                , midx = midx.all            , obs=obs.all                   ,
+				  obs.err = obs.err.all          , trends.te = trends.te      , bound.lower.in=bound.lower    ,
+				  bound.upper.in=bound.upper     , shape.in=shape.invtau      , scale.in=scale.invtau         ,
+				  rho.simple.in=rho.simple.fixed , sigma.simple.in=sigma.simple.fixed, luse.brick=luse.brick  ,
+				  i0=i0
+				  )
 t.end=proc.time()											# save timing
 chain1=amcmc.par1[[1]]$samples
 chain2=amcmc.par1[[2]]$samples
 chain3=amcmc.par1[[3]]$samples
 chain4=amcmc.par1[[4]]$samples
 }
+
+if(luse.sneasy) {cleanup.sneasy()}  # deallocates memory after SNEASY is done
 
 ##==============================================================================
 
