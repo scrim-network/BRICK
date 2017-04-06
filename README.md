@@ -1,4 +1,5 @@
 # BRICK v0.1.1
+![alt text](https://github.com/scrim-network/BRICK/master/brick_logo.png "This is a brick!")
 
 ## Synopsis
 
@@ -143,6 +144,12 @@ Note that in each of these scripts, some edits will be necessary. These will inc
 
 Suppose you are a researcher who wishes to use the sea level projections from the BRICK GMDD model description paper in your own work. The following example will demonstrate how to use these projections and fingerprint the global sea level contributions to local mean sea level rise.
 
+1. Checkout the model codes.
+~~~~
+git clone https://github.com/scrim-network/BRICK.git
+~~~~
+
+2. Obtain the projections of the major contributions to global mean sea level for the control ensemble presented in the [BRICK model description paper](http://www.geosci-model-dev-discuss.net/gmd-2016-303/).
 **TONY TODO**
 
 ## Reference documentation to get new users started

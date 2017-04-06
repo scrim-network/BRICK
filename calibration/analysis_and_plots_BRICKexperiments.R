@@ -85,7 +85,7 @@ logl.ar1 = function(r,sigma1,rho1,eps1=0) # default obs error is 0
 
 ##==============================================================================
 ##==============================================================================
-## FIGURE 1 -- R07 MODEL FOR GMSL RISE VS BRICK
+## FIGURE 2 -- R07 MODEL FOR GMSL RISE VS BRICK
 ##=========
 
 ncdata <- nc_open(filename.brick.magicc)
@@ -224,7 +224,7 @@ gmsl.r07.hind.mle = gmsl.r07.hind[,which(llik.r07==max(llik.r07))]
 ## 5-95% CI of full BRICK and BRICK-R07 hindcasts, with obs
 ##
 
-pdf(paste(plotdir,'gmsl_comparison_new.pdf',sep=''),width=4,height=6,colormodel='cmyk')
+pdf(paste(plotdir,'gmsl_comparison_new.pdf',sep=''),width=3.5,height=5.25,colormodel='cmyk')
 
 n.sig = 2         # how many sigma to plot around the obs?
 itmp=midx.sl[1]:midx.sl[length(midx.sl)]
@@ -242,9 +242,9 @@ plot(mod.time[itmp], gmsl.ctrl.hind.mle[itmp], type='l', col=rgb(mycol[colmod,1]
           col=rgb(mycol[colobs,1],mycol[colobs,2],mycol[colobs,3],.5), border=NA);
 	text(1930, -.125, paste("AIC = ",signif(aic.brick,4),sep=""), pos = 4, cex = 1)
   text(1930, -.150, paste("BIC = ",signif(bic.brick,4),sep=""), pos = 4, cex = 1)
-  text(1930, -.175, paste("RMSE = ",signif(rmse.brick,2)," m SLE",sep=""), pos = 4, cex = 1)
+  text(1930, -.175, paste("RMSE = ",signif(rmse.brick,2)," m",sep=""), pos = 4, cex = 1)
 
-  legend(1892,.13,c("2-sigma range, observations","5-95% range, model"),
+  legend(1892,.13,c("2-sigma range, obs.","5-95% range, model"),
          col=c(rgb(mycol[colobs,1],mycol[colobs,2],mycol[colobs,3]), rgb(mycol[colmod,1],mycol[colmod,2],mycol[colmod,3])),
          lwd=2, bty='n', cex=1.0)
 
@@ -262,7 +262,7 @@ plot(mod.time[itmp], gmsl.r07.hind.mle[itmp], type='l', col=rgb(mycol[colmod,1],
           col=rgb(mycol[colobs,1],mycol[colobs,2],mycol[colobs,3],.5), border=NA);
 	text(1930, -.125, paste("AIC = ",signif(aic.r07,4),sep=""), pos = 4, cex = 1)
   text(1930, -.150, paste("BIC = ",signif(bic.r07,4),sep=""), pos = 4, cex = 1)
-  text(1930, -.175, paste("RMSE = ",signif(rmse.r07,2)," m SLE",sep=""), pos = 4, cex = 1)
+  text(1930, -.175, paste("RMSE = ",signif(rmse.r07,2)," m",sep=""), pos = 4, cex = 1)
 
 dev.off()
 
@@ -275,7 +275,7 @@ dev.off()
 
 ##==============================================================================
 ##==============================================================================
-## FIGURE 2 -- GSIC HINDCASTS, MAGICC VS SIMPLE
+## FIGURE 3 -- GSIC HINDCASTS, MAGICC VS SIMPLE
 ##=========
 
 ncdata <- nc_open(filename.brick.magicc)
@@ -396,7 +396,7 @@ gsic.simple.mle = gsic.simple[,which(llik.simple==max(llik.simple))]
 ## 5-95% CI of GSIC-MAGICC and -SIMPLE hindcasts, with obs
 ##
 
-pdf(paste(plotdir,'gsic_comparison_new.pdf',sep=''),width=4,height=6,colormodel='cmyk')
+pdf(paste(plotdir,'gsic_comparison_new.pdf',sep=''),width=3.5,height=5.25,colormodel='cmyk')
 
 n.sig = 2         # how many sigma to plot around the obs?
 itmp=midx.gsic[1]:midx.gsic[length(midx.gsic)]
@@ -404,7 +404,7 @@ itmp=midx.gsic[1]:midx.gsic[length(midx.gsic)]
 # >>> GSIC-MAGICC <<<
 par(mfrow=c(2,1), mai=c(.45,.7,.25,.08))
 plot(mod.time[itmp], gsic.magicc.mle[itmp], type='l', col=rgb(mycol[colmod,1],mycol[colmod,2],mycol[colmod,3]), lwd=2, xlab='',
-     ylab='', xlim=c(1960,2003), ylim=c(-.02,.04), cex.lab=1.2, cex.axis=1.0, xaxs='i', yaxs='i');
+     ylab='', xlim=c(1960,2003), ylim=c(-.02,.05), cex.lab=1.2, cex.axis=1.0, xaxs='i', yaxs='i');
   mtext(side=2, text='GIC, MAGICC [m SLE]', line=2.3, cex=1.0);
   mtext(side=3, text=expression(bold('  a')), line=-1.5, cex=1.0, adj=0);
   polygon(c(mod.time[itmp],rev(mod.time[itmp])), c(gsic.magicc.95[itmp],rev(gsic.magicc.05[itmp])), col=rgb(mycol[colmod,1],mycol[colmod,2],mycol[colmod,3],.5), border=NA);
@@ -414,16 +414,16 @@ plot(mod.time[itmp], gsic.magicc.mle[itmp], type='l', col=rgb(mycol[colmod,1],my
           col=rgb(mycol[colobs,1],mycol[colobs,2],mycol[colobs,3],.5), border=NA);
   text(1976, -0.006, paste("AIC = ",signif(aic.magicc,4),sep=""), pos = 4, cex = 1)
   text(1976, -0.011, paste("BIC = ",signif(bic.magicc,4),sep=""), pos = 4, cex = 1)
-	text(1976, -0.016, paste("RMSE = ",signif(rmse.magicc,2)," m SLE",sep=""), pos = 4, cex = 1)
+	text(1976, -0.016, paste("RMSE = ",signif(rmse.magicc,2)," m",sep=""), pos = 4, cex = 1)
 
-  legend(1964,0.0413,c("2-sigma range, observations","5-95% range, model"),
+  legend(1964,0.051,c("2-sigma range, obs.","5-95% range, model"),
          col=c(rgb(mycol[colobs,1],mycol[colobs,2],mycol[colobs,3]), rgb(mycol[colmod,1],mycol[colmod,2],mycol[colmod,3])),
          lwd=2, bty='n', cex=1.0)
 
 # >>> GSIC-SIMPLE <<<
 par(mai=c(.65,.7,.05,.08))
 plot(mod.time[itmp], gsic.simple.mle[itmp], type='l', col=rgb(mycol[colmod,1],mycol[colmod,2],mycol[colmod,3]), lwd=2, xlab='',
-     ylab='', xlim=c(1960,2003), ylim=c(-.02,.04), cex.lab=1.2, cex.axis=1.0, xaxs='i', yaxs='i');
+     ylab='', xlim=c(1960,2003), ylim=c(-.02,.05), cex.lab=1.2, cex.axis=1.0, xaxs='i', yaxs='i');
   mtext(side=1, text='Year', line=2.2, cex=1.0);
   mtext(side=2, text='GIC, SIMPLE [m SLE]', line=2.3, cex=1.0);
   mtext(side=3, text=expression(bold('  b')), line=-1.5, cex=1.0, adj=0);
@@ -434,7 +434,7 @@ plot(mod.time[itmp], gsic.simple.mle[itmp], type='l', col=rgb(mycol[colmod,1],my
           col=rgb(mycol[colobs,1],mycol[colobs,2],mycol[colobs,3],.5), border=NA);
   text(1976, -0.007, paste("AIC = ",signif(aic.simple,4),sep=""), pos = 4, cex = 1)
   text(1976, -0.012, paste("BIC = ",signif(bic.simple,4),sep=""), pos = 4, cex = 1)
-  text(1976, -0.017, paste("RMSE = ",signif(rmse.simple,2)," m SLE",sep=""), pos = 4, cex = 1)
+  text(1976, -0.017, paste("RMSE = ",signif(rmse.simple,2)," m",sep=""), pos = 4, cex = 1)
 
 dev.off()
 
@@ -447,7 +447,7 @@ dev.off()
 
 ##==============================================================================
 ##==============================================================================
-## FIGURE 3 -- PROJECTIONS OF LOCAL SLR, MAP FROM FINGERPRINTING
+## FIGURE 4 -- PROJECTIONS OF LOCAL SLR, MAP FROM FINGERPRINTING
 ##=========
 
 library(gplots)
@@ -570,46 +570,48 @@ cols.pos = colorRampPalette(c("red","orange","yellow","white"),space="Lab")(n.po
 cols.neg = colorRampPalette(c("white","blue"),space="Lab")(n.neg)
 cols.b2r = rev(c(cols.pos,cols.neg))
 
-png(paste(plotdir,'slr_projections_map_new.tif',sep=''), width=330,height=650,units='px')
+#png(paste(plotdir,'slr_projections_map_new.tif',sep=''), width=330,height=650,res=300,units='px')
+png(paste(plotdir,'slr_projections_map_new.tif',sep=''), width=3.5,height=6.89,res=300,units='in')
+#pdf(paste(plotdir,'slr_projections_map_new.pdf',sep=''), width=3.5,height=8,colormodel='cmyk')
 
-par(mfrow=c(3,1), mai=c(.5,.5,.5,1))
+par(mfrow=c(3,1), mai=c(.2,.5,.7,.9))
 image(x=lon,y=lat,z=slr26.filt, zlim=lims, col=cols.b2r,
       xlab='',ylab='', xaxt='n', yaxt='n')
-  map("world", add = TRUE, interior=FALSE)
-  axis(1, at=seq(-180,180,by=30), labels=c('-180','','-120','','-60','','0','','60','','120','','180'), cex.axis=1.4)
-  mtext('Longitude',side = 1,line = 2.2)
-  axis(2, at=seq(-90,90,by=30), labels=c('-90','-60','-30','0','30','60','90'), cex.axis=1.4)
-  mtext('Latitude',side=2,line=2.2)
-  mtext('Global mean sea level relative to 1986-2005 average\nRCP2.6',side=3,line=0.4)
-  mtext('[meters]', side=3, adj=1.3, line=-3.3)
-  mtext(side=3, text=expression(bold(' a')), line=-1.5, cex=1.0, adj=0);
-par(mai=c(.5,.5,.5,1))
+map("world", add = TRUE, interior=FALSE)
+axis(1, at=seq(-180,180,by=45), labels=c('-180','','-90','','0','','90','','180'), cex.axis=1.4)
+mtext('Longitude',side = 1,line = 2.2)
+axis(2, at=seq(-90,90,by=30), labels=c('-90','-60','-30','0','30','60','90'), cex.axis=1.4)
+mtext('Latitude',side=2,line=2.2)
+mtext('Global mean sea level\nrelative to 1986-2005 average\nRCP2.6',side=3,line=0.4)
+mtext('[meters]', side=3, adj=1.5, line=-1.5)
+mtext(side=3, text=expression(bold(' a')), line=-1.2, cex=1.0, adj=0);
+par(mai=c(.35,.5,.55,.9))
 image(x=lon,y=lat,z=slr45.filt, zlim=lims, col=cols.b2r,
       xlab='',ylab='', xaxt='n', yaxt='n')
-  map("world", add = TRUE, interior=FALSE)
-  axis(1, at=seq(-180,180,by=30), labels=c('-180','','-120','','-60','','0','','60','','120','','180'), cex.axis=1.4)
-  mtext('Longitude',side = 1,line = 2.2)
-  axis(2, at=seq(-90,90,by=30), labels=c('-90','-60','-30','0','30','60','90'), cex.axis=1.4)
-  mtext('Latitude',side=2,line=2.2)
-  mtext('RCP4.5',side=3,line=0.4)
-  mtext(side=3, text=expression(bold(' b')), line=-1.5, cex=1.0, adj=0);
-par(mai=c(.5,.5,.5,1))
+map("world", add = TRUE, interior=FALSE)
+axis(1, at=seq(-180,180,by=45), labels=c('-180','','-90','','0','','90','','180'), cex.axis=1.4)
+mtext('Longitude',side = 1,line = 2.2)
+axis(2, at=seq(-90,90,by=30), labels=c('-90','-60','-30','0','30','60','90'), cex.axis=1.4)
+mtext('Latitude',side=2,line=2.2)
+mtext('RCP4.5',side=3,line=0.4)
+mtext(side=3, text=expression(bold(' b')), line=-1.2, cex=1.0, adj=0);
+par(mai=c(.5,.5,.4,.9))
 image(x=lon,y=lat,z=slr85.filt, zlim=lims, col=cols.b2r,
       xlab='',ylab='', xaxt='n', yaxt='n')
-  map("world", add = TRUE, interior=FALSE)
-  axis(1, at=seq(-180,180,by=30), labels=c('-180','','-120','','-60','','0','','60','','120','','180'), cex.axis=1.4)
-  mtext('Longitude',side = 1,line = 2.2)
-  axis(2, at=seq(-90,90,by=30), labels=c('-90','-60','-30','0','30','60','90'), cex.axis=1.4)
-  mtext('Latitude',side=2,line=2.2)
-  mtext('RCP8.5',side=3,line=0.4)
-  mtext(side=3, text=expression(bold(' c')), line=-1.5, cex=1.0, adj=0);
+map("world", add = TRUE, interior=FALSE)
+axis(1, at=seq(-180,180,by=45), labels=c('-180','','-90','','0','','90','','180'), cex.axis=1.4)
+mtext('Longitude',side = 1,line = 2.2)
+axis(2, at=seq(-90,90,by=30), labels=c('-90','-60','-30','0','30','60','90'), cex.axis=1.4)
+mtext('Latitude',side=2,line=2.2)
+mtext('RCP8.5',side=3,line=0.4)
+mtext(side=3, text=expression(bold(' c')), line=-1.2, cex=1.0, adj=0);
 
-par(fig=c(.2,1,0,1))
-image.plot(zlim=lims,legend.only=TRUE, col=cols.b2r, cex=1.4, legend.shrink = 0.85,
+par(fig=c(.2,1,0,1), mai=c(.3,2.5,.3,.1))
+image.plot(zlim=lims,legend.only=TRUE, col=cols.b2r, cex=1.4, legend.shrink = 0.75,
            axis.args=list(cex.axis=1.4,
-           at=seq(-1.5,1.5,by=0.1),
-           labels=c("-1.5","","","","","-1","","","","","-0.5","","","","","0",
-           "","","","","0.5","","","","","1","","","","","1.5")))
+                          at=seq(-1.5,1.5,by=0.1),
+                          labels=c("-1.5","","","","","-1","","","","","-0.5","","","","","0",
+                                   "","","","","0.5","","","","","1","","","","","1.5")))
 
 dev.off()
 
@@ -623,7 +625,7 @@ dev.off()
 
 ##==============================================================================
 ##==============================================================================
-## FIGURE 4 -- VAN DANTZIG ANALYSIS
+## FIGURE 5 -- VAN DANTZIG ANALYSIS
 ##=========
 
 ## Grab the van Dantzig output
@@ -1354,10 +1356,10 @@ row.slr = paste('Total sea level &',
 									1000*signif(slr.rcp85.50[i2100],4),' (',1000*signif(slr.rcp85.05[i2100],4),'-',1000*signif(slr.rcp85.95[i2100],4),') \\',
 									sep='')
 
-pdf(paste(plotdir,'projections_SLR_total_new.pdf',sep=''),width=5,height=3.5,colormodel='cmyk')
+pdf(paste(plotdir,'projections_SLR_total_new.pdf',sep=''),width=3.5,height=2.45,colormodel='cmyk')
 par(mfrow=c(1,1))
 # RCP85
-par(mai=c(.65,.65,.20,.4))
+par(mai=c(.65,.65,.20,.2))
 plot(t.proj[iproj],slr.rcp85.50[iproj],type='l',col=rgb(col85[1],col85[2],col85[3]),lwd=2, ann='',
 		 xlim=c(2000,2100), ylim=c(0,2), xaxt='n', yaxt='n', xaxs='i', yaxs='i');
 		 axis(1, seq(2000,2100,by=20)); axis(2, seq(0,2,by=.25), lab=c('0','','0.5','','1','','1.5','','2'));
