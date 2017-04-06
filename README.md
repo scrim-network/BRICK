@@ -1,8 +1,9 @@
 # BRICK v0.1.1
+![alt text](https://github.com/scrim-network/BRICK/master/brick_logo.png "This is a brick!")
 
 ## Synopsis
 
-BRICK (**B**uilding blocks for **R**elevant **I**ce and **C**limate **K**nowledge) is a modular semi-empirical modeling framework to simulate global temperature and sea-level rise. In the default model configuration, first, global mean surface temperature and ocean heat uptake are simulated by DOECLIM. Changes in global mean surface temperature drive changes in global mean sea level (GMSL). The contributions to GMSL from the Greenland and Antarctic ice sheets, thermal expansion, and glaciers and ice caps are simulated. 
+BRICK (**B**uilding blocks for **R**elevant **I**ce and **C**limate **K**nowledge) is a modular semi-empirical modeling framework to simulate global temperature and sea-level rise. In the default model configuration, first, global mean surface temperature and ocean heat uptake are simulated by DOECLIM. Changes in global mean surface temperature drive changes in global mean sea level (GMSL). The contributions to GMSL from the Greenland and Antarctic ice sheets, thermal expansion, and glaciers and ice caps are simulated.
 
 This repository contains the BRICK model source code and analysis scripts. Analysis codes and the main user interface are written in R and the main physics codes are in Fortran 90.
 
@@ -142,6 +143,12 @@ Note that in each of these scripts, some edits will be necessary. These will inc
 
 Suppose you are a researcher who wishes to use the sea level projections from the BRICK GMDD model description paper in your own work. The following example will demonstrate how to use these projections and fingerprint the global sea level contributions to local mean sea level rise.
 
+1. Checkout the model codes.
+~~~~
+git clone https://github.com/scrim-network/BRICK.git
+~~~~
+
+2. Obtain the projections of the major contributions to global mean sea level for the control ensemble presented in the [BRICK model description paper](http://www.geosci-model-dev-discuss.net/gmd-2016-303/).
 **TONY TODO**
 
 ## Reference documentation to get new users started
@@ -163,7 +170,7 @@ Suppose you are a researcher who wishes to use the sea level projections from th
 
 ## Contributors
 
-Please enjoy the code and offer us any suggestions. It is our aim to make the model accessible and usable by all. We are always interested to hear about potential improvements to the model, both in the statistical calibration framework as well as the physical sub-models for climate and contributions to sea-level rise. 
+Please enjoy the code and offer us any suggestions. It is our aim to make the model accessible and usable by all. We are always interested to hear about potential improvements to the model, both in the statistical calibration framework as well as the physical sub-models for climate and contributions to sea-level rise.
 
 Questions? Tony Wong (twong@psu.edu)
 
