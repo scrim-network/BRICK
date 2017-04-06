@@ -1,5 +1,5 @@
-# BRICK v0.2
 ![alt text](https://github.com/scrim-network/BRICK/master/brick_logo.png "This is a brick!")
+# BRICK v0.2
 
 ## Synopsis
 
