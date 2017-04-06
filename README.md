@@ -1,5 +1,5 @@
+![alt text](https://github.com/scrim-network/BRICK/master/brick_logo.png "This is a brick!")
 # BRICK v0.2
-<img src="https://github.com/scrim-network/BRICK/blob/master/brick_logo.png" alt="This is a brick!" style="width: 200px;"/>
 
 ## Synopsis
 
