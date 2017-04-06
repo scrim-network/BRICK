@@ -23,17 +23,32 @@
 ## You should have received a copy of the GNU General Public License
 ## along with BRICK.  If not, see <http://www.gnu.org/licenses/>.
 ##==============================================================================
+if(luse.doeclim & luse.sneasy) {
+	print('ERROR - you cannot use SNEASY and DOECLIM; SNEASY includes DOECLIM')
+}
 
 ## DOECLIM (Urban and Keller, 2010, values
 parnames.doeclim   =NULL; p0.doeclim       =NULL; bound.lower.doeclim=NULL;
 bound.upper.doeclim=NULL; step.mcmc.doeclim=NULL; index.model.doeclim=NULL;
 if (luse.doeclim) {
 	parnames.doeclim   =c("S" ,"kappa.doeclim","alpha.doeclim","T0"  ,"H0" ,"sigma.T","sigma.H","rho.T","rho.H")	# parameters names
-	p0.doeclim		     =c(3.1 , 3.5   , 1.1           , -0.06, -33 , 0.1     , 2       , 0.55  , 0.9   )	# initial parameter guesses
+	p0.doeclim         =c(3.1 , 3.5   , 1.1           , -0.06, -33 , 0.1     , 2       , 0.55  , 0.9   )	# initial parameter guesses
 	bound.lower.doeclim=c(0.1 , 0.1   , 0             , -0.3 , -50 , 0.05    , 0.1     , 0     , 0     )	# prior range lower bounds
 	bound.upper.doeclim=c(10  , 4     , 2             ,  0.3 ,   0 , 5       , 10      , 0.999 , 0.999 )	# prior range upper bounds
-	step.mcmc.doeclim	 =c(0.16, 0.17  ,0.025          ,0.003 , 0.9 , 5e-4    , 0.025   , 0.007 , 0.006 )	# step size for parameters in MCMC (proposals)
+	step.mcmc.doeclim  =c(0.16, 0.17  ,0.025          ,0.003 , 0.9 , 5e-4    , 0.025   , 0.007 , 0.006 )	# step size for parameters in MCMC (proposals)
 	index.model.doeclim=c(1,2,3,4,5)		# which are model parameters? (index within parnames.doeclim)
+}
+
+## SNEASY
+parnames.sneasy   =NULL; p0.sneasy       =NULL; bound.lower.sneasy=NULL;
+bound.upper.sneasy=NULL; step.mcmc.sneasy=NULL; index.model.sneasy=NULL;
+if (luse.sneasy) {
+    parnames.sneasy   =c("S" ,"kappa.sneasy","alpha.sneasy","Q10" ,"beta.sneasy","eta","h.sneasy","T0"  ,"H0" ,"CO20","MOC0","sigma.T","sigma.H","sigma.CO2.inst","sigma.CO2.ice","rho.T","rho.H","rho.CO2.inst")
+	p0.sneasy         =c(3.1 , 3.5          , 1.1          , 4.2  , 0.9         , 23  , 0.03     , -0.06, -33 , 286  , 19.5 , 0.1     , 2.0     , 0.45           , 2.25          , 0.55  , 0.9   , 0.95         )
+    bound.lower.sneasy=c( 0  , 0            , 0            , 0    , 0           , 0   , 0        , -Inf , -100, 280  , 10   , 0       , 0       , 0              , 0             , 0     , 0     , 0            )
+    bound.upper.sneasy=c( Inf, Inf          , 3            , 5    , 1           , 200 , 0.06     ,  Inf , 0   , 295  , 30   , 0.2     , 4       , 1              , 10            , 0.99  , 0.99  , 0.99         )
+    step.mcmc.sneasy  =c( 1.6, 1.7          , 0.25         , 0.75 , 0.15        , 40  , 0.015    , 0.03 , 9   , 0.7  , 1.3  , 0.005   , 0.25    , 0.045          , 0.57          , 0.07  , 0.06  , 0.11         )/10
+	index.model.sneasy=c(1,2,3,4,5,6,7,8,9,10,11)		# which are model parameters? (index within parnames.sneasy)
 }
 
 ## GSIC-MAGICC
@@ -41,7 +56,7 @@ parnames.gsic   =NULL; p0.gsic       =NULL; bound.lower.gsic=NULL;
 bound.upper.gsic=NULL; step.mcmc.gsic=NULL; index.model.gsic=NULL;
 if (luse.gsic) {
 	parnames.gsic   =c("beta0","V0.gsic","n"  ,"Gs0"    , "sigma.gsic", "rho.gsic")	# parameters names
-	p0.gsic		      =c(0.00058, 0.41    , 0.82, 0.0     , 0.00045     , 0.5       )	# initial parameter guesses
+	p0.gsic         =c(0.00058, 0.41    , 0.82, 0.0     , 0.00045     , 0.5       )	# initial parameter guesses
 	bound.lower.gsic=c(0      , 0.3     , 0.55, -0.0041 , 0           , -0.999    )	# prior range lower bounds
 	bound.upper.gsic=c(0.041  , 0.5     , 1.0 ,  0.0041 , 0.00150     ,  0.999    )	# prior range upper bounds
 	step.mcmc.gsic	=c(0.01   , 0.01    , 0.1 , 0.01    , 0.0001      , 0.01      )	# step size for parameters in MCMC (proposals)
@@ -53,10 +68,10 @@ parnames.te   =NULL; p0.te       =NULL; bound.lower.te=NULL;
 bound.upper.te=NULL; step.mcmc.te=NULL; index.model.te=NULL;
 if (luse.te) {
 	parnames.te   =c("a.te","b.te" ,"invtau.te" ,"TE0"  )        # parameters names
-	p0.te		      =c(0.3616, 0.5   , 1/200      , 0.0   )        # initial parameter guesses
+	p0.te         =c(0.3616, 0.5   , 1/200      , 0.0   )        # initial parameter guesses
 	bound.lower.te=c(0.0   , 0.0   , 0          ,-0.0484)        # prior range lower bounds
 	bound.upper.te=c(0.8595, 2.193 , 1          , 0.0484)        # prior range upper bounds
-	step.mcmc.te	=0.05*(bound.upper.te-bound.lower.te) # set size for parameters in MCMC (proposals)
+	step.mcmc.te  =0.05*(bound.upper.te-bound.lower.te) # set size for parameters in MCMC (proposals)
 	index.model.te=c(1,2,3,4)			# which are model parameters? (index within parnames.te)
 }
 
@@ -86,19 +101,20 @@ if (luse.dais) {
 
 ##==============================================================================
 ## Combine for coupled model
-parnames    = c(parnames.doeclim, parnames.gsic, parnames.te, parnames.simple, parnames.dais)
-p0          = c(p0.doeclim      , p0.gsic      , p0.te      , p0.simple      , p0.dais      )
-bound.lower = c(bound.lower.doeclim, bound.lower.gsic, bound.lower.te, bound.lower.simple,
-								bound.lower.dais   )
-bound.upper = c(bound.upper.doeclim, bound.upper.gsic, bound.upper.te, bound.upper.simple,
-								bound.upper.dais   )
-step.mcmc   = c(step.mcmc.doeclim  , step.mcmc.gsic  , step.mcmc.te  , step.mcmc.simple  ,
-								step.mcmc.dais     )
+parnames    = c(parnames.doeclim, parnames.sneasy, parnames.gsic, parnames.te, parnames.simple, parnames.dais)
+p0          = c(p0.doeclim      , p0.sneasy      , p0.gsic      , p0.te      , p0.simple      , p0.dais      )
+bound.lower = c(bound.lower.doeclim, bound.lower.sneasy, bound.lower.gsic,
+                bound.lower.te     , bound.lower.simple, bound.lower.dais)
+bound.upper = c(bound.upper.doeclim, bound.upper.sneasy, bound.upper.gsic,
+                bound.upper.te     , bound.upper.simple, bound.upper.dais)
+step.mcmc   = c(step.mcmc.doeclim  , step.mcmc.sneasy  , step.mcmc.gsic  ,
+                step.mcmc.te       , step.mcmc.simple  , step.mcmc.dais  )
 index.model = c(match(parnames.doeclim[index.model.doeclim],parnames),
-								match(parnames.gsic[index.model.gsic]      ,parnames),
-								match(parnames.te[index.model.te]          ,parnames),
-								match(parnames.simple[index.model.simple]  ,parnames),
-								match(parnames.dais[index.model.dais]      ,parnames))
+                match(parnames.sneasy[index.model.sneasy]  ,parnames),
+				match(parnames.gsic[index.model.gsic]      ,parnames),
+				match(parnames.te[index.model.te]          ,parnames),
+				match(parnames.simple[index.model.simple]  ,parnames),
+				match(parnames.dais[index.model.dais]      ,parnames))
 index.all = 1:length(p0); index.stat = index.all[is.na(pmatch(index.all,index.model))]
 
 ## Reshape so all the model parameters are first; easier bookkeeping for DEoptim

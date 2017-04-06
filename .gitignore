@@ -1,4 +1,5 @@
 lobj/
+*.Rout
 *.so
 *.dll
 .Rhistory
