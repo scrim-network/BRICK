@@ -129,11 +129,16 @@ stat_sig_s1st <- function(df
   } else if(method == 'con') {
     df$s1_sig[which(s1st$S1_conf_low * s1st$S1_conf_high > 0)] <- 1
     df$st_sig[which(s1st$ST_conf_low * s1st$ST_conf_high > 0)] <- 1
+  } else if(method == 'congtr'){
+    df$s1_sig[which(s1st$S1_conf_low * s1st$S1_conf_high > 0 &
+                    abs(s1st$S1) > greater)] <- 1
+    df$st_sig[which(s1st$ST_conf_low * s1st$ST_conf_high > 0 &
+                    abs(s1st$ST) > greater)] <- 1
   } else {
     print('Not a valid parameter for method')
   }
 
-  # determining whether the parameter is signficiant
+  # determining whether the parameter is significant
   if(sigCri == 'either'){
     for(i in 1:nrow(df)){
       df$sig[i] <- max(df$s1_sig[i],df$st_sig[i])
@@ -223,6 +228,8 @@ plotRadCon <- function(df                   # dataframe with S1 and ST indices
                        ,legSecLabs=NULL     # legend labels for second order
                        ,legTotLabs=NULL     # legend labels for total order
                        ,lBuildRCPhoriz=FALSE # horizontal legends for Emissions and Protection?
+                       ,lnoGEVhoriz=FALSE   # horizontal legends for Emissions, Protection, Storm Surge, and Land Subsidence?
+                       ,lnoHRhoriz=FALSE   # horizontal legends for Emissions, Protection?
                        ){
 
   # Shift plot up
@@ -440,7 +447,7 @@ if(lBuildRCPhoriz) {
            , col = df$gp_col[which(df$gp_name %in% sig_gps[i])]#[i]]
            , cex = cex
            , srt = 0# angle_gp*360/(2*pi) + 90
-           , adj = 0.1 # for centering
+           , adj = 0.3 # for centering
            , font = 1
       )
   } else {
@@ -449,7 +456,7 @@ if(lBuildRCPhoriz) {
            , sig_gps[i]
            , col = df$gp_col[which(df$gp_name %in% sig_gps[i])]#[i]]
            , cex = cex
-           , srt =  angle_gp*360/(2*pi) - 90
+           , srt = angle_gp*360/(2*pi) - 90
            , adj = 0.5 # for centering
            , font = 1
       )
@@ -458,7 +465,69 @@ if(lBuildRCPhoriz) {
            , sig_gps[i]
            , col = df$gp_col[which(df$gp_name %in% sig_gps[i])]#[i]]
            , cex = cex
-           , srt =  angle_gp*360/(2*pi) + 90
+           , srt = angle_gp*360/(2*pi) + 90
+           , adj = 0.5 # for centering
+           , font = 1
+      )
+    }
+  }
+} else if(lnoGEVhoriz) {
+  if(sig_gps[i]=='Emissions' | sig_gps[i]=='Protection' | sig_gps[i]=='Storm Surge' | sig_gps[i]=='Land\nSubsidence') {
+      text(gpNameMult*radSc*cos(angle_gp), gpNameMult*radSc*sin(angle_gp) + shift
+           , sig_gps[i]
+           , col = df$gp_col[which(df$gp_name %in% sig_gps[i])]#[i]]
+           , cex = cex
+           , srt = 0# angle_gp*360/(2*pi) + 90
+           , adj = 0.15 # for centering
+           , font = 1
+      )
+  } else {
+    if((angle_gp*360/(2*pi)) >= 0 & (angle_gp*360/(2*pi)) <= 180){
+      text(gpNameMult*radSc*cos(angle_gp), gpNameMult*radSc*sin(angle_gp) + shift
+           , sig_gps[i]
+           , col = df$gp_col[which(df$gp_name %in% sig_gps[i])]#[i]]
+           , cex = cex
+           , srt = angle_gp*360/(2*pi) - 90
+           , adj = 0.5 # for centering
+           , font = 1
+      )
+    } else {
+      text(gpNameMult*radSc*cos(angle_gp), gpNameMult*radSc*sin(angle_gp) + shift
+           , sig_gps[i]
+           , col = df$gp_col[which(df$gp_name %in% sig_gps[i])]#[i]]
+           , cex = cex
+           , srt = angle_gp*360/(2*pi) + 90
+           , adj = 0.5 # for centering
+           , font = 1
+      )
+    }
+  }
+} else if(lnoHRhoriz) {
+  if(sig_gps[i]=='Emissions' | sig_gps[i]=='Protection') {
+      text(gpNameMult*radSc*cos(angle_gp), gpNameMult*radSc*sin(angle_gp) + shift
+           , sig_gps[i]
+           , col = df$gp_col[which(df$gp_name %in% sig_gps[i])]#[i]]
+           , cex = cex
+           , srt = 0# angle_gp*360/(2*pi) + 90
+           , adj = 0.15 # for centering
+           , font = 1
+      )
+  } else {
+    if((angle_gp*360/(2*pi)) >= 0 & (angle_gp*360/(2*pi)) <= 180){
+      text(gpNameMult*radSc*cos(angle_gp), gpNameMult*radSc*sin(angle_gp) + shift
+           , sig_gps[i]
+           , col = df$gp_col[which(df$gp_name %in% sig_gps[i])]#[i]]
+           , cex = cex
+           , srt = angle_gp*360/(2*pi) - 90
+           , adj = 0.5 # for centering
+           , font = 1
+      )
+    } else {
+      text(gpNameMult*radSc*cos(angle_gp), gpNameMult*radSc*sin(angle_gp) + shift
+           , sig_gps[i]
+           , col = df$gp_col[which(df$gp_name %in% sig_gps[i])]#[i]]
+           , cex = cex
+           , srt = angle_gp*360/(2*pi) + 90
            , adj = 0.5 # for centering
            , font = 1
       )
