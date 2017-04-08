@@ -148,8 +148,48 @@ Suppose you are a researcher who wishes to use the sea level projections from th
 git clone https://github.com/scrim-network/BRICK.git
 ~~~~
 
-2. Obtain the projections of the major contributions to global mean sea level for the control ensemble presented in the [BRICK model description paper](http://www.geosci-model-dev-discuss.net/gmd-2016-303/).
-**TONY TODO**
+2. Open R, and navigate to the BRICK directory containing the `BRICK_LSL.R` script.
+~~~~
+R
+setwd('~/codes/BRICK/R')
+~~~~
+
+3. Set a latitude and longitude at which you want to project local mean sea level. Here, we demonstrate using Key West, Florida (24.5551 deg N, 81.7800 deg W).
+~~~~
+lat <- 24.5551
+lon <- -81.7800
+~~~~
+
+4. Read in the projections of the major contributions to global mean sea level for the control ensemble presented in the [BRICK model description paper](http://www.geosci-model-dev-discuss.net/gmd-2016-303/). Here, we demonstrate using RCP8.5.
+~~~~
+library(ncdf4)
+filename.projections <- '../output_model/BRICK-model_physical_control_02Apr2017.nc'
+ncdata <- nc_open(filename.projections)
+slr.gsic <- ncvar_get(ncdata, 'GSIC_RCP85')
+slr.gis <- ncvar_get(ncdata, 'GIS_RCP85')
+slr.ais <- ncvar_get(ncdata, 'AIS_RCP85')
+slr.te <- ncvar_get(ncdata, 'TE_RCP85')
+t.proj <- ncvar_get(ncdata, 'time_proj')
+n.ens <- length(ncvar_get(ncdata, 'ens'))
+nc_close(ncdata)
+~~~~
+
+5. Use the `BRICK_LSL.R` script to project local mean sea level.
+~~~~
+source('BRICK_LSL.R')
+lsl.proj <- brick_lsl(lat.in=lat, lon.in=lon, n.time=length(t.proj), slr_gis=slr.gis, slr_gsic=slr.gsic, slr_ais=slr.ais, slr_te=slr.te)
+~~~~
+
+6. Write output to a netCDF file
+~~~~
+filename.output <- '../output_model/BRICK_LSL_KeyWest_RCP85.nc'
+dim.tproj <- ncdim_def('time_proj', 'years', as.double(t.proj))
+dim.ensemble <- ncdim_def('ens', 'ensemble member', as.double(1:n.ens), unlim=TRUE)
+lsl.rcp85 <- ncvar_def('LocalSeaLevel_RCP85', 'meters', list(dim.tproj, dim.ensemble), -999, longname = 'Local sea level (RCP85)')
+outnc <- nc_create(filename.output, list(lsl.rcp85), force_v4 = TRUE)
+ncvar_put(outnc, lsl.rcp85, t(lsl.proj))
+nc_close(outnc)
+~~~~
 
 ## Reference documentation to get new users started
 
