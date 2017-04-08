@@ -60,7 +60,7 @@ colmod <- 2
 colobs <- 11
 
 ## Where would you like to save the plots?
-plotdir='~/Box\ Sync/Wong-Projects/BRICK_model/figures/'
+plotdir='~/Box\ Sync/Wong-Projects/BRICK_model/figures/test/'
 
 ##==============================================================================
 logl.ar1 = function(r,sigma1,rho1,eps1=0) # default obs error is 0
@@ -224,7 +224,7 @@ gmsl.r07.hind.mle = gmsl.r07.hind[,which(llik.r07==max(llik.r07))]
 ## 5-95% CI of full BRICK and BRICK-R07 hindcasts, with obs
 ##
 
-pdf(paste(plotdir,'gmsl_comparison_new.pdf',sep=''),width=3.5,height=5.25,colormodel='cmyk')
+pdf(paste(plotdir,'gmsl_comparison.pdf',sep=''),width=3.5,height=5.25,colormodel='cmyk')
 
 n.sig = 2         # how many sigma to plot around the obs?
 itmp=midx.sl[1]:midx.sl[length(midx.sl)]
@@ -396,7 +396,7 @@ gsic.simple.mle = gsic.simple[,which(llik.simple==max(llik.simple))]
 ## 5-95% CI of GSIC-MAGICC and -SIMPLE hindcasts, with obs
 ##
 
-pdf(paste(plotdir,'gsic_comparison_new.pdf',sep=''),width=3.5,height=5.25,colormodel='cmyk')
+pdf(paste(plotdir,'gsic_comparison.pdf',sep=''),width=3.5,height=5.25,colormodel='cmyk')
 
 n.sig = 2         # how many sigma to plot around the obs?
 itmp=midx.gsic[1]:midx.gsic[length(midx.gsic)]
@@ -570,9 +570,9 @@ cols.pos = colorRampPalette(c("red","orange","yellow","white"),space="Lab")(n.po
 cols.neg = colorRampPalette(c("white","blue"),space="Lab")(n.neg)
 cols.b2r = rev(c(cols.pos,cols.neg))
 
-#png(paste(plotdir,'slr_projections_map_new.tif',sep=''), width=330,height=650,res=300,units='px')
-png(paste(plotdir,'slr_projections_map_new.tif',sep=''), width=3.5,height=6.89,res=300,units='in')
-#pdf(paste(plotdir,'slr_projections_map_new.pdf',sep=''), width=3.5,height=8,colormodel='cmyk')
+#png(paste(plotdir,'slr_projections_map.tif',sep=''), width=330,height=650,res=300,units='px')
+png(paste(plotdir,'slr_projections_map.tif',sep=''), width=3.5,height=6.89,res=300,units='in')
+#pdf(paste(plotdir,'slr_projections_map.pdf',sep=''), width=3.5,height=8,colormodel='cmyk')
 
 par(mfrow=c(3,1), mai=c(.2,.5,.7,.9))
 image(x=lon,y=lat,z=slr26.filt, zlim=lims, col=cols.b2r,
@@ -713,7 +713,7 @@ print('====================================================================')
 
 ## BOTH RETURN PERIOD AND HEIGHTENING, SAME COST AXIS
 
-pdf(paste(plotdir,'vandantzig_RP+H_new.pdf',sep=''),width=3.5,height=3.5,colormodel='cmyk')
+pdf(paste(plotdir,'vandantzig_RP+H.pdf',sep=''),width=3.5,height=3.5,colormodel='cmyk')
 
 conv=1e9  # convert from $ to billions or millions of $? (for nicer looking axes)
 
@@ -763,13 +763,14 @@ source('../Useful/MultipleOutput.R') # defines the ":=" operator
 ## overwritten. These comments are not repeated for the SIMPLE-GSIC or Control
 ## experiments.
 
+luse.sneasy <- FALSE
 luse.doeclim <- TRUE
 luse.gsic <- FALSE
 luse.te <- FALSE
 luse.simple <- FALSE
 luse.dais <- FALSE
 luse.gmsl	<- TRUE
-luse.brick <- cbind(luse.doeclim, luse.gsic, luse.te, luse.simple, luse.dais, luse.gmsl)
+luse.brick <- cbind(luse.sneasy,luse.doeclim, luse.gsic, luse.te, luse.simple, luse.dais, luse.gmsl)
 source('BRICK_parameterSetup_R07.R')
 ind.gmsl <- rep(NA,length(parnames.gmsl))
 for (i in 1:length(parnames.gmsl)) {
@@ -802,12 +803,13 @@ write.csv(table.gmsl, "../output_calibration/parameters.gmsl.csv")
 ##==============================================================================
 ## The SIMPLE-GIC experiment
 
+luse.sneasy <- FALSE
 luse.doeclim <- TRUE
 luse.gsic <- TRUE
 luse.te <- TRUE
 luse.simple <- TRUE
 luse.dais <- FALSE
-luse.brick <- cbind(luse.doeclim, luse.gsic, luse.te, luse.simple, luse.dais)
+luse.brick <- cbind(luse.sneasy,luse.doeclim, luse.gsic, luse.te, luse.simple, luse.dais)
 source('BRICK_parameterSetup_SIMPLE-GSIC.R')
 ind.gsic <- rep(NA,length(parnames.gsic))
 for (i in 1:length(parnames.gsic)) {ind.gsic[i] <- which(parnames==parnames.gsic[i])}
@@ -830,12 +832,13 @@ write.csv(table.gsic, "../output_calibration/parameters.gic-simple.csv")
 
 ## For this one, need *all* of the models' parameters
 
+luse.sneasy <- FALSE
 luse.doeclim <- TRUE
 luse.gsic <- TRUE
 luse.te <- TRUE
 luse.simple <- TRUE
 luse.dais <- TRUE
-luse.brick <- cbind(luse.doeclim, luse.gsic, luse.te, luse.simple, luse.dais)
+luse.brick <- cbind(luse.sneasy, luse.doeclim, luse.gsic, luse.te, luse.simple, luse.dais)
 source('BRICK_parameterSetup.R')
 
 ## DOECLIM
@@ -1081,7 +1084,7 @@ obs.years = c(120000, 220000, 234000, 240002)
 ## 5-95% CI of hindcasts, with obs in there
 ##
 
-pdf(paste(plotdir,'hindcasts_new.pdf',sep=''),width=7,height=6,colormodel='cmyk')
+pdf(paste(plotdir,'hindcasts.pdf',sep=''),width=7,height=6,colormodel='cmyk')
 n.sig = 2         # how many sigma to plot around the obs?
 layout(cbind(c(1,4,7),c(2,5,7),c(3,6,7)))
 par(mai=c(.5,.7,.2,.08))
@@ -1292,7 +1295,7 @@ print('==============================================================')
 
 i2050 <- which(t.proj==2050)
 print('==============================================================')
-print('min/5%/50%/95%/max of 2100 sea level relative to 1986-2005:')
+print('min/5%/50%/95%/max of 2050 sea level relative to 1986-2005:')
 print(paste('RCP2.6: ',quantile(slr.rcp26[i2050,],c(0,.05,.50,.95,1))))
 print(paste('RCP4.5: ',quantile(slr.rcp45[i2050,],c(0,.05,.50,.95,1))))
 print(paste('RCP8.5: ',quantile(slr.rcp85[i2050,],c(0,.05,.50,.95,1))))
@@ -1356,7 +1359,7 @@ row.slr = paste('Total sea level &',
 									1000*signif(slr.rcp85.50[i2100],4),' (',1000*signif(slr.rcp85.05[i2100],4),'-',1000*signif(slr.rcp85.95[i2100],4),') \\',
 									sep='')
 
-pdf(paste(plotdir,'projections_SLR_total_new.pdf',sep=''),width=3.5,height=2.45,colormodel='cmyk')
+pdf(paste(plotdir,'projections_SLR_total.pdf',sep=''),width=3.5,height=2.45,colormodel='cmyk')
 par(mfrow=c(1,1))
 # RCP85
 par(mai=c(.65,.65,.20,.2))

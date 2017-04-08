@@ -81,7 +81,7 @@ t.beg = proc.time()
 ##==============================================================================
 ## Define the files you want to process/read/create
 
-experiment='g'  ## Which model set-up? (c = control, with MAGICC-GSIC; e = experiment,
+experiment='c'  ## Which model set-up? (c = control, with MAGICC-GSIC; e = experiment,
 				## with SIMPLE-GSIC; g = experiment, with BRICK-GMSL)
 appen=''		## Append file name? In case you process multiple files in one day
 today=Sys.Date(); today=format(today,format="%d%b%Y")
@@ -312,24 +312,26 @@ i0$gsic = which(mod.time==1990)
 ## GIS initial conditions are relative to 1961-1990
 i0$gis = which(mod.time==1961)
 
+luse.sneasy   = FALSE    # Simple Nonlinear EArth SYstem model (DOECLIM+CCM)
 luse.doeclim  = TRUE    # diffusion-ocean-energy balance climate model
 luse.gsic     = TRUE    # glaciers and small ice caps contribution to SLR
 luse.te       = TRUE    # thermal expansion contribution to SLR
 luse.simple   = TRUE    # Greenland ice sheet model
 luse.dais     = TRUE    # Antarctic ice sheet model
-luse.brick = cbind(luse.doeclim, luse.gsic, luse.te, luse.simple, luse.dais)
+luse.brick = cbind(luse.sneasy,luse.doeclim, luse.gsic, luse.te, luse.simple, luse.dais)
 
 ## Source the appropriate BRICK model for your purposes
 if(experiment=='c') {source('../R/BRICK_coupledModel.R')}
 if(experiment=='e') {source('../R/BRICK_coupledModel_SIMPLE-GSIC.R')}
 if(experiment=='g') {
+    luse.sneasy   = FALSE    # Simple Nonlinear EArth SYstem model (DOECLIM+CCM)
 	luse.doeclim  = TRUE    # diffusion-ocean-energy balance climate model
 	luse.gsic     = FALSE   # glaciers and small ice caps contribution to SLR
 	luse.te       = FALSE   # thermal expansion contribution to SLR
 	luse.simple   = FALSE   # Greenland ice sheet model
 	luse.dais     = FALSE   # Antarctic ice sheet model
 	luse.gmsl     = TRUE    # Example of adding your own model component - GMSL
-	luse.brick = cbind(luse.doeclim, luse.gsic, luse.te, luse.simple, luse.dais, luse.gmsl)
+	luse.brick = cbind(luse.sneasy,luse.doeclim, luse.gsic, luse.te, luse.simple, luse.dais, luse.gmsl)
 	source('../R/BRICK_coupledModel_R07.R')
 }
 
