@@ -89,22 +89,23 @@ install.packages(stats)
 
 ### To reproduce the work of Wong, Bakker et al. (GMDD description paper)
 
-1. Checkout the model codes, and enter
+1. Checkout the model codes. Specifically, the `BRICKms` branch reproduces the model description paper.
 ~~~~
 git clone https://github.com/scrim-network/BRICK.git
-cd BRICK
+git checkout BRICKms
 ~~~~
 
 2. Create the dynamic libraries necessary to run the model in Fortran. You might need to modify the `Makefile` to use your preferred Fortran compiler. Further help can be found at `BRICK/fortran/README`.
 ~~~~
-cd fortran
+cd BRICK/fortran
+mkdir obj
 make
 ~~~~
 
 3. Open R and install the relevant R packages.
 ~~~~
-cd ../calibration
 R
+setwd('BRICK/calibration')
 source('BRICK_install_packages.R')
 ~~~~
 

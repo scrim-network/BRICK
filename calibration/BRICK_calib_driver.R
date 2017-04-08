@@ -37,8 +37,8 @@ set.seed(as.double(Sys.time())) # should yield same distributions...
 ## Or do you want to use historical data to make hindcasts? (l.project=FALSE)
 ## Note -- l.project=FALSE => Kriegler (2005) data, same as Urban and Keller (2010)
 l.project = FALSE
-begyear = 1765  # SNEASY start date
-#begyear = 1850  # DOECLIM start date
+#begyear = 1765  # SNEASY start date
+begyear = 1850  # DOECLIM start date
 endyear = 2009
 tstep   = 1
 mod.time= seq(from=begyear, to=endyear, by=tstep)
@@ -66,7 +66,7 @@ source('../R/compute_indices.R')        # function to determine the model and
 	## TODO -- revise SNEASY_readData.R to match other components
 	## TODO
 
-source('../calibration/SNEASY_readData.R')    # read SNEASY calibration data
+#source('../calibration/SNEASY_readData.R')    # read SNEASY calibration data
 source('../calibration/DOECLIM_readData.R')   # read DOECLIM calibration data
 source('../calibration/GSIC_readData.R')      # read GSIC calibration data
 source('../calibration/TE_readData.R')        # read TE data
@@ -113,8 +113,8 @@ i0$gis = which(mod.time==1961)
 ## Which model(s) will you use?
 ## If you want to plug in your own model, insert the relevant "luse.XXX" line
 ## below, as well as into the "luse.brick = ..." command.
-luse.sneasy   = TRUE    # Simple Nonlinear EArth SYstem model (DOECLIM+CCM)
-luse.doeclim  = FALSE    # diffusion-ocean-energy balance climate model
+luse.sneasy   = FALSE    # Simple Nonlinear EArth SYstem model (DOECLIM+CCM)
+luse.doeclim  = TRUE    # diffusion-ocean-energy balance climate model
 luse.gsic     = TRUE    # glaciers and small ice caps contribution to SLR
 luse.te       = TRUE    # thermosteric expansion contribution to SLR
 luse.simple   = TRUE    # Greenland ice sheet model
@@ -198,7 +198,7 @@ outDEoptim <- DEoptim(minimize_residuals_brick, bound.lower[index.model], bound.
 				parnames.in=parnames[index.model], forcing.in=forcing        , l.project=l.project      ,
 				#slope.Ta2Tg.in=slope.Ta2Tg       , intercept.Ta2Tg.in=intercept.Ta2Tg,
 				ind.norm.data=ind.norm.data      , ind.norm.sl=ind.norm      , mod.time=mod.time        ,
-				timestep=tstep                   , oidx = oidx.all           , midx = midx.all          ,
+				tstep=tstep                      , oidx = oidx.all           , midx = midx.all          ,
 				obs=obs.all                      , obs.err = obs.err.all     , trends.te = trends.te    ,
 				luse.brick = luse.brick	         , i0 = i0)
 p0.deoptim[index.model] = outDEoptim$optim$bestmem
@@ -445,8 +445,8 @@ gr.stat = rep(NA,length(niter.test))
 for (i in 1:length(niter.test)){
   mcmc1 = as.mcmc(chain1[1:niter.test[i],])
   mcmc2 = as.mcmc(chain2[1:niter.test[i],])
-	mcmc3 = as.mcmc(chain3[1:niter.test[i],])
-	mcmc4 = as.mcmc(chain4[1:niter.test[i],])
+  mcmc3 = as.mcmc(chain3[1:niter.test[i],])
+  mcmc4 = as.mcmc(chain4[1:niter.test[i],])
   mcmc_chain_list = mcmc.list(list(mcmc1, mcmc2, mcmc3, mcmc4))
   gr.stat[i] = gelman.diag(mcmc_chain_list)[2]
 }

@@ -328,8 +328,8 @@ log.post = function(  parameters.in,
                       midx=midx,
                       oidx=oidx,
                       obs=obs,
-										  obs.err=obs.err,
-											trends.te=trends.te,
+                      obs.err=obs.err,
+                      trends.te=trends.te,
                       luse.brick=luse.brick,
                       i0=i0
                       )
