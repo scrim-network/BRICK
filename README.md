@@ -1,5 +1,5 @@
+![alt text](https://github.com/scrim-network/BRICK/blob/master/brick_logo.png "This is a brick!")
 # BRICK v0.2
-![alt text](https://github.com/scrim-network/BRICK/master/brick_logo.png "This is a brick!")
 
 ## Synopsis
 
@@ -8,7 +8,8 @@ BRICK (**B**uilding blocks for **R**elevant **I**ce and **C**limate **K**nowledg
 This repository contains the BRICK model source code and analysis scripts. Analysis codes and the main user interface are written in R and the main physics codes are in Fortran 90.
 
 It contains the sub-models
-* DOECLIM (climate)
+* DOECLIM (Diffusion-Ocean-Energy CLIMate model)
+* SNEASY (Simple Nonlinear EArth SYstem model)
 * DAIS (Antarctic ice sheet)
 * SIMPLE (Greenland ice sheet)
 * GSIC-MAGICC (Glaciers and small ice caps)

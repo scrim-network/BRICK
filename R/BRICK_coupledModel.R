@@ -14,7 +14,7 @@
 ##	obs.temp							mean global surface temperature anomalies, used if no climate module
 ##	ind.norm.data					indices within the model output for setting zero anomaly of calibration data fields
 ##	ind.norm.sl						indices within model output for setting zero sea level
-##	timestep							model timestep [years]
+##	tstep							model tstep [years]
 ##	i0										index of reference year, within mod.time. For initial conditions to sub-models.
 ##
 ## Requires:
@@ -40,21 +40,20 @@
 ## along with BRICK.  If not, see <http://www.gnu.org/licenses/>.
 ##==============================================================================
 
-brick_model = function(
-												parameters.in,
-												parnames.in,
-												forcing.in,
-												l.project = FALSE,
-												slope.Ta2Tg.in = 1,
-												intercept.Ta2Tg.in = 0,
-												mod.time,
-												obs.temp = NULL,
-												ind.norm.data = NULL,
-												ind.norm.sl = NULL,
-												luse.brick,
-												timestep = 1,
-												i0
-												){
+brick_model = function(parameters.in,
+                       parnames.in,
+					   forcing.in,
+					   l.project = FALSE,
+					   slope.Ta2Tg.in = 1,
+					   intercept.Ta2Tg.in = 0,
+					   tstep = 1,
+					   mod.time,
+					   obs.temp = NULL,
+					   ind.norm.data = NULL,
+					   ind.norm.sl = NULL,
+					   luse.brick,
+					   i0
+){
 
 	# Initialize the list of output (do NOT grow lists/arrays in R)
 	# The +1 is to have total global mean sea level (relative to ind.relative) in
@@ -67,12 +66,48 @@ brick_model = function(
 	temp.couple = rep(NA, length(mod.time))
 
 	#=============================================================================
+	# SNEASY - Simple Nonlinear EArth SYstem model (including DOECLIM and CCM)
+
+    if (luse.brick[,"luse.sneasy"]) {
+
+        ## Grab the SNEASY parameters
+        S            =parameters.in[match("S"           ,parnames.in)]
+		kappa.sneasy =parameters.in[match("kappa.sneasy",parnames.in)]
+		alpha.sneasy =parameters.in[match("alpha.sneasy",parnames.in)]
+		Q10          =parameters.in[match("Q10"         ,parnames.in)]
+		beta.sneasy  =parameters.in[match("beta.sneasy" ,parnames.in)]
+		eta          =parameters.in[match("eta"         ,parnames.in)]
+		h.sneasy     =parameters.in[match("h.sneasy"    ,parnames.in)]
+		T0           =parameters.in[match("T0"          ,parnames.in)]
+		H0           =parameters.in[match("H0"          ,parnames.in)]
+		CO20         =parameters.in[match("CO20"        ,parnames.in)]
+		MOC0         =parameters.in[match("MOC0"        ,parnames.in)]
+
+        sneasy.out = sneasy(S=S, kappa=kappa.sneasy, alpha=alpha.sneasy, Q10=Q10,
+		                     beta=beta.sneasy, eta=eta, hydsens=h.sneasy, init.CO2=CO20,
+							 init.MOC=MOC0, tstep=tstep, mod.time=mod.time,
+							 forcing.co2=forcing.in$co2, forcing.aero=forcing.in$aero,
+							 forcing.other=forcing.in$other)
+
+		## Normalize temperature to match the observations
+		itmp = ind.norm.data[match("temp",ind.norm.data[,1]),2]:ind.norm.data[match("temp",ind.norm.data[,1]),3]
+		sneasy.out$temp = sneasy.out$temp - mean(sneasy.out$temp[itmp])
+
+		#itmp = ind.norm.data[match("ocheat",ind.norm.data[,1]),2]:ind.norm.data[match("ocheat",ind.norm.data[,1]),3]
+		#sneasy.out$ocheat = sneasy.out$ocheat - mean(sneasy.out$ocheat[itmp])
+
+		temp.couple = sneasy.out$temp + T0
+		brick.out[[outcnt]] = sneasy.out; names(brick.out)[outcnt]="sneasy.out"; outcnt=outcnt+1;
+
+	}
+
+	#=============================================================================
 	# DOECLIM - climate and ocean energy balance
 
-  if (luse.brick[,"luse.doeclim"]) {
+    if (luse.brick[,"luse.doeclim"]) {
 
-	  ## Grab the DOECLIM parameters
-    S            =parameters.in[match("S"            ,parnames.in)]
+        ## Grab the DOECLIM parameters
+        S            =parameters.in[match("S"            ,parnames.in)]
 		kappa.doeclim=parameters.in[match("kappa.doeclim",parnames.in)]
 		alpha.doeclim=parameters.in[match("alpha.doeclim",parnames.in)]
 		T0           =parameters.in[match("T0"           ,parnames.in)]
@@ -80,11 +115,10 @@ brick_model = function(
 
 		## Set up the radiative forcing
 		forcing.total = forcing_total(forcing=forcing.in,
-																	alpha.doeclim=alpha.doeclim,
-																	l.project=l.project,
-																	begyear=mod.time[1],
-																	endyear=mod.time[length(mod.time)]
-																	)
+		                              alpha.doeclim=alpha.doeclim,
+									  l.project=l.project,
+									  begyear=mod.time[1],
+									  endyear=mod.time[length(mod.time)])
 
 		## Run DOECLIM at these parameter values
 		doeclim.out = doeclimF(S=S, kappa=kappa.doeclim, forcing.total=forcing.total, mod.time=mod.time)
@@ -99,12 +133,17 @@ brick_model = function(
 		temp.couple = doeclim.out$temp + T0
 		brick.out[[outcnt]] = doeclim.out; names(brick.out)[outcnt]="doeclim.out"; outcnt=outcnt+1;
 
-	} else {temp.couple=obs.temp}
+	}
+
+	#=============================================================================
+	# Establish coupling if there is no module to estimate global mean surface temperature
+
+	if (!luse.brick[,"luse.doeclim"] & !luse.brick[,"luse.sneasy"]) {temp.couple=obs.temp}
 
 	#=============================================================================
 	# GSIC-MAGICC - glaciers and small ice caps
 
-  if (luse.brick[,"luse.gsic"]) {
+    if (luse.brick[,"luse.gsic"]) {
 
 		## Grab the GSIC parameters
 		beta0  = parameters.in[match("beta0"  ,parnames.in)]
@@ -130,27 +169,27 @@ brick_model = function(
 		## Add this contribution to the total sea level rise
 		slr.out = slr.out + (gsic.out - mean(gsic.out[ind.norm.sl]))
 
-  }
+    }
 
 	#=============================================================================
-	# TE - thermosteric expansion
+	# TE - thermal expansion
 
 	if (luse.brick[,"luse.te"]) {
 
-	  ## Grab the BRICK-TE parameters
-		a.te  =parameters.in[match("a.te"  ,parnames.in)]
-		b.te  =parameters.in[match("b.te"  ,parnames.in)]
+	    ## Grab the BRICK-TE parameters
+		a.te     =parameters.in[match("a.te"     ,parnames.in)]
+		b.te     =parameters.in[match("b.te"     ,parnames.in)]
 		invtau.te=parameters.in[match("invtau.te",parnames.in)]
-		TE0   =parameters.in[match("TE0"   ,parnames.in)]
+		TE0      =parameters.in[match("TE0"      ,parnames.in)]
 
 		## Normalize temperature to match what the sub-model expects (the parameters
 		## may assume a particular time period associated with Tg=0, for example)
 		# TE expects temp.couple relative to late 1800s, which it already is
 		# with ind.norm.data for temperature rel to 1850-70
 
-    ## Run BRICK-TE (thermosteric expansion) model, using temp output from DOECLIM
+        ## Run BRICK-TE (thermosteric expansion) model, using temp output from DOECLIM
 		## i0$te=1
-    te.out = brick_te_F(a=a.te , b=b.te, invtau=invtau.te, TE_0=TE0, Tg=temp.couple)
+		te.out = brick_te_F(a=a.te , b=b.te, invtau=invtau.te, TE_0=TE0, Tg=temp.couple)
 
 		## Subtract off normalization period
 		itmp = ind.norm.data[match("te",ind.norm.data[,1]),2]:ind.norm.data[match("te",ind.norm.data[,1]),3]
@@ -161,14 +200,14 @@ brick_model = function(
 		## Add this contribution to the total sea level rise
 		slr.out = slr.out + (te.out.norm - mean(te.out.norm[ind.norm.sl]))
 
-  }
+    }
 
 	#=============================================================================
 	# SIMPLE - Greenland ice sheet
 
 	if (luse.brick[,"luse.simple"]) {
 
-	  ## Grab SIMPLE parameters
+	    ## Grab SIMPLE parameters
 		a.simple    =parameters.in[match("a.simple"    ,parnames.in)]
 		b.simple    =parameters.in[match("b.simple"    ,parnames.in)]
 		alpha.simple=parameters.in[match("alpha.simple",parnames.in)]
@@ -180,9 +219,9 @@ brick_model = function(
 		# SIMPLE expects temp.couple relative to 1960-1990. i0$gis should match this.
 		temp.couple = temp.couple - mean(temp.couple[i0$gis])
 
-    ## Run SIMPLE (Greenland Ice Sheet model)
-    simple.out = simpleF(a=a.simple, b=b.simple, alpha=alpha.simple,
-											 	 beta=beta.simple, V0=V0, Tg=temp.couple, i0=i0$gis)
+        ## Run SIMPLE (Greenland Ice Sheet model)
+        simple.out = simpleF(a=a.simple, b=b.simple, alpha=alpha.simple,
+                             beta=beta.simple, V0=V0, Tg=temp.couple, i0=i0$gis)
 
 		## Add this contribution to the total sea level rise
 		slr.out = slr.out + (simple.out$sle.gis - mean(simple.out$sle.gis[ind.norm.sl]))
@@ -193,12 +232,12 @@ brick_model = function(
 
 		brick.out[[outcnt]] = simple.out; names(brick.out)[outcnt]="simple.out"; outcnt=outcnt+1;
 
-  }
+    }
 
 	#=============================================================================
 	# DAIS - Antarctic ice sheet
 
-  if (luse.brick[,"luse.dais"]) {
+    if (luse.brick[,"luse.dais"]) {
 
 		## Grab DAIS parameters
 		anto.a=parameters.in[match("anto.a",parnames.in)]
@@ -227,10 +266,9 @@ brick_model = function(
 			dSL.gsic= diff(gsic.out)
 			dSL.te	= diff(te.out)
 			for (i in 2:length(mod.time)) {
-				SL.couple[i] = SL.couple[i-1] + timestep*(	1.1*dSL.gis[i] +
-																										1.1*dSL.gsic[i] +
-																										1.0*dSL.te[i]
-																										)
+				SL.couple[i] = SL.couple[i-1] + tstep*(	1.1*dSL.gis[i] +
+                                                        1.1*dSL.gsic[i]+
+														1.0*dSL.te[i]  )
 			}
 		}
 
@@ -239,18 +277,17 @@ brick_model = function(
 
 		itmp = ind.norm.data[match("sl",ind.norm.data[,1]),2]:ind.norm.data[match("sl",ind.norm.data[,1]),3]
 		SL.couple = slr.out
-  	SL.couple = SL.couple - mean(SL.couple[itmp])
+		SL.couple = SL.couple - mean(SL.couple[itmp])
 		dSL.couple = c(-999,diff(slr.out))
 		include_dSLais = 0		# in coupled model, feeding AIS dSL without AIS contribution
 
 		## Check to make sure output from other models was reasonable
 		if(any(is.na(SL.couple))) {
-			slr.out=rep(NA,length(mod.time))
-			brick.out[[outcnt]] = slr.out; names(brick.out)[outcnt]="dais.out"; outcnt=outcnt+1;
-		}	else {
+          slr.out=rep(NA,length(mod.time))
+          brick.out[[outcnt]] = slr.out; names(brick.out)[outcnt]="dais.out"; outcnt=outcnt+1;
+		} else {
 
-  		dais.out = daisantoF(
-#			dais.out = daisanto(
+  		  dais.out = daisantoF(
                        		anto.a=anto.a , anto.b=anto.b,
                        		gamma=gamma   , alpha=alpha.dais,
                        		mu=mu         , nu=nu        ,
@@ -258,20 +295,20 @@ brick_model = function(
                        		f0=f0         , h0=h0        ,
                        		c=c           , b0=b0        ,
                        		slope=slope   ,
-											 		slope.Ta2Tg=slope.Ta2Tg.in, intercept.Ta2Tg=intercept.Ta2Tg.in,
+							slope.Ta2Tg=slope.Ta2Tg.in, intercept.Ta2Tg=intercept.Ta2Tg.in,
                        		Tg=temp.couple, SL=SL.couple, dSL=dSL.couple ,
-													includes_dSLais = include_dSLais)
+							includes_dSLais = include_dSLais)
 
-		  ## Subtract off normalization period
+          ## Subtract off normalization period
 		  itmp = ind.norm.data[match("ais",ind.norm.data[,1]),2]:ind.norm.data[match("ais",ind.norm.data[,1]),3]
-  		dais.out.norm = dais.out - mean(dais.out[itmp])
+  		  dais.out.norm = dais.out - mean(dais.out[itmp])
 
-    	brick.out[[outcnt]] = dais.out.norm; names(brick.out)[outcnt]="dais.out"; outcnt=outcnt+1;
+    	  brick.out[[outcnt]] = dais.out.norm; names(brick.out)[outcnt]="dais.out"; outcnt=outcnt+1;
 
-			## Add this contribution to the total sea level rise
-			slr.out = slr.out + (dais.out.norm - mean(dais.out.norm[ind.norm.sl]))
+		  ## Add this contribution to the total sea level rise
+		  slr.out = slr.out + (dais.out.norm - mean(dais.out.norm[ind.norm.sl]))
 
-  	}
+  	    }
 	}
 
 	#=============================================================================
@@ -279,7 +316,7 @@ brick_model = function(
 
 	## Add the SLR to the output
 	brick.out[[sum(luse.brick)+1]] = slr.out - mean(slr.out[ind.norm.sl])
-  names(brick.out)[sum(luse.brick)+1]="slr.out"
+	names(brick.out)[sum(luse.brick)+1]="slr.out"
 
 	## Check to make sure all the output made it
 	if(outcnt!=sum(luse.brick)+1) print('ERROR - missing model output!')
