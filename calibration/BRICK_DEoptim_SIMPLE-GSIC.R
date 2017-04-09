@@ -95,21 +95,31 @@ minimize_residuals_brick = function(
 	}
 
   if(luse.brick[,"luse.te"]) {
-    # Note 1: the trends from IPCC are in mm/year, and model output is m
-    # Note 2: these calculate the least squares regression slope coefficients. It
-    # is more than twice as fast to calcualte by hand like this than to use R's
-    # "lm(...)" function.
-    # Note 3: Need 1000*trends.mod because they're in meters, but trends.te is mm
-		trends.mod = rep(0, nrow(trends.te))
-		for (i in 1:nrow(trends.te)) {
-			x = seq(trends.te[i,6],trends.te[i,7]);              barx = mean(x);
-			y = brick.out$te.out[trends.te[i,6]:trends.te[i,7]]; bary = mean(y);
-	  	trends.mod[i] = sum( (x-rep(barx,length(x)))*(y-rep(bary,length(y))))/sum( (x-rep(barx,length(x)))^2 )
-		}
+
+    resid.sl.te = (obs$sl[oidx$sl]-mean(obs$sl[oidx$sl[1:20]])) -
+                  (brick.out$te.out[midx$sl]-mean(brick.out$te.out[midx$sl[1:20]]))
+
+    if(all(resid.sl.te[20:length(resid.sl.te)]>0)){
+
+      # Note 1: the trends from IPCC are in mm/year, and model output is m
+      # Note 2: these calculate the least squares regression slope coefficients. It
+      # is more than twice as fast to calcualte by hand like this than to use R's
+      # "lm(...)" function.
+      # Note 3: Need 1000*trends.mod because they're in meters, but trends.te is mm
+	  trends.mod = rep(0, nrow(trends.te))
+      for (i in 1:nrow(trends.te)) {
+		x = seq(trends.te[i,6],trends.te[i,7]);              barx = mean(x);
+		y = brick.out$te.out[trends.te[i,6]:trends.te[i,7]]; bary = mean(y);
+	 	trends.mod[i] = sum( (x-rep(barx,length(x)))*(y-rep(bary,length(y))))/sum( (x-rep(barx,length(x)))^2 )
+      }
 	  resid.trends = 1000*trends.mod - trends.te[,1]
-		err.trends   = 0.5*(trends.te[,3]-trends.te[,2])
-		te.norm.resid = mean(abs(resid.trends/ err.trends ))
-	}
+      err.trends   = 0.5*(trends.te[,3]-trends.te[,2])
+      te.norm.resid = mean(abs(resid.trends/ err.trends ))
+
+    } else {
+      te.norm.resid = 1e10
+    }
+  }
 
   if(!is.null(oidx$gis) & luse.brick[,"luse.simple"]) {
 	  simple.resid  = (obs$gis[oidx$gis]-brick.out$simple.out$sle.gis[midx$gis])/obs.err$gis
