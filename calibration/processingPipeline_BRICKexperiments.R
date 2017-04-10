@@ -86,7 +86,7 @@ experiment='c'  ## Which model set-up? (c = control, with MAGICC-GSIC; e = exper
 appen=''		## Append file name? In case you process multiple files in one day
 today=Sys.Date(); today=format(today,format="%d%b%Y")
 
-n.ensemble = 1000#135000
+n.ensemble = 135000
 n.ensemble.gmsl = 10671		# pick n.ensemble for BRICK-GMSL to match control
 n.ensemble.report = n.ensemble
 
