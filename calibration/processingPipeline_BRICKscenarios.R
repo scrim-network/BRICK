@@ -5,45 +5,45 @@
 ## This is done for the standard BRICK experiment (control), as well as
 ## - the GSIC-SIMPLE experiment
 ## - the BRICK-GMSL experiment (this one only to create ensembles of hindcasts
-##		and projections)
+##   and projections)
 ##
 ## 1. Data are read, hindcasts are set up. Parameters for the DAIS paleoclimatic
-##		calibration and the DOECLIM+GSIC+GIS+TE modern calibration are drawn. The
-##		number of parameter combinations (initial ensemble members) is specified
-##		in the section of the script for the user to modify. (n.ensemble)
+##    calibration and the DOECLIM+GSIC+GIS+TE modern calibration are drawn. The
+##    number of parameter combinations (initial ensemble members) is specified
+##    in the section of the script for the user to modify. (n.ensemble)
 ## 2. These full BRICK model parameter sets run the full model to obtain hindcasts
-##		of global mean sea level. The parameters are calibrated to global mean sea
-##		level data (Church and White, 2011). This is done using rejection sampling.
+##    of global mean sea level. The parameters are calibrated to global mean sea
+##    level data (Church and White, 2011). This is done using rejection sampling.
 ## 3. These fully calibrated parameter sets are written to a netCDF file whose
-##		name is given by [filename.parameters], specified by the user.
+##    name is given by [filename.parameters], specified by the user.
 ## 4. Projections of sea level and its components are made to 2100. These, as
-##		well as the hindcasts, are written to the file [filename.brickout]. This
-##		file contains the physical model output.
+##    well as the hindcasts, are written to the file [filename.brickout]. This
+##    file contains the physical model output.
 ## 5. If running the control experiment, projections of the components of sea-
-##		level rise are fingerprinted to New Orleans, Louisiana. This yields local
-##		sea-level rise for "NOLA".
+##    level rise are fingerprinted to New Orleans, Louisiana. This yields local
+##    sea-level rise for "NOLA".
 ## 6. If running the control experiment, local NOLA sea level is used in a
 ##
 ##  Required input: (set below)
-##		filename.rho_simple_fixed	csv file with the fixed value for rho.simple
+##    filename.rho_simple_fixed	csv file with the fixed value for rho.simple
 ##    filename.DAIScalibration  DAIS calibration parameter posterior draws
 ##    filename.BRICKcalibration BRICK (non-DAIS) calibration parameter posterior draws
-##		filename.parameters				[output] file name for post-calibrated parameters
-##		filename.brickout					[output] file name for BRICK physical model results
-##		filename.vdout						[output] file name for the Van Dantzig model results
+##    filename.parameters       [output] file name for post-calibrated parameters
+##    filename.brickout	        [output] file name for BRICK physical model results
+##    filename.vdout            [output] file name for the Van Dantzig model results
 ##
 ##  Output:
 ##    BRICK-model_postcalibratedParameters_[datestamp].nc
-##                            post-calibrated parameters file
-##		BRICK-model_physical_[datestamp].nc
-##														netCDF4 file with the BRICK physical model output
-##														(should be as many runs as post-calibrated parameters).
-##														Includes SIMPLE-GSIC experimental results.
-##														Includes GMSL-R07 experimental results.
-##		BRICK-model_VanDantzig_[datestamp].nc
-##														netCDF4 file with the BRICK physical model output
-##														(should be as many runs as post-calibrated parameters
-##														on the postcalibrated parameters file)
+##                              post-calibrated parameters file
+##    BRICK-model_physical_[datestamp].nc
+##                              netCDF4 file with the BRICK physical model output
+##                              (should be as many runs as post-calibrated parameters).
+##                              Includes SIMPLE-GSIC experimental results.
+##                              Includes GMSL-R07 experimental results.
+##    BRICK-model_VanDantzig_[datestamp].nc
+##                              netCDF4 file with the BRICK physical model output
+##                              (should be as many runs as post-calibrated parameters
+##                              on the postcalibrated parameters file)
 ##
 ## Questions? Tony Wong (twong@psu.edu)
 ##
@@ -72,12 +72,12 @@ t.beg = proc.time()
 ##==============================================================================
 ## Define the files you want to process/read/create
 
-dais <- 'g'	## Which DAIS model set-up? (n = no fast dynamics, u = uniform priors, g = gamma priors)
-appen <- ''				## Append file name? In case you process multiple files in one day
+dais <- 'g'     ## Which DAIS model set-up? (n = no fast dynamics, u = uniform priors, g = gamma priors)
+appen <- ''     ## Append file name? In case you process multiple files in one day
 today <- Sys.Date(); today=format(today,format="%d%b%Y")
 
-filename.rho_simple_fixed	<- "../output_calibration/rho_simple_fixed_01Nov2016.csv"
-filename.BRICKcalibration	<- "../output_calibration/BRICK-model_calibratedParameters_control_01Nov2016.nc"
+filename.rho_simple_fixed <- "../output_calibration/rho_simple_fixed_01Nov2016.csv"
+filename.BRICKcalibration <- "../output_calibration/BRICK-model_calibratedParameters_control_01Nov2016.nc"
 filename.gevstat <- '../output_calibration/BRICK_estimateGEV_03Jan2017.nc'
 
 if(dais=='n'){
@@ -98,9 +98,9 @@ filename.parameters = paste('../output_calibration/BRICK-model_postcalibratedPar
 filename.brickout = paste('../output_model/BRICK-model_physical_',name,'_',today,appen,'.nc',sep="")
 filename.vdout = paste('../output_model/VanDantzig_',name,'_',today,appen,'.nc',sep="")
 
-n.ensemble = 10000									# total number of parameter samples to send into GMSL rejection sampling
-n.ensemble.report = n.ensemble		# save for timing information
-l.dopaleo = FALSE									# skip the paleo AIS simulations?
+n.ensemble = 1000               # total number of parameter samples to send into GMSL rejection sampling
+n.ensemble.report = n.ensemble   # save for timing information
+l.dopaleo = FALSE                # skip the paleo AIS simulations?
 
 ## Add heteroscedastic (observational) error into the hindcasts?
 l.ar1.hetero = TRUE
@@ -108,6 +108,15 @@ l.ar1.hetero = TRUE
 ## Fingerprints of sea-level rise sources on local sea-level rise
 lat.fp = 29.95			# latitude of location to fingerprint local sea level rise (>0 is North, <0 is South)
 lon.fp = -90.07			# longitude of location ... (>0 is East, <0 is West)
+
+## Mean and standard deviation for sampling land water storage (LWS)
+## contributions to GMSL
+## -- Using IPCC AR5 (Church et al. 2013) --
+#lws.mean <- 0.38           # mm/y
+#lws.sd   <- (0.49-.26)/4   # mm/y (take the IPCC 5-95% range as +/-2sigma)
+## -- Using Dieng et al 2015 (doi:10.1088/1748-9326/10/12/124010)--
+lws.mean <- 0.30           # mm/y
+lws.sd   <- 0.18           # mm/y
 
 ##==============================================================================
 ##==============================================================================
@@ -187,7 +196,7 @@ parameters.ensemble.dais = mat.or.vec(n.ensemble , ncol(parameters.dais) )
 ind.dais=sample( seq(1,nrow(parameters.dais)), size=n.ensemble, replace=FALSE)
 for (p in 1:ncol(parameters.dais)){
 	for (i in 1:n.ensemble){
-  	#parameters.ensemble.dais[i,p] = rnorm( 1, mean=parameters.dais[ind.dais[i],p], sd=bandwidths.dais[1,p])
+		#parameters.ensemble.dais[i,p] = rnorm( 1, mean=parameters.dais[ind.dais[i],p], sd=bandwidths.dais[1,p])
 		parameters.ensemble.dais[i,p] = parameters.dais[ind.dais[i],p]
 	}
 }
@@ -202,7 +211,7 @@ parameters.ensemble.brick = mat.or.vec(n.ensemble , ncol(parameters.brick) )
 ind.ensemble = sample( seq(1,nrow(parameters.brick)), size=n.ensemble, replace=FALSE)
 for (p in 1:ncol(parameters.brick)){
 	for (i in 1:n.ensemble){
-	  #parameters.ensemble.brick[i,p] = rnorm( 1, mean=parameters.brick[ind.ensemble[i],p], sd=bandwidths.brick[1,p])
+		#parameters.ensemble.brick[i,p] = rnorm( 1, mean=parameters.brick[ind.ensemble[i],p], sd=bandwidths.brick[1,p])
 		parameters.ensemble.brick[i,p] = parameters.brick[ind.ensemble[i],p]
 	}
 }
@@ -230,20 +239,18 @@ n.time=length(mod.time)
 forcing = read.csv( '../data/forcing_hindcast.csv', header=TRUE )
 
 ## Source some useful functions for manipulating data
-source('../R/forcing_total.R')					# function to add up the total forcing
-source('../R/compute_indices.R')				# function to determine the model and
+source('../R/forcing_total.R')          # function to add up the total forcing
+source('../R/compute_indices.R')        # function to determine the model and
 																				# data indices for comparisons
 
 ## Source the model(s) and data
-source('../fortran/R/doeclimF.R')  			# the DOECLIM model - resets the mod.time
+source('../fortran/R/doeclimF.R')       # the DOECLIM model - resets the mod.time
 source('../fortran/R/daisanto_fastdynF.R')# for translating Tg (surface temperature anomaly)
 																				# to Ta (Antarctic temperature reduced to sea level)
 																				# and Toc (Antarctic/high-latitude ocean temperature)
 source('../fortran/R/GSIC_magiccF.R') 	# the GSIC model
 source('../fortran/R/brick_te_F.R')   	# TE (thermal expansion) model
 source('../fortran/R/simpleF.R')      	# GIS (Greenland Ice Sheet) model
-source('../R/GSIC_magicc.R') 	# the GSIC model
-source('../R/simple.R')      	# GIS (Greenland Ice Sheet) model
 
 ## Read the data sets for hindcast comparisons
 source('../calibration/DOECLIM_readData.R')
@@ -305,20 +312,20 @@ print(paste('Starting ',n.ensemble,' model hindcasts...',sep=''))
 pb <- txtProgressBar(min=0,max=n.ensemble,initial=0,style=3)
 for (i in 1:n.ensemble) {
 
-	brick.out[[i]] = brick_model(	parameters.in			= as.numeric(parameters[i,]),
-																parnames.in				= parnames,
-																forcing.in				= forcing,
-																l.project					= l.project,
-																slope.Ta2Tg.in		= slope.Ta2Tg,
-																intercept.Ta2Tg.in= intercept.Ta2Tg,
-																mod.time					= mod.time,
-																ind.norm.data 		= ind.norm.data,
-																ind.norm.sl 			= ind.norm,
-																luse.brick 				= luse.brick,
-																i0								= i0
-																)
+        brick.out[[i]] = brick_model(parameters.in = as.numeric(parameters[i,]),
+                                     parnames.in = parnames,
+                                     forcing.in = forcing,
+                                     l.project = l.project,
+                                     slope.Ta2Tg.in = slope.Ta2Tg,
+                                     intercept.Ta2Tg.in = intercept.Ta2Tg,
+                                     mod.time = mod.time,
+                                     ind.norm.data = ind.norm.data,
+                                     ind.norm.sl = ind.norm,
+                                     luse.brick = luse.brick,
+                                     i0 = i0
+                                     )
 
-  setTxtProgressBar(pb, i)
+        setTxtProgressBar(pb, i)
 }
 close(pb)
 print(paste(' ... done running model hindcasts'))
@@ -349,8 +356,8 @@ temp.out.norm   = temp.out
 ocheat.out.norm = ocheat.out
 gsic.out.norm   = gsic.out
 gis.out.norm    = gis.out
-ais.out.norm		= ais.out
-te.out.norm		  = te.out
+ais.out.norm    = ais.out
+te.out.norm     = te.out
 
 ## And add statistical noise
 slr.norm.stat    = slr.out
@@ -359,7 +366,7 @@ ocheat.norm.stat = ocheat.out
 gsic.norm.stat   = gsic.out
 gis.norm.stat    = gis.out
 ais.norm.stat    = ais.out
-te.norm.stat	   = te.out
+te.norm.stat     = te.out
 
 ## Go through each simulation and collect, normalize and add modeled error to
 ## the fields
@@ -369,8 +376,8 @@ print(paste('Starting to add up total sea level rise from model hindcasts...',se
 pb <- txtProgressBar(min=0,max=n.ensemble,initial=0,style=3)
 for (i in 1:n.ensemble) {
 
-	T0=parameters[i,match("T0",parnames)]
-	H0=parameters[i,match("H0",parnames)]
+  T0=parameters[i,match("T0",parnames)]
+  H0=parameters[i,match("H0",parnames)]
 
   # set the results (note that we already have slr.out)
   temp.out[i,]   = brick.out[[i]]$doeclim.out$temp + T0
@@ -380,51 +387,51 @@ for (i in 1:n.ensemble) {
   temp.out.norm[i,]   = temp.out[i,]  -mean(temp.out[i,1:20])
   ocheat.out.norm[i,] = ocheat.out[i,]#-mean(ocheat.out[i,ind.norm.data[which(ind.norm.data[,1]=='ocheat'),2]:ind.norm.data[which(ind.norm.data[,1]=='ocheat'),3]])
 
-	# Add the statistcal model for AR1 (or otherwise) noise
-	sigma.T     =parameters[i,match("sigma.T"     ,parnames)]
-	rho.T       =parameters[i,match("rho.T"       ,parnames)]
-	sigma.H     =parameters[i,match("sigma.H"     ,parnames)]
-	rho.H       =parameters[i,match("rho.H"       ,parnames)]
-	err.temp	 = rep(sigma.T,n.time); if(l.ar1.hetero) {err.temp[midx.temp]=sqrt(sigma.T^2 + obs.temp.err[oidx.temp]^2)}
-	err.ocheat = rep(sigma.H,n.time); if(l.ar1.hetero) {err.ocheat[midx.ocheat]=sqrt(sigma.H^2+obs.ocheat.err[oidx.ocheat]^2)}
-	temp.norm.stat[i,]   = temp.out.norm[i,]   + ar1.sim(n.time, rho.T, err.temp)
-	ocheat.norm.stat[i,] = ocheat.out.norm[i,] + ar1.sim(n.time, rho.H, err.ocheat)
+  # Add the statistcal model for AR1 (or otherwise) noise
+  sigma.T     =parameters[i,match("sigma.T"     ,parnames)]
+  rho.T       =parameters[i,match("rho.T"       ,parnames)]
+  sigma.H     =parameters[i,match("sigma.H"     ,parnames)]
+  rho.H       =parameters[i,match("rho.H"       ,parnames)]
+  err.temp    = rep(sigma.T,n.time); if(l.ar1.hetero) {err.temp[midx.temp]=sqrt(sigma.T^2 + obs.temp.err[oidx.temp]^2)}
+  err.ocheat  = rep(sigma.H,n.time); if(l.ar1.hetero) {err.ocheat[midx.ocheat]=sqrt(sigma.H^2+obs.ocheat.err[oidx.ocheat]^2)}
+  temp.norm.stat[i,]   = temp.out.norm[i,]   + ar1.sim(n.time, rho.T, err.temp)
+  ocheat.norm.stat[i,] = ocheat.out.norm[i,] + ar1.sim(n.time, rho.H, err.ocheat)
 
-	gsic.out[i,]   = brick.out[[i]]$gsic.out
-	gis.out[i,]    = brick.out[[i]]$simple.out$sle.gis
-	te.out[i,]     = brick.out[[i]]$te.out
-	ais.out[i,] = brick.out[[i]]$dais.out$Vais
+  gsic.out[i,]   = brick.out[[i]]$gsic.out
+  gis.out[i,]    = brick.out[[i]]$simple.out$sle.gis
+  te.out[i,]     = brick.out[[i]]$te.out
+  ais.out[i,] = brick.out[[i]]$dais.out$Vais
 
   # Normalize the output to "ind.norm.data"
   gsic.out.norm[i,]   = gsic.out[i,]  -mean(gsic.out[i,ind.norm.data[which(ind.norm.data[,1]=='gsic'),2]:ind.norm.data[which(ind.norm.data[,1]=='gsic'),3]])
   gis.out.norm[i,]    = gis.out[i,]   -mean(gis.out[i,ind.norm.data[which(ind.norm.data[,1]=='gis'),2]:ind.norm.data[which(ind.norm.data[,1]=='gis'),3]])
   ais.out.norm[i,]    = ais.out[i,]   -mean(ais.out[i,ind.norm.data[which(ind.norm.data[,1]=='ais'),2]:ind.norm.data[which(ind.norm.data[,1]=='ais'),3]])
-	te.out.norm[i,]     = te.out[i,]    -mean(te.out[i,ind.norm.data[which(ind.norm.data[,1]=='te'),2]:ind.norm.data[which(ind.norm.data[,1]=='te'),3]])
+  te.out.norm[i,]     = te.out[i,]    -mean(te.out[i,ind.norm.data[which(ind.norm.data[,1]=='te'),2]:ind.norm.data[which(ind.norm.data[,1]=='te'),3]])
 
-	# Add the statistcal model for AR1 (or otherwise) noise
-	sigma.gsic  =parameters[i,match("sigma.gsic"  ,parnames)]
-	rho.gsic    =parameters[i,match("rho.gsic"    ,parnames)]
+  # Add the statistcal model for AR1 (or otherwise) noise
+  sigma.gsic  =parameters[i,match("sigma.gsic"  ,parnames)]
+  rho.gsic    =parameters[i,match("rho.gsic"    ,parnames)]
   sigma.simple=parameters[i,match("sigma.simple",parnames)]
   rho.simple  =parameters[i,match("rho.simple"  ,parnames)]
-	var.dais    =parameters[i,match("var.dais"    ,parnames)]
-	if(is.null(rho.simple) | is.na(rho.simple)) rho.simple=rho.simple.fixed
+  var.dais    =parameters[i,match("var.dais"    ,parnames)]
+  if(is.null(rho.simple) | is.na(rho.simple)) rho.simple=rho.simple.fixed
 
 	err.gsic = rep(sigma.gsic,n.time); if(l.ar1.hetero) {err.gsic[midx.gsic]=sqrt(sigma.gsic^2+obs.gsic.err[oidx.gsic]^2)}
 	err.gis = rep(sigma.simple,n.time); if(l.ar1.hetero) {err.gis[midx.gis]=sqrt(sigma.simple^2+obs.gis.err^2)}
 
-	gsic.norm.stat[i,]   = gsic.out.norm[i,]   + ar1.sim(n.time, rho.gsic, err.gsic)
-	gis.norm.stat[i,]    = gis.out.norm[i,]    + ar1.sim(n.time, rho.simple, err.gis)
-	ais.norm.stat[i,]    = ais.out.norm[i,]    #+ rnorm(  n.time, mean=0,sd=sqrt(var.dais))
-	te.norm.stat[i,]     = te.out.norm[i,]
+	gsic.norm.stat[i,] = gsic.out.norm[i,]   + ar1.sim(n.time, rho.gsic, err.gsic)
+	gis.norm.stat[i,]  = gis.out.norm[i,]    + ar1.sim(n.time, rho.simple, err.gis)
+	ais.norm.stat[i,]  = ais.out.norm[i,]    #+ rnorm(  n.time, mean=0,sd=sqrt(var.dais))
+	te.norm.stat[i,]   = te.out.norm[i,]
 
-	slr.norm.stat[i,] = gsic.norm.stat[i,] +
-									  	gis.norm.stat[i,]  +
-									  	ais.norm.stat[i,]  +
-									  	te.norm.stat[i,]
+	slr.norm.stat[i,]  = gsic.norm.stat[i,] +
+                             gis.norm.stat[i,]  +
+                             ais.norm.stat[i,]  +
+                             te.norm.stat[i,]
 
 	slr.norm.stat[i,] = slr.norm.stat[i,] - mean(slr.norm.stat[i,ind.norm.data[which(ind.norm.data[,1]=='sl'),2]:ind.norm.data[which(ind.norm.data[,1]=='sl'),3]])
 
-  setTxtProgressBar(pb, i)
+    setTxtProgressBar(pb, i)
 }
 close(pb)
 print(paste(' ... done adding up model hindcast sea level rise and contributions'))
@@ -438,20 +445,64 @@ ibeg=which(obs.sl.time==mod.time[ind.norm.data[which(ind.norm.data[,1]=='sl'),2]
 iend=which(obs.sl.time==mod.time[ind.norm.data[which(ind.norm.data[,1]=='sl'),3]])
 obs.sl = obs.sl - mean(obs.sl[ibeg:iend])
 
-# maximum likelihood of sea-level rise data would occur if you saw the exact
-# same data out in the wild
-resid = obs.sl-obs.sl
-lik.max = sum(dnorm(resid,sd=obs.sl.err,log=TRUE))/n.ensemble
+# calibrate to the Church and White data with land water subtracted out
+# and uncertainties added in quadrature
+# assumed budget: TE+AIS+GIS+GSIC+LWS = GMSL
+# 1901-1990: –0.11 [–0.16 to –0.06] (5-95% range)
+lw.time.1900 <- 1900:1989
+i1900 <- which(mod.time==lw.time.1900[1]):which(mod.time==lw.time.1900[length(lw.time.1900)])
+lw.1900 <- (-0.11/1000)*(lw.time.1900 - 1900)
+lw.err.1900 <- (0.25*(-0.06--0.16)/1000)*sqrt(lw.time.1900 - lw.time.1900[1])
+# 1971-2010: 0.12 [0.03 to 0.22]
+lw.time.1970 <- 1970:2009
+i1970 <- which(mod.time==lw.time.1970[1]):which(mod.time==lw.time.1970[length(lw.time.1970)])
+lw.1970 <- (0.12/1000)*(lw.time.1970 - lw.time.1970[1])
+lw.err.1970 <- (0.25*(0.2-0.03)/1000)*sqrt(lw.time.1970 - lw.time.1970[1])
+# 1993-2010: 0.38 [0.26 to 0.49]
+lw.time.1992 <- 1992:2009
+i1992 <- which(mod.time==lw.time.1992[1]):which(mod.time==lw.time.1992[length(lw.time.1992)])
+lw.1992 <- (0.38/1000)*(lw.time.1992 - lw.time.1992[1])
+lw.err.1992 <- (0.25*(0.49-0.26)/1000)*sqrt(lw.time.1992 - lw.time.1992[1])
 
-# suppose each of the concomitant parameter combinations yields a sea-level rise
-# simulation that is uniformly distributed with probability lik.max.
-# this is certainly an upper bound on the likelihood function given the actual
-# sea level rise data, evaluated at the simulated sea level rise (lik.mem).
-# the ratio of lik.mem to lik.max is the acceptance ratio for rejection sampling
+# normalize, subtract and add error in quadrature
+obs.sl.lw.1900 <- obs.sl[which(obs.sl.time==lw.time.1900[1]):which(obs.sl.time==lw.time.1900[length(lw.time.1900)])] - obs.sl[which(obs.sl.time==lw.time.1900[1])]
+obs.sl.lw.1970 <- obs.sl[which(obs.sl.time==lw.time.1970[1]):which(obs.sl.time==lw.time.1970[length(lw.time.1970)])] - obs.sl[which(obs.sl.time==lw.time.1970[1])]
+obs.sl.lw.1992 <- obs.sl[which(obs.sl.time==lw.time.1992[1]):which(obs.sl.time==lw.time.1992[length(lw.time.1992)])] - obs.sl[which(obs.sl.time==lw.time.1992[1])]
+
+obs.sl.lw.1900 <- obs.sl.lw.1900 - lw.1900
+obs.sl.lw.1970 <- obs.sl.lw.1970 - lw.1970
+obs.sl.lw.1992 <- obs.sl.lw.1992 - lw.1992
+
+obs.sl.lw.err.1900 <- sqrt(obs.sl.err[which(obs.sl.time==lw.time.1900[1]):which(obs.sl.time==lw.time.1900[length(lw.time.1900)])]^2 + lw.err.1900^2)
+obs.sl.lw.err.1970 <- sqrt(obs.sl.err[which(obs.sl.time==lw.time.1970[1]):which(obs.sl.time==lw.time.1970[length(lw.time.1970)])]^2 + lw.err.1970^2)
+obs.sl.lw.err.1992 <- sqrt(obs.sl.err[which(obs.sl.time==lw.time.1992[1]):which(obs.sl.time==lw.time.1992[length(lw.time.1992)])]^2 + lw.err.1992^2)
+
+# calculate likelihood as the product of the three independent likelihoods
+# Edit: removed llik.1970 because this overlaps with llik.1992
+resid.1900 <- obs.sl.lw.1900 - obs.sl.lw.1900
+llik.1900 <- sum(dnorm(resid.1900, sd=obs.sl.lw.err.1900, log=TRUE))
+resid.1970 <- obs.sl.lw.1970 - obs.sl.lw.1970
+llik.1970 <- sum(dnorm(resid.1970, sd=obs.sl.lw.err.1970, log=TRUE))
+resid.1992 <- obs.sl.lw.1992 - obs.sl.lw.1992
+llik.1992 <- sum(dnorm(resid.1992, sd=obs.sl.lw.err.1992, log=TRUE))
+#lik.max <- (llik.1900 + llik.1970 + llik.1992)/n.ensemble
+lik.max <- (llik.1900 + llik.1992)/n.ensemble
+
+imod.1900 <- which(mod.time==lw.time.1900[1]):which(mod.time==lw.time.1900[length(lw.time.1900)])
+imod.1970 <- which(mod.time==lw.time.1970[1]):which(mod.time==lw.time.1970[length(lw.time.1970)])
+imod.1992 <- which(mod.time==lw.time.1992[1]):which(mod.time==lw.time.1992[length(lw.time.1992)])
+
+# Edit: removed llik.1970 because this overlaps with llik.1992
 uni.rnd = log(runif(n.ensemble))
 for (i in 1:n.ensemble) {
-	resid = obs.sl[oidx.sl] - slr.norm.stat[i,midx.sl]
-	lik.mem = sum(dnorm(resid, sd=obs.sl.err, log=TRUE))
+	resid.1900 <- obs.sl.lw.1900 - (slr.norm.stat[i,imod.1900]-slr.norm.stat[i,imod.1900[1]])
+	resid.1970 <- obs.sl.lw.1970 - (slr.norm.stat[i,imod.1970]-slr.norm.stat[i,imod.1970[1]])
+	resid.1992 <- obs.sl.lw.1992 - (slr.norm.stat[i,imod.1992]-slr.norm.stat[i,imod.1992[1]])
+	llik.1900 <- sum(dnorm(resid.1900, sd=obs.sl.lw.err.1900, log=TRUE))
+	llik.1970 <- sum(dnorm(resid.1970, sd=obs.sl.lw.err.1970, log=TRUE))
+	llik.1992 <- sum(dnorm(resid.1992, sd=obs.sl.lw.err.1992, log=TRUE))
+	#lik.mem <- llik.1900 + llik.1970 + llik.1992
+	lik.mem <- llik.1900 + llik.1992
 	if( uni.rnd[i] <= lik.mem-lik.max) {survive[i]=1}
 }
 ind.survive = which( as.logical(survive))
@@ -501,7 +552,7 @@ print(paste('Starting ',n.ensemble,' DAIS paleo hindcast simulations, using the 
 pb <- txtProgressBar(min=0,max=n.ensemble,initial=0,style=3);
 for (i in 1:n.ensemble) {
 
-	anto.a=parameters.good[i,match("anto.a",parnames)]
+  anto.a=parameters.good[i,match("anto.a",parnames)]
   anto.b=parameters.good[i,match("anto.b",parnames)]
   gamma =parameters.good[i,match("gamma" ,parnames)]
   alpha =parameters.good[i,match("alpha.dais" ,parnames)]
@@ -515,30 +566,29 @@ for (i in 1:n.ensemble) {
   b0 =parameters.good[i,match("b0" ,parnames)]
   slope =parameters.good[i,match("slope" ,parnames)]
   var.dais =parameters.good[i,match("var.dais" ,parnames)]
-	Tcrit = parameters.good[match("Tcrit",parnames)]
-	lambda = parameters.good[match("lambda",parnames)]
+  Tcrit = parameters.good[match("Tcrit",parnames)]
+  lambda = parameters.good[match("lambda",parnames)]
 
-	dais.out = daisanto_fastdynF(
-											anto.a=anto.a, anto.b=anto.b,
-                      slope.Ta2Tg=slope.Ta2Tg, intercept.Ta2Tg=intercept.Ta2Tg,
-                      gamma=gamma  , alpha=alpha  ,
-                      mu=mu        , nu=nu        ,
-                      P0=P0        , kappa=kappa  ,
-                      f0=f0        , h0=h0        ,
-                      c=c          , b0=b0        ,
-                      slope=slope  ,
-											Tcrit=Tcrit	 , lambda=lambda,
-                      Tg=Tg.recon  , SL=SL , dSL=dSL, includes_dSLais=1
-											)
-	dais.tmp=dais.out$Vais
+  dais.out = daisanto_fastdynF(anto.a=anto.a, anto.b=anto.b,
+                               slope.Ta2Tg=slope.Ta2Tg, intercept.Ta2Tg=intercept.Ta2Tg,
+                               gamma=gamma  , alpha=alpha  ,
+                               mu=mu        , nu=nu        ,
+                               P0=P0        , kappa=kappa  ,
+                               f0=f0        , h0=h0        ,
+                               c=c          , b0=b0        ,
+                               slope=slope  ,
+                               Tcrit=Tcrit	 , lambda=lambda,
+                               Tg=Tg.recon  , SL=SL , dSL=dSL, includes_dSLais=1
+                               )
+  dais.tmp=dais.out$Vais
 
-	# Subtract off the 1961-1990 normalization period
-	dais.norm = dais.tmp - mean(dais.tmp[ind.norm.paleo])
+  # Subtract off the 1961-1990 normalization period
+  dais.norm = dais.tmp - mean(dais.tmp[ind.norm.paleo])
 
-	# Add the modeled error back in
-	dais.paleo[i,] = dais.norm + rnorm(n.paleo, mean=0,sd=sqrt(var.dais))
+  # Add the modeled error back in
+  dais.paleo[i,] = dais.norm + rnorm(n.paleo, mean=0,sd=sqrt(var.dais))
 
-	setTxtProgressBar(pb, i)
+  setTxtProgressBar(pb, i)
 }
 close(pb)
 
@@ -550,7 +600,7 @@ source('../Useful/MultipleOutput.R') # defines the ":=" operator
 ## Actually tally up the data
 pb <- txtProgressBar(min=0,max=length(date),initial=0,style=3);
 for (t in 1:length(date)){
-	c(dais.paleo.05[t] , dais.paleo.50[t] , dais.paleo.95[t] , dais.paleo.max[t], dais.paleo.min[t]) := quantile(dais.paleo[,t],c(0.05,.50,.95,1,0), na.rm=TRUE)
+  c(dais.paleo.05[t] , dais.paleo.50[t] , dais.paleo.95[t] , dais.paleo.max[t], dais.paleo.min[t]) := quantile(dais.paleo[,t],c(0.05,.50,.95,1,0), na.rm=TRUE)
   setTxtProgressBar(pb, t)
 }
 close(pb)
@@ -559,11 +609,11 @@ print(paste(' ... done with the paleo simulations!',sep=''))
 print(paste('Smoothing the paleo simulations with ',n.avg,'-year averages ...',sep=''))
 pb <- txtProgressBar(min=0,max=n.time.avg,initial=0,style=3);
 for (t in 1:(n.time.avg-1)){
-	dais.paleo.05.avg[t] = mean(dais.paleo.05[((t-1)*n.avg+1) : (t*n.avg)])
-	dais.paleo.50.avg[t] = mean(dais.paleo.50[((t-1)*n.avg+1) : (t*n.avg)])
-	dais.paleo.95.avg[t] = mean(dais.paleo.95[((t-1)*n.avg+1) : (t*n.avg)])
-	dais.paleo.max.avg[t] = mean(dais.paleo.max[((t-1)*n.avg+1) : (t*n.avg)])
-	dais.paleo.min.avg[t] = mean(dais.paleo.min[((t-1)*n.avg+1) : (t*n.avg)])
+  dais.paleo.05.avg[t] = mean(dais.paleo.05[((t-1)*n.avg+1) : (t*n.avg)])
+  dais.paleo.50.avg[t] = mean(dais.paleo.50[((t-1)*n.avg+1) : (t*n.avg)])
+  dais.paleo.95.avg[t] = mean(dais.paleo.95[((t-1)*n.avg+1) : (t*n.avg)])
+  dais.paleo.max.avg[t] = mean(dais.paleo.max[((t-1)*n.avg+1) : (t*n.avg)])
+  dais.paleo.min.avg[t] = mean(dais.paleo.min[((t-1)*n.avg+1) : (t*n.avg)])
   setTxtProgressBar(pb, t)
 }
 dais.paleo.05.avg[n.time.avg] = mean(dais.paleo.05[((n.time.avg-1)*n.avg+1) : length(date)])
@@ -575,7 +625,8 @@ close(pb)
 print(paste(' ... done smoothing the paleo simulations!',sep=''))
 
 } else {
-	print('Skipping the DAIS paleo simulations. They will show up as NAN on the history files.')
+  # if not-l.dopaleo
+  print('Skipping the DAIS paleo simulations. They will show up as NAN on the history files.')
 }
 
 
@@ -713,23 +764,23 @@ for (ff in 1:n.scen) {
 	pb <- txtProgressBar(min=0,max=n.ensemble,initial=0,style=3);
 	for (i in 1:n.ensemble) {
 
-		brick.out[[i]] = brick_model(	parameters.in			= parameters.ensemble[i,],
-																	parnames.in				= parnames,
-																	forcing.in				= forcing,
-																	l.project					= l.project,
-																	slope.Ta2Tg.in		= slope.Ta2Tg,
-																	intercept.Ta2Tg.in= intercept.Ta2Tg,
-																	mod.time					= mod.time,
-																	ind.norm.data 		= ind.norm.data,
-																	ind.norm.sl 			= ind.norm,
-																	luse.brick 				= luse.brick,
-																	i0								= i0
-																	)
+            brick.out[[i]] = brick_model(parameters.in = parameters.ensemble[i,]),
+                                         parnames.in = parnames,
+                                         forcing.in = forcing,
+                                         l.project = l.project,
+                                         slope.Ta2Tg.in = slope.Ta2Tg,
+                                         intercept.Ta2Tg.in = intercept.Ta2Tg,
+                                         mod.time = mod.time,
+                                         ind.norm.data = ind.norm.data,
+                                         ind.norm.sl = ind.norm,
+                                         luse.brick = luse.brick,
+                                         i0 = i0
+                                         )
 
-		# check if the run turned out bad
-		if( is.na(brick.out[[i]]$slr.out[length(mod.time)]) ) {badruns[i]=1}
+            # check if the run turned out bad
+            if( is.na(brick.out[[i]]$slr.out[length(mod.time)]) ) {badruns[i]=1}
 
-  	setTxtProgressBar(pb, i)
+            setTxtProgressBar(pb, i)
 	}
 	close(pb)
 
@@ -763,8 +814,12 @@ proj.rcp45 = vector("list", n.scen)
 proj.rcp85 = vector("list", n.scen)
 
 ## Make each projections list a list of the SLR contributions and other fields
-names.output = c('slr','gsic','gis','ais','disint','te','temp','ocheat','ais_nofd','slr.nola','slr_nofd','slr.nola_nofd')
+names.output = c('slr','gsic','gis','ais','disint','te','lws','temp','ocheat','ais_nofd','slr.nola','slr_nofd','slr.nola_nofd')
 n.output = length(names.output)
+
+HERENOW
+HERENOW
+HERENOW
 
 proj.rcp26 = vector("list", n.output)
 proj.rcp45 = vector("list", n.output)
@@ -830,15 +885,15 @@ for (i in 1:n.ensemble) {
 	proj.rcp85$ocheat[i,] = proj.rcp85$ocheat[i,] + ar1.sim(n.time, rho.H, sigma.H)
 
 	# set the results (note that we already have slr.out)
-  proj.rcp26$gsic[i,] = brick.rcp26[[i]]$gsic.out
+	proj.rcp26$gsic[i,] = brick.rcp26[[i]]$gsic.out
 	proj.rcp26$gis[i,] = brick.rcp26[[i]]$simple.out$sle.gis
 	proj.rcp26$te[i,] = brick.rcp26[[i]]$te.out
 
-  proj.rcp45$gsic[i,] = brick.rcp45[[i]]$gsic.out
+	proj.rcp45$gsic[i,] = brick.rcp45[[i]]$gsic.out
 	proj.rcp45$gis[i,] = brick.rcp45[[i]]$simple.out$sle.gis
 	proj.rcp45$te[i,] = brick.rcp45[[i]]$te.out
 
-  proj.rcp85$gsic[i,] = brick.rcp85[[i]]$gsic.out
+	proj.rcp85$gsic[i,] = brick.rcp85[[i]]$gsic.out
 	proj.rcp85$gis[i,] = brick.rcp85[[i]]$simple.out$sle.gis
 	proj.rcp85$te[i,] = brick.rcp85[[i]]$te.out
 
@@ -892,34 +947,34 @@ for (i in 1:n.ensemble) {
 
 	# Add up to total sea-level rise
 	proj.rcp26$slr[i,] = proj.rcp26$gsic[i,] +
-												proj.rcp26$gis[i,] +
-												proj.rcp26$ais[i,] +
-												proj.rcp26$te[i,]
+	                     proj.rcp26$gis[i,] +
+	                     proj.rcp26$ais[i,] +
+	                     proj.rcp26$te[i,]
 
 	proj.rcp45$slr[i,] = proj.rcp45$gsic[i,] +
-												proj.rcp45$gis[i,] +
-												proj.rcp45$ais[i,] +
-												proj.rcp45$te[i,]
+	                     proj.rcp45$gis[i,] +
+	                     proj.rcp45$ais[i,] +
+	                     proj.rcp45$te[i,]
 
 	proj.rcp85$slr[i,] = proj.rcp85$gsic[i,] +
-												proj.rcp85$gis[i,] +
-												proj.rcp85$ais[i,] +
-												proj.rcp85$te[i,]
+	                     proj.rcp85$gis[i,] +
+	                     proj.rcp85$ais[i,] +
+	                     proj.rcp85$te[i,]
 
 	proj.rcp26$slr_nofd[i,] = proj.rcp26$gsic[i,] +
-												proj.rcp26$gis[i,] +
-												proj.rcp26$ais_nofd[i,] +
-												proj.rcp26$te[i,]
+	                          proj.rcp26$gis[i,] +
+	                          proj.rcp26$ais_nofd[i,] +
+	                          proj.rcp26$te[i,]
 
 	proj.rcp45$slr_nofd[i,] = proj.rcp45$gsic[i,] +
-												proj.rcp45$gis[i,] +
-												proj.rcp45$ais_nofd[i,] +
-												proj.rcp45$te[i,]
+	                          proj.rcp45$gis[i,] +
+	                          proj.rcp45$ais_nofd[i,] +
+	                          proj.rcp45$te[i,]
 
 	proj.rcp85$slr_nofd[i,] = proj.rcp85$gsic[i,] +
-												proj.rcp85$gis[i,] +
-												proj.rcp85$ais_nofd[i,] +
-												proj.rcp85$te[i,]
+	                          proj.rcp85$gis[i,] +
+	                          proj.rcp85$ais_nofd[i,] +
+	                          proj.rcp85$te[i,]
 
 	# And normalize sea-level rise
 	proj.rcp26$slr[i,] = proj.rcp26$slr[i,] - mean(proj.rcp26$slr[i,ind.norm])
@@ -930,7 +985,7 @@ for (i in 1:n.ensemble) {
 	proj.rcp45$slr_nofd[i,] = proj.rcp45$slr_nofd[i,] - mean(proj.rcp45$slr_nofd[i,ind.norm])
 	proj.rcp85$slr_nofd[i,] = proj.rcp85$slr_nofd[i,] - mean(proj.rcp85$slr_nofd[i,ind.norm])
 
-  setTxtProgressBar(pb, i)
+	setTxtProgressBar(pb, i)
 }
 close(pb)
 
@@ -952,54 +1007,54 @@ print(paste('Beginning fingerprinting to local sea level rise...',sep=''))
 source('../R/BRICK_LSL.R')
 
 proj.rcp26$slr.nola = brick_lsl(lat.in=lat.fp,
-																lon.in=lon.fp,
-																n.time=length(t.proj),
-																slr_gis = proj.rcp26$gis,
-																slr_gsic = proj.rcp26$gsic,
-																slr_ais = proj.rcp26$ais,
-																slr_te = proj.rcp26$te
-																)
+                                lon.in=lon.fp,
+                                n.time=length(t.proj),
+                                slr_gis = proj.rcp26$gis,
+                                slr_gsic = proj.rcp26$gsic,
+                                slr_ais = proj.rcp26$ais,
+                                slr_te = proj.rcp26$te
+                                )
 proj.rcp45$slr.nola = brick_lsl(lat.in=lat.fp,
-																lon.in=lon.fp,
-																n.time=length(t.proj),
-																slr_gis = proj.rcp45$gis,
-																slr_gsic = proj.rcp45$gsic,
-																slr_ais = proj.rcp45$ais,
-																slr_te = proj.rcp45$te
-																)
+                                lon.in=lon.fp,
+                                n.time=length(t.proj),
+                                slr_gis = proj.rcp45$gis,
+                                slr_gsic = proj.rcp45$gsic,
+                                slr_ais = proj.rcp45$ais,
+                                slr_te = proj.rcp45$te
+                                )
 proj.rcp85$slr.nola = brick_lsl(lat.in=lat.fp,
-																lon.in=lon.fp,
-																n.time=length(t.proj),
-																slr_gis = proj.rcp85$gis,
-																slr_gsic = proj.rcp85$gsic,
-																slr_ais = proj.rcp85$ais,
-																slr_te = proj.rcp85$te
-																)
+                                lon.in=lon.fp,
+                                n.time=length(t.proj),
+                                slr_gis = proj.rcp85$gis,
+                                slr_gsic = proj.rcp85$gsic,
+                                slr_ais = proj.rcp85$ais,
+                                slr_te = proj.rcp85$te
+                                )
 
 proj.rcp26$slr.nola_nofd = brick_lsl(lat.in=lat.fp,
-																lon.in=lon.fp,
-																n.time=length(t.proj),
-																slr_gis = proj.rcp26$gis,
-																slr_gsic = proj.rcp26$gsic,
-																slr_ais = proj.rcp26$ais_nofd,
-																slr_te = proj.rcp26$te
-																)
+                                     lon.in=lon.fp,
+                                     n.time=length(t.proj),
+                                     slr_gis = proj.rcp26$gis,
+                                     slr_gsic = proj.rcp26$gsic,
+                                     slr_ais = proj.rcp26$ais_nofd,
+                                     slr_te = proj.rcp26$te
+                                     )
 proj.rcp45$slr.nola_nofd = brick_lsl(lat.in=lat.fp,
-																lon.in=lon.fp,
-																n.time=length(t.proj),
-																slr_gis = proj.rcp45$gis,
-																slr_gsic = proj.rcp45$gsic,
-																slr_ais = proj.rcp45$ais_nofd,
-																slr_te = proj.rcp45$te
-																)
+                                     lon.in=lon.fp,
+                                     n.time=length(t.proj),
+                                     slr_gis = proj.rcp45$gis,
+                                     slr_gsic = proj.rcp45$gsic,
+                                     slr_ais = proj.rcp45$ais_nofd,
+                                     slr_te = proj.rcp45$te
+                                     )
 proj.rcp85$slr.nola_nofd = brick_lsl(lat.in=lat.fp,
-																lon.in=lon.fp,
-																n.time=length(t.proj),
-																slr_gis = proj.rcp85$gis,
-																slr_gsic = proj.rcp85$gsic,
-																slr_ais = proj.rcp85$ais_nofd,
-																slr_te = proj.rcp85$te
-																)
+                                     lon.in=lon.fp,
+                                     n.time=length(t.proj),
+                                     slr_gis = proj.rcp85$gis,
+                                     slr_gsic = proj.rcp85$gsic,
+                                     slr_ais = proj.rcp85$ais_nofd,
+                                     slr_te = proj.rcp85$te
+                                     )
 
 # And normalize sea-level rise
 for (i in 1:n.ensemble) {
