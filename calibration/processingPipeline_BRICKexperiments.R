@@ -86,7 +86,7 @@ experiment='c'  ## Which model set-up? (c = control, with MAGICC-GSIC; e = exper
 appen=''		## Append file name? In case you process multiple files in one day
 today=Sys.Date(); today=format(today,format="%d%b%Y")
 
-n.ensemble = 135000
+n.ensemble = 1000#135000
 n.ensemble.gmsl = 10671		# pick n.ensemble for BRICK-GMSL to match control
 n.ensemble.report = n.ensemble
 
@@ -859,7 +859,7 @@ proj.rcp85 = vector("list", n.scen)
 if(experiment=='g') {
 	names.output = c('slr','temp','ocheat')
 } else {
-	names.output = c('slr','gsic','gis','ais','disint','te','temp','ocheat','slr.nola')
+	names.output = c('slr','gsic','gis','ais','disint','te','lws','temp','ocheat','slr.nola')
 }
 n.output = length(names.output)
 
@@ -991,22 +991,6 @@ for (i in 1:n.ensemble) {
 		proj.rcp85$gsic[i,] = proj.rcp85$gsic[i,] + ar1.sim(n.time, rho.gsic, sigma.gsic)
 		proj.rcp85$gis[i,] = proj.rcp85$gis[i,] + ar1.sim(n.time, rho.simple, sigma.simple)
 
-		# Add up to total sea-level rise
-		proj.rcp26$slr[i,] = proj.rcp26$gsic[i,] +
-		                     proj.rcp26$gis[i,] +
-							 proj.rcp26$ais[i,] +
-							 proj.rcp26$te[i,]
-
-	    proj.rcp45$slr[i,] = proj.rcp45$gsic[i,] +
-		                     proj.rcp45$gis[i,] +
-							 proj.rcp45$ais[i,] +
-							 proj.rcp45$te[i,]
-
-	    proj.rcp85$slr[i,] = proj.rcp85$gsic[i,] +
-		                     proj.rcp85$gis[i,] +
-							 proj.rcp85$ais[i,] +
-							 proj.rcp85$te[i,]
-
         # Add contributions to land water storage. /1000 to convert to meters.
 		# This is done for each ensemble member and each RCP.
 		# All other contributions are normalized to 1986-2005 (some have the
@@ -1014,19 +998,35 @@ for (i in 1:n.ensemble) {
 		# normalize the lws.est contribution to this period.
 
 		# RCP2.6
-		lws.est <- cumsum(rnorm(n=n.time, mean=lws.mean, sd=lws.sd)) /1000
-		lws.est <- lws.est - mean(lws.est[ind.norm])
-		proj.rcp26$slr[i,] <- proj.rcp26$slr[i,] + lws.est
+		proj.rcp26$lws[i,] <- cumsum(rnorm(n=n.time, mean=lws.mean, sd=lws.sd)) /1000
+		proj.rcp26$lws[i,] <- proj.rcp26$lws[i,] - mean(proj.rcp26$lws[i,ind.norm])
 
 		# RCP4.5
-		lws.est <- cumsum(rnorm(n=n.time, mean=lws.mean, sd=lws.sd)) /1000
-		lws.est <- lws.est - mean(lws.est[ind.norm])
-		proj.rcp45$slr[i,] <- proj.rcp45$slr[i,] + lws.est
+		proj.rcp45$lws[i,] <- cumsum(rnorm(n=n.time, mean=lws.mean, sd=lws.sd)) /1000
+		proj.rcp45$lws[i,] <- proj.rcp45$lws[i,] - mean(proj.rcp45$lws[i,ind.norm])
 
-		# RCP8.6
-		lws.est <- cumsum(rnorm(n=n.time, mean=lws.mean, sd=lws.sd)) /1000
-		lws.est <- lws.est - mean(lws.est[ind.norm])
-		proj.rcp85$slr[i,] <- proj.rcp85$slr[i,] + lws.est
+		# RCP8.5
+		proj.rcp85$lws[i,] <- cumsum(rnorm(n=n.time, mean=lws.mean, sd=lws.sd)) /1000
+		proj.rcp85$lws[i,] <- proj.rcp85$lws[i,] - mean(proj.rcp85$lws[i,ind.norm])
+
+		# Add up to total sea-level rise
+		proj.rcp26$slr[i,] = proj.rcp26$gsic[i,] +
+		                     proj.rcp26$gis[i,] +
+							 proj.rcp26$ais[i,] +
+							 proj.rcp26$te[i,] +
+                             proj.rcp26$lws[i,]
+
+	    proj.rcp45$slr[i,] = proj.rcp45$gsic[i,] +
+		                     proj.rcp45$gis[i,] +
+							 proj.rcp45$ais[i,] +
+							 proj.rcp45$te[i,]
+                             proj.rcp26$lws[i,]
+
+	    proj.rcp85$slr[i,] = proj.rcp85$gsic[i,] +
+		                     proj.rcp85$gis[i,] +
+							 proj.rcp85$ais[i,] +
+							 proj.rcp85$te[i,]
+                             proj.rcp26$lws[i,]
 
 	} # end if(experiment!='g')
 
@@ -1052,6 +1052,8 @@ if(experiment!='g') {
 ##==============================================================================
 ##==============================================================================
 ## Local sea level rise
+## Note: leaving out land water storage. Minor contribution, and no good local
+## estimate.
 
 print(paste('Beginning fingerprinting to local sea level rise...',sep=''))
 
@@ -1155,6 +1157,8 @@ if(experiment!='g') {
                   longname = 'GIS contribution to sea level (RCP26)')
   ais.rcp26 <- ncvar_def('AIS_RCP26', 'meters', list(dim.tproj, dim.ensemble), -999,
                   longname = 'AIS contribution to sea level (RCP26)')
+  lws.rcp26 <- ncvar_def('LWS_RCP26', 'meters', list(dim.tproj, dim.ensemble), -999,
+                  longname = 'estimated LWS contribution to sea level (RCP26)')
 
   lsl.rcp45 <- ncvar_def('LocalSeaLevel_RCP45', 'meters', list(dim.tproj, dim.ensemble), -999,
                   longname = 'Local sea level (RCP45)')
@@ -1166,6 +1170,8 @@ if(experiment!='g') {
                   longname = 'GIS contribution to sea level (RCP45)')
   ais.rcp45 <- ncvar_def('AIS_RCP45', 'meters', list(dim.tproj, dim.ensemble), -999,
                   longname = 'AIS contribution to sea level (RCP45)')
+  lws.rcp45 <- ncvar_def('LWS_RCP45', 'meters', list(dim.tproj, dim.ensemble), -999,
+                  longname = 'estimated LWS contribution to sea level (RCP45)')
 
   lsl.rcp85 <- ncvar_def('LocalSeaLevel_RCP85', 'meters', list(dim.tproj, dim.ensemble), -999,
                   longname = 'Local sea level (RCP85)')
@@ -1177,6 +1183,8 @@ if(experiment!='g') {
                   longname = 'GIS contribution to sea level (RCP85)')
   ais.rcp85 <- ncvar_def('AIS_RCP85', 'meters', list(dim.tproj, dim.ensemble), -999,
                   longname = 'AIS contribution to sea level (RCP85)')
+  lws.rcp85 <- ncvar_def('LWS_RCP85', 'meters', list(dim.tproj, dim.ensemble), -999,
+                  longname = 'estimated LWS contribution to sea level (RCP85)')
 }
 
 gsl.hindcast <- ncvar_def('GlobalSeaLevel_hind', 'meters', list(dim.thind, dim.ensemble), -999,
@@ -1220,9 +1228,9 @@ if(experiment=='g') {
 } else {
 	outnc <- nc_create(filename.brickout,
 										list( gsl.rcp26, gsl.rcp45, gsl.rcp85, lsl.rcp26, lsl.rcp45, lsl.rcp85,
-													gsic.rcp26, te.rcp26, gis.rcp26, ais.rcp26, temp.rcp26, ocheat.rcp26,
-													gsic.rcp45, te.rcp45, gis.rcp45, ais.rcp45, temp.rcp45, ocheat.rcp45,
-													gsic.rcp85, te.rcp85, gis.rcp85, ais.rcp85, temp.rcp85, ocheat.rcp85,
+													gsic.rcp26, te.rcp26, gis.rcp26, ais.rcp26, temp.rcp26, ocheat.rcp26, lws.rcp26,
+													gsic.rcp45, te.rcp45, gis.rcp45, ais.rcp45, temp.rcp45, ocheat.rcp45, lws.rcp45,
+													gsic.rcp85, te.rcp85, gis.rcp85, ais.rcp85, temp.rcp85, ocheat.rcp85, lws.rcp85,
 													gsl.hindcast, gsic.hindcast, te.hindcast, gis.hindcast, ais.hindcast, temp.hindcast, ocheat.hindcast,
 													ais.paleo.05, ais.paleo.50, ais.paleo.95, ais.paleo.max, ais.paleo.min,
 													ais.paleo.05.avg, ais.paleo.50.avg, ais.paleo.95.avg, ais.paleo.max.avg, ais.paleo.min.avg),
@@ -1235,18 +1243,21 @@ if(experiment!='g') {
 	ncvar_put(outnc, te.rcp26, t(proj.rcp26$te))
 	ncvar_put(outnc, gis.rcp26, t(proj.rcp26$gis))
 	ncvar_put(outnc, ais.rcp26, t(proj.rcp26$ais))
+	ncvar_put(outnc, lws.rcp26, t(proj.rcp26$lws))
 
 	ncvar_put(outnc, lsl.rcp45, t(proj.rcp45$slr.nola))
 	ncvar_put(outnc, gsic.rcp45, t(proj.rcp45$gsic))
 	ncvar_put(outnc, te.rcp45, t(proj.rcp45$te))
 	ncvar_put(outnc, gis.rcp45, t(proj.rcp45$gis))
 	ncvar_put(outnc, ais.rcp45, t(proj.rcp45$ais))
+	ncvar_put(outnc, lws.rcp45, t(proj.rcp45$lws))
 
 	ncvar_put(outnc, lsl.rcp85, t(proj.rcp85$slr.nola))
 	ncvar_put(outnc, gsic.rcp85, t(proj.rcp85$gsic))
 	ncvar_put(outnc, te.rcp85, t(proj.rcp85$te))
 	ncvar_put(outnc, gis.rcp85, t(proj.rcp85$gis))
 	ncvar_put(outnc, ais.rcp85, t(proj.rcp85$ais))
+	ncvar_put(outnc, lws.rcp85, t(proj.rcp85$lws))
 
 	ncvar_put(outnc, gsic.hindcast, gsic.hind)
 	ncvar_put(outnc, te.hindcast, te.hind)
