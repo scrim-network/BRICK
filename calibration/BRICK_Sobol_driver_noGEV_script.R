@@ -38,7 +38,7 @@ lbuild      <- TRUE
 lfullAIS    <- TRUE   # full prior range from Wong et al 2017 (fast dynamics) for h0 and c? (fixed if FALSE)
 lfullGEV    <- TRUE   # full uncertainty in GEV parameters? (fixed if FALSE)
 begyear     <- 1850   # this is just beginning of the projections; assessment begins in 2015
-endyear     <- 2065   # must be equal to end year of flood risk assessment 
+endyear     <- 2065   # must be equal to end year of flood risk assessment
 appen       <- '-Build-AIS-2065'
 name.output.rdata <- 'BRICK_Sobol_2065noGEV.RData'
 setwd('/home/scrim/axw322/codes/BRICK/calibration')
@@ -434,7 +434,7 @@ parameters.sample2.build <- lhs.sample2[,4]
 ## add Van Dantzig, surge, and RCP to parnames and bounds (and optionally build)
 if (lbuild) {
   parameters.sobol1 <- cbind(parameters.sample1.brick, parameters.sample1.surge,
-                           parameters.sample1.subs , 
+                           parameters.sample1.subs ,
                            parameters.sample1.rcp  , parameters.sample1.build)
   parameters.sobol2 <- cbind(parameters.sample2.brick, parameters.sample2.surge,
                            parameters.sample2.subs ,
@@ -451,7 +451,7 @@ if (lbuild) {
   ind.build <- length(parnames.sobol)
 } else {
   parameters.sobol1 <- cbind(parameters.sample1.brick, parameters.sample1.surge,
-                           parameters.sample1.subs , 
+                           parameters.sample1.subs ,
                            parameters.sample1.rcp  )#, parameters.sample1.build)
   parameters.sobol2 <- cbind(parameters.sample2.brick, parameters.sample2.surge,
                            parameters.sample2.subs ,
@@ -505,11 +505,12 @@ ilat = which( abs(lat-lat.fp)==min(abs(lat-lat.fp)) )
 ilon = which( abs(lon-lon.fp)==min(abs(lon-lon.fp)) )
 # it is possible there were multiple lats/lons 'closest' to your given point
 # take the average of the non-NA of these
-fp.loc      <- vector('list',4); names(fp.loc) <- c('ais','gis','gsic','te')
+fp.loc      <- vector('list',5); names(fp.loc) <- c('ais','gis','gsic','te','lws')
 fp.loc$ais  <- mean(fp.ais[ilon,ilat],na.rm=TRUE)
 fp.loc$gsic <- mean(fp.gsic[ilon,ilat],na.rm=TRUE)
 fp.loc$gis  <- mean(fp.gis[ilon,ilat],na.rm=TRUE)
 fp.loc$te   <- 1.0		# TE response is to global mean temperature, so global mean sea level response is same everywhere
+fp.loc$lws  <- 1.0		# assume LWS is uniform
 
 # levee height
 H0 <- 16*0.3048 # initial levee height (m) (change to 16ft = 4.877m
@@ -530,6 +531,7 @@ export.names <- c('brick_model', 'doeclimF', 'gsic_magiccF', 'simpleF',
                   'intercept.Ta2Tg','mod.time','ind.norm.data', 'i2015',
                   'imodend', 'fp.loc', 'nt', 'H0', 'isca', 'iloc', 'isha', 'parameters.gev.fixed',
                   'ind.norm','luse.brick','i0','lbuild',
+                  'lws.mean', 'lws.sd',
                   'forcing.rcp26', 'forcing.rcp45',
                   'forcing.rcp60', 'forcing.rcp85')
 
@@ -616,8 +618,10 @@ brick_sobol_par <- function(dataframe.in){
         slr.te   <- brick.out$te.out[i2015:imodend]             - brick.out$te.out[i2015]
         slr.gis  <- brick.out$simple.out$sle.gis[i2015:imodend] - brick.out$simple.out$sle.gis[i2015]
         slr.ais  <- brick.out$dais.out$Vais[i2015:imodend]      - brick.out$dais.out$Vais[i2015]
+        slr.lws  <- cumsum(rnorm(n=length(mod.time), mean=lws.mean, sd=lws.sd)) /1000
+        slr.lws  <- slr.lws[i2015:imodend] - slr.lws[i2015]
         lsl.proj <- fp.loc$gsic*slr.gsic + fp.loc$te  *slr.te  +
-                    fp.loc$gis *slr.gis  + fp.loc$ais *slr.ais
+                    fp.loc$gis *slr.gis  + fp.loc$ais *slr.ais + fp.loc$lws*slr.lws
         surge.rise <- surge.factor[i] * lsl.proj
         lsl.norm.subs <- subs.rate[i]*nt + lsl.proj + surge.rise
         H_eff <- H0 - lsl.norm.subs + parameters.build[i]

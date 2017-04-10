@@ -38,18 +38,18 @@ rm(list=ls())
 ## Input file names from previous parameter sampling/calibration/simulation
 
 ## Sea-level rise projections
-#filename.allslr <- "../output_model/BRICK-model_physical_allslr_04Feb2017.nc"
-filename.gamma <- "../output_model/BRICK-fastdyn_physical_gamma_31Jan2017.nc"
-filename.uniform <- "../output_model/BRICK-fastdyn_physical_uniform_31Jan2017.nc"
+#filename.allslr <- "../output_model/BRICK_physical_allslr_04Feb2017.nc"
+filename.gamma <- "../output_model/BRICK_physical_fd-gamma_10Apr2017.nc"
+filename.uniform <- "../output_model/BRICK_physical_fd-uniform_10Apr2017.nc"
 
 ## GEV parameters, fit from tide gauge data
-filename.gevstat <- '../output_calibration/BRICK_GEVsample-AnnMean_07Feb2017.nc'
+filename.gevstat <- '../output_calibration/BRICK_GEVsample-AnnMean_07Mar2017.nc'
 
 ## Surge level increase factors (USACE)
-filename.surgefactor <- '../output_calibration/BRICK_surgefactor_04Feb2017.nc'
+#filename.surgefactor <- '../output_calibration/BRICK_surgefactor_04Feb2017.nc'
 
 ## Van Dantzig model parameters
-filename.vdparams <- '../output_calibration/BRICK-VanDantzig_parameters_04Feb2017.nc'
+#filename.vdparams <- '../output_calibration/BRICK-VanDantzig_parameters_04Feb2017.nc'
 
 ##==============================================================================
 ## What time horizon to consider?
@@ -64,7 +64,7 @@ today=Sys.Date(); today=format(today,format="%d%b%Y")
 # no fast dynamics case uses the same projections as gamma/uniform, but with the
 # fast dynamic AIS disintegration contribution neglected (subtracted)
 scen.ais <- c("none","gamma","uniform")
-scen.rcp <- c("rcp26","rcp45","rcp85")
+scen.rcp <- c("rcp26","rcp45","rcp60","rcp85")
 slr <- vector('list',length(scen.rcp)); names(slr) <- scen.rcp
 slr.nofd <- vector('list',length(scen.rcp)); names(slr) <- scen.rcp
 for (rcp in scen.rcp) {
@@ -77,12 +77,15 @@ if(exists('filename.allslr')) {
   ncdata <- nc_open(filename.allslr)
     slr$rcp26$none <- ncvar_get(ncdata, 'LocalSeaLevel_nofd_RCP26')
     slr$rcp45$none <- ncvar_get(ncdata, 'LocalSeaLevel_nofd_RCP45')
+    slr$rcp60$none <- ncvar_get(ncdata, 'LocalSeaLevel_nofd_RCP60')
     slr$rcp85$none <- ncvar_get(ncdata, 'LocalSeaLevel_nofd_RCP85')
     slr$rcp26$gamma <- ncvar_get(ncdata, 'LocalSeaLevel_gamma_RCP26')
     slr$rcp45$gamma <- ncvar_get(ncdata, 'LocalSeaLevel_gamma_RCP45')
+    slr$rcp60$gamma <- ncvar_get(ncdata, 'LocalSeaLevel_gamma_RCP60')
     slr$rcp85$gamma <- ncvar_get(ncdata, 'LocalSeaLevel_gamma_RCP85')
     slr$rcp26$uniform <- ncvar_get(ncdata, 'LocalSeaLevel_uniform_RCP26')
     slr$rcp45$uniform <- ncvar_get(ncdata, 'LocalSeaLevel_uniform_RCP45')
+    slr$rcp60$uniform <- ncvar_get(ncdata, 'LocalSeaLevel_uniform_RCP60')
     slr$rcp85$uniform <- ncvar_get(ncdata, 'LocalSeaLevel_uniform_RCP85')
     mod.time <- ncvar_get(ncdata, 'time_proj')
     n.ens <- ncol(slr$rcp26$none)
@@ -94,9 +97,11 @@ if(exists('filename.allslr')) {
     n.gamma <- ncol(ncvar_get(ncdata, 'LocalSeaLevel_nofd_RCP26'))
     slr$rcp26$gamma <- ncvar_get(ncdata, 'LocalSeaLevel_RCP26')
     slr$rcp45$gamma <- ncvar_get(ncdata, 'LocalSeaLevel_RCP45')
+    slr$rcp60$gamma <- ncvar_get(ncdata, 'LocalSeaLevel_RCP60')
     slr$rcp85$gamma <- ncvar_get(ncdata, 'LocalSeaLevel_RCP85')
     slr.nofd$rcp26$gamma <- ncvar_get(ncdata, 'LocalSeaLevel_nofd_RCP26')
     slr.nofd$rcp45$gamma <- ncvar_get(ncdata, 'LocalSeaLevel_nofd_RCP45')
+    slr.nofd$rcp60$gamma <- ncvar_get(ncdata, 'LocalSeaLevel_nofd_RCP60')
     slr.nofd$rcp85$gamma <- ncvar_get(ncdata, 'LocalSeaLevel_nofd_RCP85')
     mod.time <- ncvar_get(ncdata, 'time_proj')
   nc_close(ncdata)
@@ -105,9 +110,11 @@ if(exists('filename.allslr')) {
     n.uniform <- ncol(ncvar_get(ncdata, 'LocalSeaLevel_nofd_RCP26'))
     slr$rcp26$uniform <- ncvar_get(ncdata, 'LocalSeaLevel_RCP26')
     slr$rcp45$uniform <- ncvar_get(ncdata, 'LocalSeaLevel_RCP45')
+    slr$rcp60$uniform <- ncvar_get(ncdata, 'LocalSeaLevel_RCP60')
     slr$rcp85$uniform <- ncvar_get(ncdata, 'LocalSeaLevel_RCP85')
     slr.nofd$rcp26$uniform <- ncvar_get(ncdata, 'LocalSeaLevel_nofd_RCP26')
     slr.nofd$rcp45$uniform <- ncvar_get(ncdata, 'LocalSeaLevel_nofd_RCP45')
+    slr.nofd$rcp60$uniform <- ncvar_get(ncdata, 'LocalSeaLevel_nofd_RCP60')
     slr.nofd$rcp85$uniform <- ncvar_get(ncdata, 'LocalSeaLevel_nofd_RCP85')
   nc_close(ncdata)
 
@@ -129,41 +136,51 @@ if(exists('filename.allslr')) {
   dim.ensemble <- ncdim_def('n.ensemble', 'ensemble member', 1:ncol(slr$rcp26$none), unlim=TRUE)
   slr.rcp26.none <- ncvar_def('LocalSeaLevel_nofd_RCP26', '', list(dim.time,dim.ensemble), -999)
   slr.rcp45.none <- ncvar_def('LocalSeaLevel_nofd_RCP45', '', list(dim.time,dim.ensemble), -999)
+  slr.rcp60.none <- ncvar_def('LocalSeaLevel_nofd_RCP60', '', list(dim.time,dim.ensemble), -999)
   slr.rcp85.none <- ncvar_def('LocalSeaLevel_nofd_RCP85', '', list(dim.time,dim.ensemble), -999)
   slr.rcp26.gamma <- ncvar_def('LocalSeaLevel_gamma_RCP26', '', list(dim.time,dim.ensemble), -999)
   slr.rcp45.gamma <- ncvar_def('LocalSeaLevel_gamma_RCP45', '', list(dim.time,dim.ensemble), -999)
+  slr.rcp60.gamma <- ncvar_def('LocalSeaLevel_gamma_RCP60', '', list(dim.time,dim.ensemble), -999)
   slr.rcp85.gamma <- ncvar_def('LocalSeaLevel_gamma_RCP85', '', list(dim.time,dim.ensemble), -999)
   slr.rcp26.gamma.nofd <- ncvar_def('LocalSeaLevel_gamma_nofd_RCP26', '', list(dim.time,dim.ensemble), -999)
   slr.rcp45.gamma.nofd <- ncvar_def('LocalSeaLevel_gamma_nofd_RCP45', '', list(dim.time,dim.ensemble), -999)
+  slr.rcp60.gamma.nofd <- ncvar_def('LocalSeaLevel_gamma_nofd_RCP60', '', list(dim.time,dim.ensemble), -999)
   slr.rcp85.gamma.nofd <- ncvar_def('LocalSeaLevel_gamma_nofd_RCP85', '', list(dim.time,dim.ensemble), -999)
   slr.rcp26.uniform <- ncvar_def('LocalSeaLevel_uniform_RCP26', '', list(dim.time,dim.ensemble), -999)
   slr.rcp45.uniform <- ncvar_def('LocalSeaLevel_uniform_RCP45', '', list(dim.time,dim.ensemble), -999)
+  slr.rcp60.uniform <- ncvar_def('LocalSeaLevel_uniform_RCP60', '', list(dim.time,dim.ensemble), -999)
   slr.rcp85.uniform <- ncvar_def('LocalSeaLevel_uniform_RCP85', '', list(dim.time,dim.ensemble), -999)
   slr.rcp26.uniform.nofd <- ncvar_def('LocalSeaLevel_uniform_nofd_RCP26', '', list(dim.time,dim.ensemble), -999)
   slr.rcp45.uniform.nofd <- ncvar_def('LocalSeaLevel_uniform_nofd_RCP45', '', list(dim.time,dim.ensemble), -999)
+  slr.rcp60.uniform.nofd <- ncvar_def('LocalSeaLevel_uniform_nofd_RCP60', '', list(dim.time,dim.ensemble), -999)
   slr.rcp85.uniform.nofd <- ncvar_def('LocalSeaLevel_uniform_nofd_RCP85', '', list(dim.time,dim.ensemble), -999)
   time.proj <- ncvar_def('time_proj', '', list(dim.time), -999)
   outnc <- nc_create(filename.slrout,
-                     list(slr.rcp26.none, slr.rcp45.none, slr.rcp85.none,
-                          slr.rcp26.gamma, slr.rcp45.gamma, slr.rcp85.gamma,
-                          slr.rcp26.gamma.nofd, slr.rcp45.gamma.nofd, slr.rcp85.gamma.nofd,
-                          slr.rcp26.uniform, slr.rcp45.uniform, slr.rcp85.uniform,
-                          slr.rcp26.uniform.nofd, slr.rcp45.uniform.nofd, slr.rcp85.uniform.nofd,
+                     list(slr.rcp26.none, slr.rcp45.none, slr.rcp60.none, slr.rcp85.none,
+                          slr.rcp26.gamma, slr.rcp45.gamma, slr.rcp60.gamma, slr.rcp85.gamma,
+                          slr.rcp26.gamma.nofd, slr.rcp45.gamma.nofd, slr.rcp60.gamma.nofd, slr.rcp85.gamma.nofd,
+                          slr.rcp26.uniform, slr.rcp45.uniform, slr.rcp60.uniform, slr.rcp85.uniform,
+                          slr.rcp26.uniform.nofd, slr.rcp45.uniform.nofd, slr.rcp60.uniform.nofd, slr.rcp85.uniform.nofd,
                           time.proj))
   ncvar_put(outnc, slr.rcp26.none, slr$rcp26$none)
   ncvar_put(outnc, slr.rcp45.none, slr$rcp45$none)
+  ncvar_put(outnc, slr.rcp60.none, slr$rcp60$none)
   ncvar_put(outnc, slr.rcp85.none, slr$rcp85$none)
   ncvar_put(outnc, slr.rcp26.gamma, slr$rcp26$gamma)
   ncvar_put(outnc, slr.rcp45.gamma, slr$rcp45$gamma)
+  ncvar_put(outnc, slr.rcp60.gamma, slr$rcp60$gamma)
   ncvar_put(outnc, slr.rcp85.gamma, slr$rcp85$gamma)
   ncvar_put(outnc, slr.rcp26.gamma.nofd, slr.nofd$rcp26$gamma)
   ncvar_put(outnc, slr.rcp45.gamma.nofd, slr.nofd$rcp45$gamma)
+  ncvar_put(outnc, slr.rcp60.gamma.nofd, slr.nofd$rcp60$gamma)
   ncvar_put(outnc, slr.rcp85.gamma.nofd, slr.nofd$rcp85$gamma)
   ncvar_put(outnc, slr.rcp26.uniform, slr$rcp26$uniform)
   ncvar_put(outnc, slr.rcp45.uniform, slr$rcp45$uniform)
+  ncvar_put(outnc, slr.rcp60.uniform, slr$rcp60$uniform)
   ncvar_put(outnc, slr.rcp85.uniform, slr$rcp85$uniform)
   ncvar_put(outnc, slr.rcp26.uniform.nofd, slr.nofd$rcp26$uniform)
   ncvar_put(outnc, slr.rcp45.uniform.nofd, slr.nofd$rcp45$uniform)
+  ncvar_put(outnc, slr.rcp60.uniform.nofd, slr.nofd$rcp60$uniform)
   ncvar_put(outnc, slr.rcp85.uniform.nofd, slr.nofd$rcp85$uniform)
   ncvar_put(outnc, time.proj, mod.time)
   nc_close(outnc)
@@ -206,16 +223,16 @@ sf.max <- 2
 ## sample the surge factors for each model run. min/max (or pick a different
 ## distribution to sample from) are set above
 if(exists('filename.surgefactor')){
-	ncdata <- nc_open(filename.surgefactor)
-	surge.factor <- as.vector(ncvar_get(ncdata, 'surge_factor'))
-	nc_close(ncdata)
+  ncdata <- nc_open(filename.surgefactor)
+  surge.factor <- as.vector(ncvar_get(ncdata, 'surge_factor'))
+  nc_close(ncdata)
 } else {
   if(is.null(n.ens)) {n.ens <- 1}
   surge.factor <- runif(n=n.ens, min=sf.min, max=sf.max)
   today=Sys.Date(); today=format(today,format="%d%b%Y")
   filename.surgefactor = paste('../output_calibration/BRICK_surgefactor_',today,'.nc',sep="")
   dim.parameters <- ncdim_def('n.parameters', '', 1, unlim=FALSE)
-  dim.ensemble <- ncdim_def('n.ensemble', 'ensemble member', 1:nrow(gev.params), unlim=TRUE)
+  dim.ensemble <- ncdim_def('n.ensemble', 'ensemble member', 1:n.ens, unlim=TRUE)
   parameters.var <- ncvar_def('surge_factor', '', list(dim.parameters,dim.ensemble), -999)
   outnc <- nc_create(filename.surgefactor, list(parameters.var))
   ncvar_put(outnc, parameters.var, surge.factor)
@@ -229,8 +246,8 @@ source("../R/VD_NOLA.R")					# contains parameter sampling routine (called below
 if(exists('filename.vdparams')) {
   # read pre-existing parameters file for the Van Dantzig model
   ncdata <- nc_open(filename.vdparams)
-	params.vd <- t(ncvar_get(ncdata, 'VanDantzig_parameters'))
-	parnames.vd <- ncvar_get(ncdata, 'VanDantzig_parnames')
+  params.vd <- t(ncvar_get(ncdata, 'VanDantzig_parameters'))
+  parnames.vd <- ncvar_get(ncdata, 'VanDantzig_parnames')
   nc_close(ncdata)
   colnames(params.vd) <- parnames.vd
   if(nrow(params.vd) < n.ens) {print('ERROR - number of Van Dantzig parameters is less than number of sea-level rise realizations')}
@@ -278,9 +295,9 @@ if(exists('filename.vdparams')) {
 ##==============================================================================
 
 ## Comment/modify in case you only want to (re-)run a selection of the scenarios
-scen.ais <- c("none","gamma","uniform")
+#scen.ais <- c("none","gamma","uniform")
 #scen.ais <- c("none","gamma")
-#scen.ais <- 'uniform'
+scen.ais <- 'uniform'
 
 for (ais in scen.ais) {
 
@@ -290,12 +307,14 @@ for (ais in scen.ais) {
   ## Trim the sea-level rise projections to currentyear:endyear
   sea_level_rcp26 <- slr$rcp26[[ais]][which(mod.time==currentyear):which(mod.time==endyear),]
   sea_level_rcp45 <- slr$rcp45[[ais]][which(mod.time==currentyear):which(mod.time==endyear),]
+  sea_level_rcp60 <- slr$rcp60[[ais]][which(mod.time==currentyear):which(mod.time==endyear),]
   sea_level_rcp85 <- slr$rcp85[[ais]][which(mod.time==currentyear):which(mod.time==endyear),]
   time.proj <- currentyear:endyear
 
   ## Yields ss$year, ss$surge.rise
   ss.rcp26 <- BRICK_estimateStormSurge_NOLA_usace(time.proj=time.proj, sea_level=sea_level_rcp26, surge.factor=surge.factor)
   ss.rcp45 <- BRICK_estimateStormSurge_NOLA_usace(time.proj=time.proj, sea_level=sea_level_rcp45, surge.factor=surge.factor)
+  ss.rcp60 <- BRICK_estimateStormSurge_NOLA_usace(time.proj=time.proj, sea_level=sea_level_rcp60, surge.factor=surge.factor)
   ss.rcp85 <- BRICK_estimateStormSurge_NOLA_usace(time.proj=time.proj, sea_level=sea_level_rcp85, surge.factor=surge.factor)
 
   ## Evaluate flood risk analysis model for each of these realizations
@@ -304,11 +323,13 @@ for (ais in scen.ais) {
   # stationary storm surge GEV
   vandantzig.ensemble.rcp26.ssst <- brick_vandantzig(currentyear, endyear, sea_level=sea_level_rcp26, time=time.proj, ss.gev=gev.params, params.vd=params.vd, l.vosl=FALSE)
   vandantzig.ensemble.rcp45.ssst <- brick_vandantzig(currentyear, endyear, sea_level=sea_level_rcp45, time=time.proj, ss.gev=gev.params, params.vd=params.vd, l.vosl=FALSE)
+  vandantzig.ensemble.rcp60.ssst <- brick_vandantzig(currentyear, endyear, sea_level=sea_level_rcp60, time=time.proj, ss.gev=gev.params, params.vd=params.vd, l.vosl=FALSE)
   vandantzig.ensemble.rcp85.ssst <- brick_vandantzig(currentyear, endyear, sea_level=sea_level_rcp85, time=time.proj, ss.gev=gev.params, params.vd=params.vd, l.vosl=FALSE)
 
   # non-stationary storm surge GEV
   vandantzig.ensemble.rcp26.ssns <- brick_vandantzig(currentyear, endyear, sea_level=sea_level_rcp26, time=time.proj, ss.gev=gev.params, surge.rise=ss.rcp26$surge.rise, params.vd=params.vd, l.vosl=FALSE)
   vandantzig.ensemble.rcp45.ssns <- brick_vandantzig(currentyear, endyear, sea_level=sea_level_rcp45, time=time.proj, ss.gev=gev.params, surge.rise=ss.rcp45$surge.rise, params.vd=params.vd, l.vosl=FALSE)
+  vandantzig.ensemble.rcp60.ssns <- brick_vandantzig(currentyear, endyear, sea_level=sea_level_rcp60, time=time.proj, ss.gev=gev.params, surge.rise=ss.rcp60$surge.rise, params.vd=params.vd, l.vosl=FALSE)
   vandantzig.ensemble.rcp85.ssns <- brick_vandantzig(currentyear, endyear, sea_level=sea_level_rcp85, time=time.proj, ss.gev=gev.params, surge.rise=ss.rcp85$surge.rise, params.vd=params.vd, l.vosl=FALSE)
 
   ## Write output file
@@ -342,6 +363,15 @@ for (ais in scen.ais) {
   preturn.rcp45.nonstat <- ncvar_def('ExpectedPreturn_RCP45_nonstat', 'years', list(dim.heightening, dim.ensemble), -999,
                   longname = 'Expected return period (RCP45, non-stationary storm surge)')
 
+  cost.rcp60.nonstat <- ncvar_def('ExpectedCost_RCP60_nonstat', 'US$', list(dim.heightening, dim.ensemble), -999,
+                  longname = 'Expected cost (RCP60, non-stationary storm surge)')
+  loss.rcp60.nonstat <- ncvar_def('ExpectedLoss_RCP60_nonstat', 'US$', list(dim.heightening, dim.ensemble), -999,
+                  longname = 'Expected loss (RCP60, non-stationary storm surge)')
+  investment.rcp60.nonstat <- ncvar_def('ExpectedInvestment_RCP60_nonstat', 'US$', list(dim.heightening, dim.ensemble), -999,
+                  longname = 'Expected investment (RCP60, non-stationary storm surge)')
+  preturn.rcp60.nonstat <- ncvar_def('ExpectedPreturn_RCP60_nonstat', 'years', list(dim.heightening, dim.ensemble), -999,
+                  longname = 'Expected return period (RCP60, non-stationary storm surge)')
+
   cost.rcp85.nonstat <- ncvar_def('ExpectedCost_RCP85_nonstat', 'US$', list(dim.heightening, dim.ensemble), -999,
                   longname = 'Expected cost (RCP85, non-stationary storm surge)')
   loss.rcp85.nonstat <- ncvar_def('ExpectedLoss_RCP85_nonstat', 'US$', list(dim.heightening, dim.ensemble), -999,
@@ -369,6 +399,15 @@ for (ais in scen.ais) {
   preturn.rcp45.stat <- ncvar_def('ExpectedPreturn_RCP45_stat', 'years', list(dim.heightening, dim.ensemble), -999,
                   longname = 'Expected return period (RCP45, stationary storm surge)')
 
+  cost.rcp60.stat <- ncvar_def('ExpectedCost_RCP60_stat', 'US$', list(dim.heightening, dim.ensemble), -999,
+                  longname = 'Expected cost (RCP60, stationary storm surge)')
+  loss.rcp60.stat <- ncvar_def('ExpectedLoss_RCP60_stat', 'US$', list(dim.heightening, dim.ensemble), -999,
+                  longname = 'Expected loss (RCP60, stationary storm surge)')
+  investment.rcp60.stat <- ncvar_def('ExpectedInvestment_RCP60_stat', 'US$', list(dim.heightening, dim.ensemble), -999,
+                  longname = 'Expected investment (RCP60, stationary storm surge)')
+  preturn.rcp60.stat <- ncvar_def('ExpectedPreturn_RCP60_stat', 'years', list(dim.heightening, dim.ensemble), -999,
+                  longname = 'Expected return period (RCP60, stationary storm surge)')
+
   cost.rcp85.stat <- ncvar_def('ExpectedCost_RCP85_stat', 'US$', list(dim.heightening, dim.ensemble), -999,
                   longname = 'Expected cost (RCP85, stationary storm surge)')
   loss.rcp85.stat <- ncvar_def('ExpectedLoss_RCP85_stat', 'US$', list(dim.heightening, dim.ensemble), -999,
@@ -382,9 +421,11 @@ for (ais in scen.ais) {
 										list(surge.factor.params, vd.params, gev.stat,
 										cost.rcp26.nonstat, loss.rcp26.nonstat, investment.rcp26.nonstat, preturn.rcp26.nonstat,
 										cost.rcp45.nonstat, loss.rcp45.nonstat, investment.rcp45.nonstat, preturn.rcp45.nonstat,
+										cost.rcp60.nonstat, loss.rcp60.nonstat, investment.rcp60.nonstat, preturn.rcp60.nonstat,
 										cost.rcp85.nonstat, loss.rcp85.nonstat, investment.rcp85.nonstat, preturn.rcp85.nonstat,
 										cost.rcp26.stat, loss.rcp26.stat, investment.rcp26.stat, preturn.rcp26.stat,
 										cost.rcp45.stat, loss.rcp45.stat, investment.rcp45.stat, preturn.rcp45.stat,
+										cost.rcp60.stat, loss.rcp60.stat, investment.rcp60.stat, preturn.rcp60.stat,
 										cost.rcp85.stat, loss.rcp85.stat, investment.rcp85.stat, preturn.rcp85.stat),
 										force_v4 = TRUE)
 
@@ -409,6 +450,13 @@ for (ais in scen.ais) {
   ncvar_put(outnc, investment.rcp45.nonstat, vandantzig.ensemble.rcp45.ssns$Investment)
   ncvar_put(outnc, preturn.rcp45.nonstat, 1/pfail.tmp)
 
+  pfail.tmp <- vandantzig.ensemble.rcp60.ssns$Average_p_fail
+  itmp <- which(pfail.tmp==0); if(length(itmp)>0) {pfail.tmp[itmp]=min(pfail.tmp[-itmp])}
+  ncvar_put(outnc, cost.rcp60.nonstat, vandantzig.ensemble.rcp60.ssns$Expected_costs)
+  ncvar_put(outnc, loss.rcp60.nonstat, vandantzig.ensemble.rcp60.ssns$Expected_loss)
+  ncvar_put(outnc, investment.rcp60.nonstat, vandantzig.ensemble.rcp60.ssns$Investment)
+  ncvar_put(outnc, preturn.rcp60.nonstat, 1/pfail.tmp)
+
   pfail.tmp <- vandantzig.ensemble.rcp85.ssns$Average_p_fail
   itmp <- which(pfail.tmp==0); if(length(itmp)>0) {pfail.tmp[itmp]=min(pfail.tmp[-itmp])}
   ncvar_put(outnc, cost.rcp85.nonstat, vandantzig.ensemble.rcp85.ssns$Expected_costs)
@@ -429,6 +477,13 @@ for (ais in scen.ais) {
   ncvar_put(outnc, loss.rcp45.stat, vandantzig.ensemble.rcp45.ssst$Expected_loss)
   ncvar_put(outnc, investment.rcp45.stat, vandantzig.ensemble.rcp45.ssst$Investment)
   ncvar_put(outnc, preturn.rcp45.stat, 1/pfail.tmp)
+
+  pfail.tmp <- vandantzig.ensemble.rcp60.ssst$Average_p_fail
+  itmp <- which(pfail.tmp==0); if(length(itmp)>0) {pfail.tmp[itmp]=min(pfail.tmp[-itmp])}
+  ncvar_put(outnc, cost.rcp60.stat, vandantzig.ensemble.rcp60.ssst$Expected_costs)
+  ncvar_put(outnc, loss.rcp60.stat, vandantzig.ensemble.rcp60.ssst$Expected_loss)
+  ncvar_put(outnc, investment.rcp60.stat, vandantzig.ensemble.rcp60.ssst$Investment)
+  ncvar_put(outnc, preturn.rcp60.stat, 1/pfail.tmp)
 
   pfail.tmp <- vandantzig.ensemble.rcp85.ssst$Average_p_fail
   itmp <- which(pfail.tmp==0); if(length(itmp)>0) {pfail.tmp[itmp]=min(pfail.tmp[-itmp])}

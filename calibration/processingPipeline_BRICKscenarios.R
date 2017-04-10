@@ -1,4 +1,5 @@
 ##==============================================================================
+## processingPipeline_BRICKscenarios.R
 ##
 ## Pipeline for processing DAIS calibration results and BRICK rest-of-model
 ## calibration results.
@@ -33,14 +34,14 @@
 ##    filename.vdout            [output] file name for the Van Dantzig model results
 ##
 ##  Output:
-##    BRICK-model_postcalibratedParameters_[datestamp].nc
+##    BRICK_postcalibratedParameters_[datestamp].nc
 ##                              post-calibrated parameters file
-##    BRICK-model_physical_[datestamp].nc
+##    BRICK_physical_[datestamp].nc
 ##                              netCDF4 file with the BRICK physical model output
 ##                              (should be as many runs as post-calibrated parameters).
 ##                              Includes SIMPLE-GSIC experimental results.
 ##                              Includes GMSL-R07 experimental results.
-##    BRICK-model_VanDantzig_[datestamp].nc
+##    BRICK_VanDantzig_[datestamp].nc
 ##                              netCDF4 file with the BRICK physical model output
 ##                              (should be as many runs as post-calibrated parameters
 ##                              on the postcalibrated parameters file)
@@ -72,13 +73,17 @@ t.beg = proc.time()
 ##==============================================================================
 ## Define the files you want to process/read/create
 
-dais <- 'g'     ## Which DAIS model set-up? (n = no fast dynamics, u = uniform priors, g = gamma priors)
+dais <- 'u'     ## Which DAIS model set-up? (n = no fast dynamics, u = uniform priors, g = gamma priors)
 appen <- ''     ## Append file name? In case you process multiple files in one day
 today <- Sys.Date(); today=format(today,format="%d%b%Y")
 
+n.ensemble = 50000               # total number of parameter samples to send into GMSL rejection sampling
+n.ensemble.report = n.ensemble   # save for timing information
+l.dopaleo = FALSE                # skip the paleo AIS simulations?
+
 filename.rho_simple_fixed <- "../output_calibration/rho_simple_fixed_01Nov2016.csv"
 filename.BRICKcalibration <- "../output_calibration/BRICK-model_calibratedParameters_control_01Nov2016.nc"
-filename.gevstat <- '../output_calibration/BRICK_estimateGEV_03Jan2017.nc'
+filename.gevstat <- '../output_calibration/BRICK_estimateGEV-AnnMean_07Mar2017.nc'
 
 if(dais=='n'){
 	name='fd-none'
@@ -94,17 +99,9 @@ if(dais=='g') {
 	filename.DAIScalibration = "../output_calibration/DAISfastdyn_calibratedParameters_gamma_21Aug2016.nc"
 }
 
-filename.parameters = paste('../output_calibration/BRICK-model_postcalibratedParameters_',name,'_',today,appen,'.nc', sep="")
-filename.brickout = paste('../output_model/BRICK-model_physical_',name,'_',today,appen,'.nc',sep="")
+filename.parameters = paste('../output_calibration/BRICK_postcalibratedParameters_',name,'_',today,appen,'.nc', sep="")
+filename.brickout = paste('../output_model/BRICK_physical_',name,'_',today,appen,'.nc',sep="")
 filename.vdout = paste('../output_model/VanDantzig_',name,'_',today,appen,'.nc',sep="")
-
-<<<<<<< HEAD
-n.ensemble = 1000               # total number of parameter samples to send into GMSL rejection sampling
-=======
-n.ensemble = 10000               # total number of parameter samples to send into GMSL rejection sampling
->>>>>>> 853679b506379287aa8841342944bd0c64629430
-n.ensemble.report = n.ensemble   # save for timing information
-l.dopaleo = FALSE                # skip the paleo AIS simulations?
 
 ## Add heteroscedastic (observational) error into the hindcasts?
 l.ar1.hetero = TRUE
@@ -435,11 +432,7 @@ for (i in 1:n.ensemble) {
 
 	slr.norm.stat[i,] = slr.norm.stat[i,] - mean(slr.norm.stat[i,ind.norm.data[which(ind.norm.data[,1]=='sl'),2]:ind.norm.data[which(ind.norm.data[,1]=='sl'),3]])
 
-<<<<<<< HEAD
     setTxtProgressBar(pb, i)
-=======
-        setTxtProgressBar(pb, i)
->>>>>>> 853679b506379287aa8841342944bd0c64629430
 }
 close(pb)
 print(paste(' ... done adding up model hindcast sea level rise and contributions'))
@@ -744,19 +737,20 @@ endyear.norm = 2005
 ind.norm = which(mod.time==begyear.norm):which(mod.time==endyear.norm)
 n.time = length(mod.time)
 
-## Want model projections under RCP2.6, 4.5 and 8.5. Initialize a list, each
-## will hold the ensemble model output for a different forcing scenario.
-n.scen = 3
+## Want model projections under RCP2.6, 4.5, 6.0 and 8.5. Initialize a list,
+## each will hold the ensemble model output for a different forcing scenario.
+n.scen = 4
 proj.out = vector("list", n.scen)
 forc.scen = vector("list", n.scen)
 badruns.scen = vector("list", n.scen)
-names.scen = c('rcp26','rcp45','rcp85')
+names.scen = c('rcp26','rcp45','rcp60','rcp85')
 names(proj.out) = names.scen
 
 ## Get the forcing data
 forc.scen[[1]] = read.csv( '../data/forcing_rcp26.csv', header=TRUE )
 forc.scen[[2]] = read.csv( '../data/forcing_rcp45.csv', header=TRUE )
-forc.scen[[3]] = read.csv( '../data/forcing_rcp85.csv', header=TRUE )
+forc.scen[[3]] = read.csv( '../data/forcing_rcp6.csv', header=TRUE )
+forc.scen[[4]] = read.csv( '../data/forcing_rcp85.csv', header=TRUE )
 
 ## Loop over forcing scenarios
 for (ff in 1:n.scen) {
@@ -772,7 +766,7 @@ for (ff in 1:n.scen) {
 	pb <- txtProgressBar(min=0,max=n.ensemble,initial=0,style=3);
 	for (i in 1:n.ensemble) {
 
-            brick.out[[i]] = brick_model(parameters.in = parameters.ensemble[i,]),
+            brick.out[[i]] = brick_model(parameters.in = parameters.ensemble[i,],
                                          parnames.in = parnames,
                                          forcing.in = forcing,
                                          l.project = l.project,
@@ -813,33 +807,34 @@ ocheat.hind = ocheat.hind[,ind.good]
 
 brick.rcp26 = proj.out[[1]][ind.good]
 brick.rcp45 = proj.out[[2]][ind.good]
+brick.rcp60 = proj.out[[3]][ind.good]
 brick.rcp85 = proj.out[[3]][ind.good]
 
 ## Gather the fields for each simulation (easy referencing for plotting and
 ## analysis)
 proj.rcp26 = vector("list", n.scen)
 proj.rcp45 = vector("list", n.scen)
+proj.rcp60 = vector("list", n.scen)
 proj.rcp85 = vector("list", n.scen)
 
 ## Make each projections list a list of the SLR contributions and other fields
 names.output = c('slr','gsic','gis','ais','disint','te','lws','temp','ocheat','ais_nofd','slr.nola','slr_nofd','slr.nola_nofd')
 n.output = length(names.output)
 
-HERENOW
-HERENOW
-HERENOW
-
 proj.rcp26 = vector("list", n.output)
 proj.rcp45 = vector("list", n.output)
+proj.rcp60 = vector("list", n.output)
 proj.rcp85 = vector("list", n.output)
 
 names(proj.rcp26) = names.output
 names(proj.rcp45) = names.output
+names(proj.rcp60) = names.output
 names(proj.rcp85) = names.output
 
 for (j in 1:n.output) {
 	proj.rcp26[[j]] = mat.or.vec(n.ensemble, n.time)
 	proj.rcp45[[j]] = mat.or.vec(n.ensemble, n.time)
+	proj.rcp60[[j]] = mat.or.vec(n.ensemble, n.time)
 	proj.rcp85[[j]] = mat.or.vec(n.ensemble, n.time)
 }
 
@@ -860,6 +855,9 @@ for (i in 1:n.ensemble) {
 	proj.rcp45$temp[i,] = brick.rcp45[[i]]$doeclim.out$temp + T0
 	proj.rcp45$ocheat[i,] = brick.rcp45[[i]]$doeclim.out$ocheat + H0
 
+	proj.rcp60$temp[i,] = brick.rcp60[[i]]$doeclim.out$temp + T0
+	proj.rcp60$ocheat[i,] = brick.rcp60[[i]]$doeclim.out$ocheat + H0
+
 	proj.rcp85$temp[i,] = brick.rcp85[[i]]$doeclim.out$temp + T0
 	proj.rcp85$ocheat[i,] = brick.rcp85[[i]]$doeclim.out$ocheat + H0
 
@@ -871,6 +869,9 @@ for (i in 1:n.ensemble) {
 
 	proj.rcp45$temp[i,] = proj.rcp45$temp[i,] - mean( proj.rcp45$temp[i,ind.norm])
 	proj.rcp45$ocheat[i,] = proj.rcp45$ocheat[i,] - mean( proj.rcp45$ocheat[i,ind.norm])
+
+	proj.rcp60$temp[i,] = proj.rcp60$temp[i,] - mean( proj.rcp60$temp[i,ind.norm])
+	proj.rcp60$ocheat[i,] = proj.rcp60$ocheat[i,] - mean( proj.rcp60$ocheat[i,ind.norm])
 
 	proj.rcp85$temp[i,] = proj.rcp85$temp[i,] - mean( proj.rcp85$temp[i,ind.norm])
 	proj.rcp85$ocheat[i,] = proj.rcp85$ocheat[i,] - mean( proj.rcp85$ocheat[i,ind.norm])
@@ -889,6 +890,9 @@ for (i in 1:n.ensemble) {
 	proj.rcp45$temp[i,] = proj.rcp45$temp[i,] + ar1.sim(n.time, rho.T, sigma.T)
 	proj.rcp45$ocheat[i,] = proj.rcp45$ocheat[i,] + ar1.sim(n.time, rho.H, sigma.H)
 
+	proj.rcp60$temp[i,] = proj.rcp60$temp[i,] + ar1.sim(n.time, rho.T, sigma.T)
+	proj.rcp60$ocheat[i,] = proj.rcp60$ocheat[i,] + ar1.sim(n.time, rho.H, sigma.H)
+
 	proj.rcp85$temp[i,] = proj.rcp85$temp[i,] + ar1.sim(n.time, rho.T, sigma.T)
 	proj.rcp85$ocheat[i,] = proj.rcp85$ocheat[i,] + ar1.sim(n.time, rho.H, sigma.H)
 
@@ -901,16 +905,22 @@ for (i in 1:n.ensemble) {
 	proj.rcp45$gis[i,] = brick.rcp45[[i]]$simple.out$sle.gis
 	proj.rcp45$te[i,] = brick.rcp45[[i]]$te.out
 
+	proj.rcp60$gsic[i,] = brick.rcp60[[i]]$gsic.out
+	proj.rcp60$gis[i,] = brick.rcp60[[i]]$simple.out$sle.gis
+	proj.rcp60$te[i,] = brick.rcp60[[i]]$te.out
+
 	proj.rcp85$gsic[i,] = brick.rcp85[[i]]$gsic.out
 	proj.rcp85$gis[i,] = brick.rcp85[[i]]$simple.out$sle.gis
 	proj.rcp85$te[i,] = brick.rcp85[[i]]$te.out
 
 	proj.rcp26$ais_nofd[i,] = brick.rcp26[[i]]$dais.out$Vais - brick.rcp26[[i]]$dais.out$Vdisint
 	proj.rcp45$ais_nofd[i,] = brick.rcp45[[i]]$dais.out$Vais - brick.rcp45[[i]]$dais.out$Vdisint
+	proj.rcp60$ais_nofd[i,] = brick.rcp60[[i]]$dais.out$Vais - brick.rcp60[[i]]$dais.out$Vdisint
 	proj.rcp85$ais_nofd[i,] = brick.rcp85[[i]]$dais.out$Vais - brick.rcp85[[i]]$dais.out$Vdisint
 
 	proj.rcp26$ais[i,] = brick.rcp26[[i]]$dais.out$Vais
 	proj.rcp45$ais[i,] = brick.rcp45[[i]]$dais.out$Vais
+	proj.rcp60$ais[i,] = brick.rcp60[[i]]$dais.out$Vais
 	proj.rcp85$ais[i,] = brick.rcp85[[i]]$dais.out$Vais
 
 	# Normalize the output to "ind.norm" (1961-1990? 1986-2005 (Mengel)?).
@@ -927,6 +937,12 @@ for (i in 1:n.ensemble) {
 	proj.rcp45$ais[i,] = proj.rcp45$ais[i,] - mean( proj.rcp45$ais[i,ind.norm])
 	proj.rcp45$ais_nofd[i,] = proj.rcp45$ais_nofd[i,] - mean( proj.rcp45$ais_nofd[i,ind.norm])
 	proj.rcp45$te[i,] = proj.rcp45$te[i,] - mean( proj.rcp45$te[i,ind.norm])
+
+	proj.rcp60$gsic[i,] = proj.rcp60$gsic[i,] - mean( proj.rcp60$gsic[i,ind.norm])
+	proj.rcp60$gis[i,] = proj.rcp60$gis[i,] - mean( proj.rcp60$gis[i,ind.norm])
+	proj.rcp60$ais[i,] = proj.rcp60$ais[i,] - mean( proj.rcp60$ais[i,ind.norm])
+	proj.rcp60$ais_nofd[i,] = proj.rcp60$ais_nofd[i,] - mean( proj.rcp60$ais_nofd[i,ind.norm])
+	proj.rcp60$te[i,] = proj.rcp60$te[i,] - mean( proj.rcp60$te[i,ind.norm])
 
 	proj.rcp85$gsic[i,] = proj.rcp85$gsic[i,] - mean( proj.rcp85$gsic[i,ind.norm])
 	proj.rcp85$gis[i,] = proj.rcp85$gis[i,] - mean( proj.rcp85$gis[i,ind.norm])
@@ -950,47 +966,92 @@ for (i in 1:n.ensemble) {
 	proj.rcp45$gsic[i,] = proj.rcp45$gsic[i,] + ar1.sim(n.time, rho.gsic, sigma.gsic)
 	proj.rcp45$gis[i,] = proj.rcp45$gis[i,] + ar1.sim(n.time, rho.simple, sigma.simple)
 
+	proj.rcp60$gsic[i,] = proj.rcp60$gsic[i,] + ar1.sim(n.time, rho.gsic, sigma.gsic)
+	proj.rcp60$gis[i,] = proj.rcp60$gis[i,] + ar1.sim(n.time, rho.simple, sigma.simple)
+
 	proj.rcp85$gsic[i,] = proj.rcp85$gsic[i,] + ar1.sim(n.time, rho.gsic, sigma.gsic)
 	proj.rcp85$gis[i,] = proj.rcp85$gis[i,] + ar1.sim(n.time, rho.simple, sigma.simple)
+
+    # Add contributions to land water storage. /1000 to convert to meters.
+	# This is done for each ensemble member and each RCP.
+	# All other contributions are normalized to 1986-2005 (some have the
+	# estimated noise added, so mean(1986-2005) not nec. equall to 0), so
+	# normalize the lws.est contribution to this period.
+
+	# RCP2.6
+	proj.rcp26$lws[i,] <- cumsum(rnorm(n=n.time, mean=lws.mean, sd=lws.sd)) /1000
+	proj.rcp26$lws[i,] <- proj.rcp26$lws[i,] - mean(proj.rcp26$lws[i,ind.norm])
+
+	# RCP4.5
+	proj.rcp45$lws[i,] <- cumsum(rnorm(n=n.time, mean=lws.mean, sd=lws.sd)) /1000
+	proj.rcp45$lws[i,] <- proj.rcp45$lws[i,] - mean(proj.rcp45$lws[i,ind.norm])
+
+	# RCP6.0
+	proj.rcp60$lws[i,] <- cumsum(rnorm(n=n.time, mean=lws.mean, sd=lws.sd)) /1000
+	proj.rcp60$lws[i,] <- proj.rcp60$lws[i,] - mean(proj.rcp60$lws[i,ind.norm])
+
+	# RCP8.5
+	proj.rcp85$lws[i,] <- cumsum(rnorm(n=n.time, mean=lws.mean, sd=lws.sd)) /1000
+	proj.rcp85$lws[i,] <- proj.rcp85$lws[i,] - mean(proj.rcp85$lws[i,ind.norm])
 
 	# Add up to total sea-level rise
 	proj.rcp26$slr[i,] = proj.rcp26$gsic[i,] +
 	                     proj.rcp26$gis[i,] +
 	                     proj.rcp26$ais[i,] +
-	                     proj.rcp26$te[i,]
+	                     proj.rcp26$te[i,] +
+						 proj.rcp26$lws[i,]
 
 	proj.rcp45$slr[i,] = proj.rcp45$gsic[i,] +
 	                     proj.rcp45$gis[i,] +
 	                     proj.rcp45$ais[i,] +
-	                     proj.rcp45$te[i,]
+	                     proj.rcp45$te[i,] +
+						 proj.rcp45$lws[i,]
+
+	proj.rcp60$slr[i,] = proj.rcp60$gsic[i,] +
+	                     proj.rcp60$gis[i,] +
+	                     proj.rcp60$ais[i,] +
+	                     proj.rcp60$te[i,] +
+						 proj.rcp60$lws[i,]
 
 	proj.rcp85$slr[i,] = proj.rcp85$gsic[i,] +
 	                     proj.rcp85$gis[i,] +
 	                     proj.rcp85$ais[i,] +
-	                     proj.rcp85$te[i,]
+	                     proj.rcp85$te[i,] +
+						 proj.rcp85$lws[i,]
 
 	proj.rcp26$slr_nofd[i,] = proj.rcp26$gsic[i,] +
 	                          proj.rcp26$gis[i,] +
 	                          proj.rcp26$ais_nofd[i,] +
-	                          proj.rcp26$te[i,]
+	                          proj.rcp26$te[i,] +
+							  proj.rcp26$lws[i,]
 
 	proj.rcp45$slr_nofd[i,] = proj.rcp45$gsic[i,] +
 	                          proj.rcp45$gis[i,] +
 	                          proj.rcp45$ais_nofd[i,] +
-	                          proj.rcp45$te[i,]
+	                          proj.rcp45$te[i,] +
+							  proj.rcp45$lws[i,]
+
+	proj.rcp60$slr_nofd[i,] = proj.rcp60$gsic[i,] +
+	                          proj.rcp60$gis[i,] +
+	                          proj.rcp60$ais_nofd[i,] +
+	                          proj.rcp60$te[i,] +
+							  proj.rcp60$lws[i,]
 
 	proj.rcp85$slr_nofd[i,] = proj.rcp85$gsic[i,] +
 	                          proj.rcp85$gis[i,] +
 	                          proj.rcp85$ais_nofd[i,] +
-	                          proj.rcp85$te[i,]
+	                          proj.rcp85$te[i,] +
+							  proj.rcp85$lws[i,]
 
 	# And normalize sea-level rise
 	proj.rcp26$slr[i,] = proj.rcp26$slr[i,] - mean(proj.rcp26$slr[i,ind.norm])
 	proj.rcp45$slr[i,] = proj.rcp45$slr[i,] - mean(proj.rcp45$slr[i,ind.norm])
+	proj.rcp60$slr[i,] = proj.rcp60$slr[i,] - mean(proj.rcp60$slr[i,ind.norm])
 	proj.rcp85$slr[i,] = proj.rcp85$slr[i,] - mean(proj.rcp85$slr[i,ind.norm])
 
 	proj.rcp26$slr_nofd[i,] = proj.rcp26$slr_nofd[i,] - mean(proj.rcp26$slr_nofd[i,ind.norm])
 	proj.rcp45$slr_nofd[i,] = proj.rcp45$slr_nofd[i,] - mean(proj.rcp45$slr_nofd[i,ind.norm])
+	proj.rcp60$slr_nofd[i,] = proj.rcp60$slr_nofd[i,] - mean(proj.rcp60$slr_nofd[i,ind.norm])
 	proj.rcp85$slr_nofd[i,] = proj.rcp85$slr_nofd[i,] - mean(proj.rcp85$slr_nofd[i,ind.norm])
 
 	setTxtProgressBar(pb, i)
@@ -1009,6 +1070,10 @@ print(paste('... finished projections!',sep=''))
 ##==============================================================================
 ##==============================================================================
 ## Local sea level rise
+## Note: Can comment out to assume 0 contribution locally from land water
+## storage. Minor contribution, and no good local estimate. But IPCC AR5, and
+## Dieng et al, lead to agreeing and small estimated contribution of about 30
+## mm SLR due to LWS over this century, so only about 1.5 cm to 2065.
 
 print(paste('Beginning fingerprinting to local sea level rise...',sep=''))
 
@@ -1021,6 +1086,7 @@ proj.rcp26$slr.nola = brick_lsl(lat.in=lat.fp,
                                 slr_gsic = proj.rcp26$gsic,
                                 slr_ais = proj.rcp26$ais,
                                 slr_te = proj.rcp26$te
+								,slr_lws = proj.rcp26$lws
                                 )
 proj.rcp45$slr.nola = brick_lsl(lat.in=lat.fp,
                                 lon.in=lon.fp,
@@ -1029,6 +1095,16 @@ proj.rcp45$slr.nola = brick_lsl(lat.in=lat.fp,
                                 slr_gsic = proj.rcp45$gsic,
                                 slr_ais = proj.rcp45$ais,
                                 slr_te = proj.rcp45$te
+								,slr_lws = proj.rcp45$lws
+                                )
+proj.rcp60$slr.nola = brick_lsl(lat.in=lat.fp,
+                                lon.in=lon.fp,
+                                n.time=length(t.proj),
+                                slr_gis = proj.rcp60$gis,
+                                slr_gsic = proj.rcp60$gsic,
+                                slr_ais = proj.rcp60$ais,
+                                slr_te = proj.rcp60$te
+								,slr_lws = proj.rcp60$lws
                                 )
 proj.rcp85$slr.nola = brick_lsl(lat.in=lat.fp,
                                 lon.in=lon.fp,
@@ -1037,6 +1113,7 @@ proj.rcp85$slr.nola = brick_lsl(lat.in=lat.fp,
                                 slr_gsic = proj.rcp85$gsic,
                                 slr_ais = proj.rcp85$ais,
                                 slr_te = proj.rcp85$te
+								,slr_lws = proj.rcp85$lws
                                 )
 
 proj.rcp26$slr.nola_nofd = brick_lsl(lat.in=lat.fp,
@@ -1046,6 +1123,7 @@ proj.rcp26$slr.nola_nofd = brick_lsl(lat.in=lat.fp,
                                      slr_gsic = proj.rcp26$gsic,
                                      slr_ais = proj.rcp26$ais_nofd,
                                      slr_te = proj.rcp26$te
+								     ,slr_lws = proj.rcp26$lws
                                      )
 proj.rcp45$slr.nola_nofd = brick_lsl(lat.in=lat.fp,
                                      lon.in=lon.fp,
@@ -1054,6 +1132,16 @@ proj.rcp45$slr.nola_nofd = brick_lsl(lat.in=lat.fp,
                                      slr_gsic = proj.rcp45$gsic,
                                      slr_ais = proj.rcp45$ais_nofd,
                                      slr_te = proj.rcp45$te
+								     ,slr_lws = proj.rcp45$lws
+                                     )
+proj.rcp60$slr.nola_nofd = brick_lsl(lat.in=lat.fp,
+                                     lon.in=lon.fp,
+                                     n.time=length(t.proj),
+                                     slr_gis = proj.rcp60$gis,
+                                     slr_gsic = proj.rcp60$gsic,
+                                     slr_ais = proj.rcp60$ais_nofd,
+                                     slr_te = proj.rcp60$te
+								     ,slr_lws = proj.rcp60$lws
                                      )
 proj.rcp85$slr.nola_nofd = brick_lsl(lat.in=lat.fp,
                                      lon.in=lon.fp,
@@ -1062,16 +1150,19 @@ proj.rcp85$slr.nola_nofd = brick_lsl(lat.in=lat.fp,
                                      slr_gsic = proj.rcp85$gsic,
                                      slr_ais = proj.rcp85$ais_nofd,
                                      slr_te = proj.rcp85$te
+								     ,slr_lws = proj.rcp85$lws
                                      )
 
 # And normalize sea-level rise
 for (i in 1:n.ensemble) {
-	proj.rcp26$slr.nola[i,] = proj.rcp26$slr.nola[i,] - mean(proj.rcp26$slr.nola[i,ind.norm])
+	proj.rcp85$slr.nola[i,] = proj.rcp26$slr.nola[i,] - mean(proj.rcp26$slr.nola[i,ind.norm])
 	proj.rcp45$slr.nola[i,] = proj.rcp45$slr.nola[i,] - mean(proj.rcp45$slr.nola[i,ind.norm])
+	proj.rcp60$slr.nola[i,] = proj.rcp60$slr.nola[i,] - mean(proj.rcp60$slr.nola[i,ind.norm])
 	proj.rcp85$slr.nola[i,] = proj.rcp85$slr.nola[i,] - mean(proj.rcp85$slr.nola[i,ind.norm])
 
 	proj.rcp26$slr.nola_nofd[i,] = proj.rcp26$slr.nola_nofd[i,] - mean(proj.rcp26$slr.nola_nofd[i,ind.norm])
 	proj.rcp45$slr.nola_nofd[i,] = proj.rcp45$slr.nola_nofd[i,] - mean(proj.rcp45$slr.nola_nofd[i,ind.norm])
+	proj.rcp60$slr.nola_nofd[i,] = proj.rcp60$slr.nola_nofd[i,] - mean(proj.rcp60$slr.nola_nofd[i,ind.norm])
 	proj.rcp85$slr.nola_nofd[i,] = proj.rcp85$slr.nola_nofd[i,] - mean(proj.rcp85$slr.nola_nofd[i,ind.norm])
 }
 
@@ -1159,6 +1250,8 @@ gis.rcp26 <- ncvar_def('GIS_RCP26', 'meters', list(dim.tproj, dim.ensemble), -99
                 longname = 'GIS contribution to sea level (RCP26)')
 ais.rcp26 <- ncvar_def('AIS_RCP26', 'meters', list(dim.tproj, dim.ensemble), -999,
                 longname = 'AIS contribution to sea level (RCP26)')
+lws.rcp26 <- ncvar_def('LWS_RCP26', 'meters', list(dim.tproj, dim.ensemble), -999,
+                  longname = 'estimated LWS contribution to sea level (RCP26)')
 
 gsl.rcp45 <- ncvar_def('GlobalSeaLevel_RCP45', 'meters', list(dim.tproj, dim.ensemble), -999,
                 longname = 'Global sea level (RCP45)')
@@ -1180,6 +1273,31 @@ gis.rcp45 <- ncvar_def('GIS_RCP45', 'meters', list(dim.tproj, dim.ensemble), -99
                 longname = 'GIS contribution to sea level (RCP45)')
 ais.rcp45 <- ncvar_def('AIS_RCP45', 'meters', list(dim.tproj, dim.ensemble), -999,
                 longname = 'AIS contribution to sea level (RCP45)')
+lws.rcp45 <- ncvar_def('LWS_RCP45', 'meters', list(dim.tproj, dim.ensemble), -999,
+                  longname = 'estimated LWS contribution to sea level (RCP45)')
+
+gsl.rcp60 <- ncvar_def('GlobalSeaLevel_RCP60', 'meters', list(dim.tproj, dim.ensemble), -999,
+                longname = 'Global sea level (RCP60)')
+lsl.rcp60 <- ncvar_def('LocalSeaLevel_RCP60', 'meters', list(dim.tproj, dim.ensemble), -999,
+                longname = 'Local sea level (RCP60)')
+gsl.nofd.rcp60 <- ncvar_def('GlobalSeaLevel_nofd_RCP60', 'meters', list(dim.tproj, dim.ensemble), -999,
+                longname = 'Global sea level, no fast dynamics (RCP60)')
+lsl.nofd.rcp60 <- ncvar_def('LocalSeaLevel_nofd_RCP60', 'meters', list(dim.tproj, dim.ensemble), -999,
+                longname = 'Local sea level, no fast dynamics (RCP60)')
+temp.rcp60 <- ncvar_def('temp_RCP60', 'deg C', list(dim.tproj, dim.ensemble), -999,
+                longname = 'global mean surface temperature anomaly (RCP60)')
+ocheat.rcp60 <- ncvar_def('ocheat_RCP60', '10^22 J', list(dim.tproj, dim.ensemble), -999,
+                longname = 'ocean heat uptake (RCP60)')
+gsic.rcp60 <- ncvar_def('GSIC_RCP60', 'meters', list(dim.tproj, dim.ensemble), -999,
+                longname = 'GSIC contribution to sea level (RCP60)')
+te.rcp60 <- ncvar_def('TE_RCP60', 'meters', list(dim.tproj, dim.ensemble), -999,
+                longname = 'TE contribution to sea level (RCP60)')
+gis.rcp60 <- ncvar_def('GIS_RCP60', 'meters', list(dim.tproj, dim.ensemble), -999,
+                longname = 'GIS contribution to sea level (RCP60)')
+ais.rcp60 <- ncvar_def('AIS_RCP60', 'meters', list(dim.tproj, dim.ensemble), -999,
+                longname = 'AIS contribution to sea level (RCP60)')
+lws.rcp60 <- ncvar_def('LWS_RCP60', 'meters', list(dim.tproj, dim.ensemble), -999,
+                  longname = 'estimated LWS contribution to sea level (RCP60)')
 
 gsl.rcp85 <- ncvar_def('GlobalSeaLevel_RCP85', 'meters', list(dim.tproj, dim.ensemble), -999,
                 longname = 'Global sea level (RCP85)')
@@ -1201,15 +1319,18 @@ gis.rcp85 <- ncvar_def('GIS_RCP85', 'meters', list(dim.tproj, dim.ensemble), -99
                 longname = 'GIS contribution to sea level (RCP85)')
 ais.rcp85 <- ncvar_def('AIS_RCP85', 'meters', list(dim.tproj, dim.ensemble), -999,
                 longname = 'AIS contribution to sea level (RCP85)')
+lws.rcp85 <- ncvar_def('LWS_RCP85', 'meters', list(dim.tproj, dim.ensemble), -999,
+                  longname = 'estimated LWS contribution to sea level (RCP85)')
 
 today=Sys.Date(); today=format(today,format="%d%b%Y")
 
 outnc <- nc_create(filename.brickout,
-	list( gsl.rcp26, gsl.rcp45, gsl.rcp85, lsl.rcp26, lsl.rcp45, lsl.rcp85,
-	gsl.nofd.rcp26, gsl.nofd.rcp45, gsl.nofd.rcp85, lsl.nofd.rcp26, lsl.nofd.rcp45, lsl.nofd.rcp85,
-	gsic.rcp26, te.rcp26, gis.rcp26, ais.rcp26, temp.rcp26, ocheat.rcp26,
-	gsic.rcp45, te.rcp45, gis.rcp45, ais.rcp45, temp.rcp45, ocheat.rcp45,
-	gsic.rcp85, te.rcp85, gis.rcp85, ais.rcp85, temp.rcp85, ocheat.rcp85,
+	list( gsl.rcp26, gsl.rcp45, gsl.rcp60, gsl.rcp85, lsl.rcp26, lsl.rcp45, lsl.rcp60, lsl.rcp85,
+	gsl.nofd.rcp26, gsl.nofd.rcp45, gsl.nofd.rcp60, gsl.nofd.rcp85, lsl.nofd.rcp26, lsl.nofd.rcp45, lsl.nofd.rcp60, lsl.nofd.rcp85,
+	gsic.rcp26, te.rcp26, gis.rcp26, ais.rcp26, temp.rcp26, ocheat.rcp26, lws.rcp26,
+	gsic.rcp45, te.rcp45, gis.rcp45, ais.rcp45, temp.rcp45, ocheat.rcp45, lws.rcp45,
+	gsic.rcp60, te.rcp60, gis.rcp60, ais.rcp60, temp.rcp60, ocheat.rcp60, lws.rcp60,
+	gsic.rcp85, te.rcp85, gis.rcp85, ais.rcp85, temp.rcp85, ocheat.rcp85, lws.rcp85,
 	gsl.hindcast, gsic.hindcast, te.hindcast, gis.hindcast, ais.hindcast, temp.hindcast, ocheat.hindcast,
 	ais.paleo.05, ais.paleo.50, ais.paleo.95, ais.paleo.max, ais.paleo.min,
 	ais.paleo.05.avg, ais.paleo.50.avg, ais.paleo.95.avg, ais.paleo.max.avg, ais.paleo.min.avg),
@@ -1225,6 +1346,7 @@ ncvar_put(outnc, gsic.rcp26, t(proj.rcp26$gsic))
 ncvar_put(outnc, te.rcp26, t(proj.rcp26$te))
 ncvar_put(outnc, gis.rcp26, t(proj.rcp26$gis))
 ncvar_put(outnc, ais.rcp26, t(proj.rcp26$ais))
+ncvar_put(outnc, lws.rcp26, t(proj.rcp26$lws))
 
 ncvar_put(outnc, gsl.rcp45, t(proj.rcp45$slr))
 ncvar_put(outnc, lsl.rcp45, t(proj.rcp45$slr.nola))
@@ -1236,6 +1358,19 @@ ncvar_put(outnc, gsic.rcp45, t(proj.rcp45$gsic))
 ncvar_put(outnc, te.rcp45, t(proj.rcp45$te))
 ncvar_put(outnc, gis.rcp45, t(proj.rcp45$gis))
 ncvar_put(outnc, ais.rcp45, t(proj.rcp45$ais))
+ncvar_put(outnc, lws.rcp45, t(proj.rcp45$lws))
+
+ncvar_put(outnc, gsl.rcp60, t(proj.rcp60$slr))
+ncvar_put(outnc, lsl.rcp60, t(proj.rcp60$slr.nola))
+ncvar_put(outnc, gsl.nofd.rcp60, t(proj.rcp60$slr_nofd))
+ncvar_put(outnc, lsl.nofd.rcp60, t(proj.rcp60$slr.nola_nofd))
+ncvar_put(outnc, temp.rcp60, t(proj.rcp60$temp))
+ncvar_put(outnc, ocheat.rcp60, t(proj.rcp60$ocheat))
+ncvar_put(outnc, gsic.rcp60, t(proj.rcp60$gsic))
+ncvar_put(outnc, te.rcp60, t(proj.rcp60$te))
+ncvar_put(outnc, gis.rcp60, t(proj.rcp60$gis))
+ncvar_put(outnc, ais.rcp60, t(proj.rcp60$ais))
+ncvar_put(outnc, lws.rcp60, t(proj.rcp60$lws))
 
 ncvar_put(outnc, gsl.rcp85, t(proj.rcp85$slr))
 ncvar_put(outnc, lsl.rcp85, t(proj.rcp85$slr.nola))
@@ -1247,6 +1382,7 @@ ncvar_put(outnc, gsic.rcp85, t(proj.rcp85$gsic))
 ncvar_put(outnc, te.rcp85, t(proj.rcp85$te))
 ncvar_put(outnc, gis.rcp85, t(proj.rcp85$gis))
 ncvar_put(outnc, ais.rcp85, t(proj.rcp85$ais))
+ncvar_put(outnc, lws.rcp85, t(proj.rcp85$lws))
 
 ncvar_put(outnc, gsl.hindcast, gsl.hind)
 ncvar_put(outnc, temp.hindcast, temp.hind)
@@ -1274,257 +1410,13 @@ nc_close(outnc)
 
 
 
+## moved van dantzig analysis to separate pipeline file, at least for now
 
-
-
-
-##==============================================================================
-##==============================================================================
-## Beginning here from a previous experiment?
-if(FALSE){
-	library(ncdf4)
-	filename.in = "../output_model/BRICK-model_physical_fd-none_01Dec2016.nc"
-	ncdata <- nc_open(filename.in)
-	sea_level_rcp26 = ncvar_get(ncdata, 'LocalSeaLevel_RCP26')
-	sea_level_rcp45 = ncvar_get(ncdata, 'LocalSeaLevel_RCP45')
-	sea_level_rcp85 = ncvar_get(ncdata, 'LocalSeaLevel_RCP85')
-	mod.time =ncvar_get(ncdata, 'time_proj')
-	nc_close(ncdata)
-} else {
-	sea_level_rcp26=t(proj.rcp26$slr.nola)
-	sea_level_rcp45=t(proj.rcp45$slr.nola)
-	sea_level_rcp85=t(proj.rcp85$slr.nola)
-}
-
-
-## Set up a few things (here for now, can move to beginning or external settings
-## files later)
-currentyear <- 2015		# start year for flood defense analysis
-endyear <- 2065				# end year (reevaluation) for flood defense
-
-## Trim sea level rise arrays to the proper time frame.
-time.proj <- currentyear:endyear
-sea_level_rcp26 <- sea_level_rcp26[which(mod.time==currentyear):which(mod.time==endyear),]
-sea_level_rcp45 <- sea_level_rcp45[which(mod.time==currentyear):which(mod.time==endyear),]
-sea_level_rcp85 <- sea_level_rcp85[which(mod.time==currentyear):which(mod.time==endyear),]
-n.ens <- ncol(sea_level_rcp26)
-
-## Evaluate storm surge GEV estimation, and US ACE evaluation.
-source('../calibration/stormsurge_NOLA.R')
-
-# fit and sample distributions for the (stationary) GEV distirbution parameters
-# (commented out because we have already done this (only need to do it once), and
-# can draw from the previous GEV parameter estimates from the netCDF file on which
-# the results are stored)
-
-#filename.gevstat <- '../output_calibration/BRICK_estimateGEV_03Jan2017.nc'
-
-if(FALSE){
-	gev.est <- BRICK_estimateGEV_NOLA(niter=1e4, burnin=0.5, sd=c(13.5,0.2,0.25))
-} else {
-	ncdata <- nc_open(filename.gevstat)
-	gev.names <- ncvar_get(ncdata, 'GEV_names')
-	gev.est <- t(ncvar_get(ncdata, 'GEV_parameters'))
-	nc_close(ncdata)
-	colnames(gev.est) <- gev.names
-}
-
-# sample GEV parameters. based on tide gauge, so does not depend on RCP sceniaor
-gev.params <- gev.est[sample(1:nrow(gev.est), size=n.ens, replace=FALSE) , ]
-#gev.rcp26 <- gev.est[sample(1:nrow(gev.est), size=ncol(sea_level_rcp26), replace=FALSE) , ]
-#gev.rcp45 <- gev.est[sample(1:nrow(gev.est), size=ncol(sea_level_rcp45), replace=FALSE) , ]
-#gev.rcp85 <- gev.est[sample(1:nrow(gev.est), size=ncol(sea_level_rcp85), replace=FALSE) , ]
-
-## Draw surge.factor parameters here
-
-## Ref: Table 1.2, p.1-22, of USACE "Hurricane and Storm Damage Risk Reduction
-## System Design Guidelines" (with revisions through June 2012). Accessible
-## here (as of 30 Nov 2016):
-## http://www.mvn.usace.army.mil/Portals/56/docs/engineering/HurrGuide/EntireDocument.pdf
-
-# set min/max surge factors
-sf.min <- 1.5
-sf.max <- 2
-
-# sample the surge factors for each model run. min/max (or pick a different
-# distribution to sample from) are set above
-if(is.null(n.ens)) {n.ens <- 1}
-surge.factor <- runif(n=n.ens, min=sf.min, max=sf.max)
-
-## Yields ss$year, ss$surge.rise, ss$surge.factor
-ss.rcp26 <- BRICK_estimateStormSurge_NOLA_usace(time.proj=time.proj, sea_level=sea_level_rcp26, surge.factor=surge.factor)
-ss.rcp45 <- BRICK_estimateStormSurge_NOLA_usace(time.proj=time.proj, sea_level=sea_level_rcp45, surge.factor=surge.factor)
-ss.rcp85 <- BRICK_estimateStormSurge_NOLA_usace(time.proj=time.proj, sea_level=sea_level_rcp85, surge.factor=surge.factor)
-
-#ss <- BRICK_estimateStormSurge_NOLA_tg(time.proj) # yields ss$stat and ss$nonstat
-
-## Evaluate flood risk analysis model for each of these realizations
-source('../R/BRICK_VanDantzig.R')
-
-## Draw BRICK-VanDantzig parameters here
-source("../R/VD_NOLA.R")					# contains parameter sampling routine (called below)
-
-p_zero_p = 0.0038                 # Initial flood frequency (1/yr) with zero height increase (Van Dantzig (1956))
-alpha_p = 2.6                     # Exponential flood frequency constant (Van Dantzig (1956))
-V_p = c(7.5e+9, 3e+10)            # Value of goods protected by dike (based on estimates in Jonkman et al. (2009)) (US$)
-delta_prime_p = c(0.02, 0.06)     # Discount rate (percent/year) (based on estimates in Jonkman et al. (2009))
-I_range = c(-0.5,1.0)             # Investment cost uncertainty range (as fraction of investment cost) (Jonkman and Dutch Perspective use -50%, +100%)
-subs_rate = 0.0056                # Rate of land subsidence (meter/year) (Dixon et al. (2006))
-
-## Sample parameters (using Dutch Perspective as a guide). Uses Latin Hypercube,
-## assigns each ensemble member a set of parameters.
-params.vd = parameter_sampling_DP(ncol(sea_level_rcp26), p_zero_p, alpha_p, V_p, delta_prime_p, I_range, subs_rate)
-
-# stationary storm surge GEV
-vandantzig.ensemble.rcp26.ssst <- brick_vandantzig(currentyear, endyear, sea_level = sea_level_rcp26, time = time.proj, ss.gev=gev.params, params.vd=params.vd, l.vosl=FALSE)
-vandantzig.ensemble.rcp45.ssst <- brick_vandantzig(currentyear, endyear, sea_level = sea_level_rcp45, time = time.proj, ss.gev=gev.params, params.vd=params.vd, l.vosl=FALSE)
-vandantzig.ensemble.rcp85.ssst <- brick_vandantzig(currentyear, endyear, sea_level = sea_level_rcp85, time = time.proj, ss.gev=gev.params, params.vd=params.vd, l.vosl=FALSE)
-
-# non-stationary storm surge GEV
-vandantzig.ensemble.rcp26.ssns <- brick_vandantzig(currentyear, endyear, sea_level = sea_level_rcp26, time = time.proj, ss.gev=gev.params, surge.rise=ss.rcp26$surge.rise, params.vd=params.vd, l.vosl=FALSE)
-vandantzig.ensemble.rcp45.ssns <- brick_vandantzig(currentyear, endyear, sea_level = sea_level_rcp45, time = time.proj, ss.gev=gev.params, surge.rise=ss.rcp45$surge.rise, params.vd=params.vd, l.vosl=FALSE)
-vandantzig.ensemble.rcp85.ssns <- brick_vandantzig(currentyear, endyear, sea_level = sea_level_rcp85, time = time.proj, ss.gev=gev.params, surge.rise=ss.rcp85$surge.rise, params.vd=params.vd, l.vosl=FALSE)
-
-##==============================================================================
-##==============================================================================
-
-
-
-
-
-
-##==============================================================================
-##==============================================================================
-## Output results of van Dantzig to netCDF file
-
-library(ncdf4)
-
-dim.heightening <- ncdim_def('H', 'meters', vandantzig.ensemble.rcp26.ssst$Heightening[,1])
-dim.ensemble <- ncdim_def('ens', 'ensemble member', (1:ncol(vandantzig.ensemble.rcp26.ssst$Heightening)))
-dim.gev <- ncdim_def('param.gev', '[-]', (1:3))
-
-surge.factor.rcp26 <- ncvar_def('surge_factor_RCP26', '[-]', list(dim.ensemble), -999,
-                  longname = 'storm surge level increase = surge_factor * sea level increase (RCP26)')
-surge.factor.rcp45 <- ncvar_def('surge_factor_RCP45', '[-]', list(dim.ensemble), -999,
-                  longname = 'storm surge level increase = surge_factor * sea level increase (RCP45)')
-surge.factor.rcp85 <- ncvar_def('surge_factor_RCP85', '[-]', list(dim.ensemble), -999,
-                  longname = 'storm surge level increase = surge_factor * sea level increase (RCP85)')
-
-gev.stat.rcp26 <- ncvar_def('gev_stat_RCP26', '[-]', list(dim.ensemble, dim.gev), -999,
-                  longname = 'stationary storm surge GEV parameters [loc, scale, shape]')
-gev.stat.rcp45 <- ncvar_def('gev_stat_RCP45', '[-]', list(dim.ensemble, dim.gev), -999,
-                  longname = 'stationary storm surge GEV parameters [loc, scale, shape]')
-gev.stat.rcp85 <- ncvar_def('gev_stat_RCP85', '[-]', list(dim.ensemble, dim.gev), -999,
-                  longname = 'stationary storm surge GEV parameters [loc, scale, shape]')
-
-cost.rcp26.nonstat <- ncvar_def('ExpectedCost_RCP26_nonstat', 'US$', list(dim.heightening, dim.ensemble), -999,
-                  longname = 'Expected cost (RCP26, non-stationary storm surge)')
-loss.rcp26.nonstat <- ncvar_def('ExpectedLoss_RCP26_nonstat', 'US$', list(dim.heightening, dim.ensemble), -999,
-                  longname = 'Expected loss (RCP26, non-stationary storm surge)')
-investment.rcp26.nonstat <- ncvar_def('ExpectedInvestment_RCP26_nonstat', 'US$', list(dim.heightening, dim.ensemble), -999,
-                  longname = 'Expected investment (RCP26, non-stationary storm surge)')
-preturn.rcp26.nonstat <- ncvar_def('ExpectedPreturn_RCP26_nonstat', 'years', list(dim.heightening, dim.ensemble), -999,
-                  longname = 'Expected return period (RCP26, non-stationary storm surge)')
-
-cost.rcp45.nonstat <- ncvar_def('ExpectedCost_RCP45_nonstat', 'US$', list(dim.heightening, dim.ensemble), -999,
-                  longname = 'Expected cost (RCP45, non-stationary storm surge)')
-loss.rcp45.nonstat <- ncvar_def('ExpectedLoss_RCP45_nonstat', 'US$', list(dim.heightening, dim.ensemble), -999,
-                  longname = 'Expected loss (RCP45, non-stationary storm surge)')
-investment.rcp45.nonstat <- ncvar_def('ExpectedInvestment_RCP45_nonstat', 'US$', list(dim.heightening, dim.ensemble), -999,
-                  longname = 'Expected investment (RCP45, non-stationary storm surge)')
-preturn.rcp45.nonstat <- ncvar_def('ExpectedPreturn_RCP45_nonstat', 'years', list(dim.heightening, dim.ensemble), -999,
-                  longname = 'Expected return period (RCP45, non-stationary storm surge)')
-
-cost.rcp85.nonstat <- ncvar_def('ExpectedCost_RCP85_nonstat', 'US$', list(dim.heightening, dim.ensemble), -999,
-                  longname = 'Expected cost (RCP85, non-stationary storm surge)')
-loss.rcp85.nonstat <- ncvar_def('ExpectedLoss_RCP85_nonstat', 'US$', list(dim.heightening, dim.ensemble), -999,
-                  longname = 'Expected loss (RCP85, non-stationary storm surge)')
-investment.rcp85.nonstat <- ncvar_def('ExpectedInvestment_RCP85_nonstat', 'US$', list(dim.heightening, dim.ensemble), -999,
-                  longname = 'Expected investment (RCP85, non-stationary storm surge)')
-preturn.rcp85.nonstat <- ncvar_def('ExpectedPreturn_RCP85_nonstat', 'years', list(dim.heightening, dim.ensemble), -999,
-                  longname = 'Expected return period (RCP85, non-stationary storm surge)')
-
-cost.rcp26.stat <- ncvar_def('ExpectedCost_RCP26_stat', 'US$', list(dim.heightening, dim.ensemble), -999,
-                  longname = 'Expected cost (RCP26, stationary storm surge)')
-loss.rcp26.stat <- ncvar_def('ExpectedLoss_RCP26_stat', 'US$', list(dim.heightening, dim.ensemble), -999,
-                  longname = 'Expected loss (RCP26, stationary storm surge)')
-investment.rcp26.stat <- ncvar_def('ExpectedInvestment_RCP26_stat', 'US$', list(dim.heightening, dim.ensemble), -999,
-                  longname = 'Expected investment (RCP26, stationary storm surge)')
-preturn.rcp26.stat <- ncvar_def('ExpectedPreturn_RCP26_stat', 'years', list(dim.heightening, dim.ensemble), -999,
-                  longname = 'Expected return period (RCP26, stationary storm surge)')
-
-cost.rcp45.stat <- ncvar_def('ExpectedCost_RCP45_stat', 'US$', list(dim.heightening, dim.ensemble), -999,
-                  longname = 'Expected cost (RCP45, stationary storm surge)')
-loss.rcp45.stat <- ncvar_def('ExpectedLoss_RCP45_stat', 'US$', list(dim.heightening, dim.ensemble), -999,
-                  longname = 'Expected loss (RCP45, stationary storm surge)')
-investment.rcp45.stat <- ncvar_def('ExpectedInvestment_RCP45_stat', 'US$', list(dim.heightening, dim.ensemble), -999,
-                  longname = 'Expected investment (RCP45, stationary storm surge)')
-preturn.rcp45.stat <- ncvar_def('ExpectedPreturn_RCP45_stat', 'years', list(dim.heightening, dim.ensemble), -999,
-                  longname = 'Expected return period (RCP45, stationary storm surge)')
-
-cost.rcp85.stat <- ncvar_def('ExpectedCost_RCP85_stat', 'US$', list(dim.heightening, dim.ensemble), -999,
-                  longname = 'Expected cost (RCP85, stationary storm surge)')
-loss.rcp85.stat <- ncvar_def('ExpectedLoss_RCP85_stat', 'US$', list(dim.heightening, dim.ensemble), -999,
-                  longname = 'Expected loss (RCP85, stationary storm surge)')
-investment.rcp85.stat <- ncvar_def('ExpectedInvestment_RCP85_stat', 'US$', list(dim.heightening, dim.ensemble), -999,
-                  longname = 'Expected investment (RCP85, stationary storm surge)')
-preturn.rcp85.stat <- ncvar_def('ExpectedPreturn_RCP85_stat', 'years', list(dim.heightening, dim.ensemble), -999,
-                  longname = 'Expected return period (RCP85, stationary storm surge)')
-
-outnc <- nc_create(filename.vdout,
-										list(surge.factor.rcp26, surge.factor.rcp45, surge.factor.rcp85,
-										cost.rcp26.nonstat, loss.rcp26.nonstat, investment.rcp26.nonstat, preturn.rcp26.nonstat,
-										cost.rcp45.nonstat, loss.rcp45.nonstat, investment.rcp45.nonstat, preturn.rcp45.nonstat,
-										cost.rcp85.nonstat, loss.rcp85.nonstat, investment.rcp85.nonstat, preturn.rcp85.nonstat,
-										cost.rcp26.stat, loss.rcp26.stat, investment.rcp26.stat, preturn.rcp26.stat,
-										cost.rcp45.stat, loss.rcp45.stat, investment.rcp45.stat, preturn.rcp45.stat,
-										cost.rcp85.stat, loss.rcp85.stat, investment.rcp85.stat, preturn.rcp85.stat),
-										force_v4 = TRUE)
-
-ncvar_put(outnc, surge.factor.rcp26, ss.rcp26$surge.factor)
-ncvar_put(outnc, surge.factor.rcp45, ss.rcp45$surge.factor)
-ncvar_put(outnc, surge.factor.rcp85, ss.rcp85$surge.factor)
-
-ncvar_put(outnc, cost.rcp26.nonstat, vandantzig.ensemble.rcp26.ssns$Expected_costs)
-ncvar_put(outnc, loss.rcp26.nonstat, vandantzig.ensemble.rcp26.ssns$Expected_loss)
-ncvar_put(outnc, investment.rcp26.nonstat, vandantzig.ensemble.rcp26.ssns$Investment)
-ncvar_put(outnc, preturn.rcp26.nonstat, 1/vandantzig.ensemble.rcp26.ssns$Average_p_fail)
-
-ncvar_put(outnc, cost.rcp45.nonstat, vandantzig.ensemble.rcp45.ssns$Expected_costs)
-ncvar_put(outnc, loss.rcp45.nonstat, vandantzig.ensemble.rcp45.ssns$Expected_loss)
-ncvar_put(outnc, investment.rcp45.nonstat, vandantzig.ensemble.rcp45.ssns$Investment)
-ncvar_put(outnc, preturn.rcp45.nonstat, 1/vandantzig.ensemble.rcp45.ssns$Average_p_fail)
-
-ncvar_put(outnc, cost.rcp85.nonstat, vandantzig.ensemble.rcp85.ssns$Expected_costs)
-ncvar_put(outnc, loss.rcp85.nonstat, vandantzig.ensemble.rcp85.ssns$Expected_loss)
-ncvar_put(outnc, investment.rcp85.nonstat, vandantzig.ensemble.rcp85.ssns$Investment)
-ncvar_put(outnc, preturn.rcp85.nonstat, 1/vandantzig.ensemble.rcp85.ssns$Average_p_fail)
-
-ncvar_put(outnc, cost.rcp26.stat, vandantzig.ensemble.rcp26.ssst$Expected_costs)
-ncvar_put(outnc, loss.rcp26.stat, vandantzig.ensemble.rcp26.ssst$Expected_loss)
-ncvar_put(outnc, investment.rcp26.stat, vandantzig.ensemble.rcp26.ssst$Investment)
-ncvar_put(outnc, preturn.rcp26.stat, 1/vandantzig.ensemble.rcp26.ssst$Average_p_fail)
-
-ncvar_put(outnc, cost.rcp45.stat, vandantzig.ensemble.rcp45.ssst$Expected_costs)
-ncvar_put(outnc, loss.rcp45.stat, vandantzig.ensemble.rcp45.ssst$Expected_loss)
-ncvar_put(outnc, investment.rcp45.stat, vandantzig.ensemble.rcp45.ssst$Investment)
-ncvar_put(outnc, preturn.rcp45.stat, 1/vandantzig.ensemble.rcp45.ssst$Average_p_fail)
-
-ncvar_put(outnc, cost.rcp85.stat, vandantzig.ensemble.rcp85.ssst$Expected_costs)
-ncvar_put(outnc, loss.rcp85.stat, vandantzig.ensemble.rcp85.ssst$Expected_loss)
-ncvar_put(outnc, investment.rcp85.stat, vandantzig.ensemble.rcp85.ssst$Investment)
-ncvar_put(outnc, preturn.rcp85.stat, 1/vandantzig.ensemble.rcp85.ssst$Average_p_fail)
-
-nc_close(outnc)
-
-##==============================================================================
-##==============================================================================
 
 t.end = proc.time()
 time.minutes = (t.end-t.beg)[3]/60
 
 print(paste('it took',time.minutes,'minutes to process an initial ensemble of',n.ensemble.report,'simulations'))
-
 
 
 ##==============================================================================
