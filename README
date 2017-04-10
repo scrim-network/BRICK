@@ -13,6 +13,9 @@ This code of this repository will also be used to build BRICK from
 BRICK will be organized differently with the code divided by language
 fortran, R and julia
 
+Note that the codes here ("robustslr" branch) will reproduce that work, but the 
+"latest and greatest" BRICK model codes are available through the master branch.
+
 Alexander
 
 ================================================================================
