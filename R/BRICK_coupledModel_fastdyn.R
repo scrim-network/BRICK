@@ -209,8 +209,9 @@ brick_model = function(
 		P0 =parameters.in[match("P0" ,parnames.in)]
 		kappa.dais =parameters.in[match("kappa.dais" ,parnames.in)]
 		f0 =parameters.in[match("f0" ,parnames.in)]
-		h0 =parameters.in[match("h0" ,parnames.in)]
-		c =parameters.in[match("c" ,parnames.in)]
+#TONYHERE
+#		h0 =parameters.in[match("h0" ,parnames.in)]
+#		c =parameters.in[match("c" ,parnames.in)]
 		b0 =parameters.in[match("b0" ,parnames.in)]
 		slope =parameters.in[match("slope" ,parnames.in)]
 		Tcrit = parameters.in[match("Tcrit",parnames.in)]
@@ -256,13 +257,15 @@ brick_model = function(
                        		gamma=gamma   , alpha=alpha.dais,
                        		mu=mu         , nu=nu        ,
                        		P0=P0         , kappa=kappa.dais,
-                       		f0=f0         , h0=h0        ,
-                       		c=c           , b0=b0        ,
+#TONYHERE
+                       		f0=f0         , #h0=h0        ,
+                       		#c=c           , 
+				b0=b0        ,
                        		slope=slope   ,
-													Tcrit=Tcrit		,	lambda=lambda,
-											 		slope.Ta2Tg=slope.Ta2Tg.in, intercept.Ta2Tg=intercept.Ta2Tg.in,
+				Tcrit=Tcrit   , lambda=lambda,
+				slope.Ta2Tg=slope.Ta2Tg.in, intercept.Ta2Tg=intercept.Ta2Tg.in,
                        		Tg=temp.couple, SL=SL.couple, dSL=dSL.couple ,
-													includes_dSLais = include_dSLais)
+				includes_dSLais = include_dSLais)
 
 		  ## Subtract off normalization period
 		  itmp = ind.norm.data[match("ais",ind.norm.data[,1]),2]:ind.norm.data[match("ais",ind.norm.data[,1]),3]

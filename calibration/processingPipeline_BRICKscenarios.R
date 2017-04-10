@@ -98,7 +98,11 @@ filename.parameters = paste('../output_calibration/BRICK-model_postcalibratedPar
 filename.brickout = paste('../output_model/BRICK-model_physical_',name,'_',today,appen,'.nc',sep="")
 filename.vdout = paste('../output_model/VanDantzig_',name,'_',today,appen,'.nc',sep="")
 
+<<<<<<< HEAD
 n.ensemble = 1000               # total number of parameter samples to send into GMSL rejection sampling
+=======
+n.ensemble = 10000               # total number of parameter samples to send into GMSL rejection sampling
+>>>>>>> 853679b506379287aa8841342944bd0c64629430
 n.ensemble.report = n.ensemble   # save for timing information
 l.dopaleo = FALSE                # skip the paleo AIS simulations?
 
@@ -431,7 +435,11 @@ for (i in 1:n.ensemble) {
 
 	slr.norm.stat[i,] = slr.norm.stat[i,] - mean(slr.norm.stat[i,ind.norm.data[which(ind.norm.data[,1]=='sl'),2]:ind.norm.data[which(ind.norm.data[,1]=='sl'),3]])
 
+<<<<<<< HEAD
     setTxtProgressBar(pb, i)
+=======
+        setTxtProgressBar(pb, i)
+>>>>>>> 853679b506379287aa8841342944bd0c64629430
 }
 close(pb)
 print(paste(' ... done adding up model hindcast sea level rise and contributions'))
