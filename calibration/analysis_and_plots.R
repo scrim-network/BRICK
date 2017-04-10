@@ -27,6 +27,17 @@ c85=6;
 c45=4;
 c26=2;
 
+## And set the IPCC RCP colors
+col26 <- c(0, 0, 255)/255
+col45 <- c(121, 188, 255)/255
+col60 <- c(255, 130, 45)/255
+col85 <- c(255, 0, 0)/255
+
+## Set colors to use for control model, and observations/experimental model,
+## in all plots. This is indexed within "mycol", from "colorblindPalette.R".
+colmod <- 2
+colobs <- 11
+
 ## Where would you like to save the plots?
 plotdir='~/Box\ Sync/Robust_SLR_Projections/Figures/'
 
@@ -189,57 +200,57 @@ layout(cbind(c(1,4,7),c(2,5,7),c(3,6,7)))
 par(mai=c(.5,.7,.2,.08))
 
 # >>> SURFACE TEMPERATURE <<<
-plot(mod.time[midx.temp], temp.50[midx.temp], type='l', col=rgb(mycol[c45,1],mycol[c45,2],mycol[c45,3]), lwd=2, xlab='',
+plot(mod.time[midx.temp], temp.50[midx.temp], type='l', col=rgb(mycol[colmod,1],mycol[colmod,2],mycol[colmod,3]), lwd=2, xlab='',
      ylab='', xlim=c(1850,2016), ylim=c(-.3,1.5), cex.axis=1.2);
   mtext(side=1, text='Year', line=2.3, cex=.9);
   mtext(side=2, text='Surface temperature\n[deg C]', line=2.3, cex=.9);
   mtext(side=3, text=expression(bold(' a')), line=.25, cex=.9, adj=0);
-  polygon(c(mod.time[midx.temp],rev(mod.time[midx.temp])), c(temp.95,rev(temp.05)), col=rgb(mycol[c45,1],mycol[c45,2],mycol[c45,3],.5), border=NA);
-  lines(obs.temp.time[oidx.temp], obs.temp.norm[oidx.temp], type='l', col=rgb(mycol[6,1],mycol[6,2],mycol[6,3]), lwd=2);
+  polygon(c(mod.time[midx.temp],rev(mod.time[midx.temp])), c(temp.95,rev(temp.05)), col=rgb(mycol[colmod,1],mycol[colmod,2],mycol[colmod,3],.5), border=NA);
+  lines(obs.temp.time[oidx.temp], obs.temp.norm[oidx.temp], type='l', col=rgb(mycol[colobs,1],mycol[colobs,2],mycol[colobs,3]), lwd=2);
 	lines(c(-1e6,1e6),c(0,0),type='l',lty=2,col='black');
   polygon(c(obs.temp.time[oidx.temp],rev(obs.temp.time[oidx.temp])),
 					c(obs.temp.norm[oidx.temp]+n.sig*obs.temp.err[oidx.temp],rev(obs.temp.norm[oidx.temp]-n.sig*obs.temp.err[oidx.temp])),
-          col=rgb(mycol[6,1],mycol[6,2],mycol[6,3],.5), border=NA);
+          col=rgb(mycol[colobs,1],mycol[colobs,2],mycol[colobs,3],.5), border=NA);
   #legend(1839,1.65,c("5-95% range, modeled","2-sigma range, observations"),
-  #       col=c(rgb(mycol[c45,1],mycol[c45,2],mycol[c45,3]),rgb(mycol[6,1],mycol[6,2],mycol[6,3])), lwd=2, bty='n', cex=1.2)
+  #       col=c(rgb(mycol[colmod,1],mycol[colmod,2],mycol[colmod,3]),rgb(mycol[colobs,1],mycol[colobs,2],mycol[colobs,3])), lwd=2, bty='n', cex=1.2)
 
 # >>> OCEAN HEAT <<<
 itmp=midx.ocheat[1]:nrow(ocheat.hind)
-plot(mod.time[itmp], ocheat.50[itmp], type='l', col=rgb(mycol[c45,1],mycol[c45,2],mycol[c45,3]), lwd=2, xlab='',
+plot(mod.time[itmp], ocheat.50[itmp], type='l', col=rgb(mycol[colmod,1],mycol[colmod,2],mycol[colmod,3]), lwd=2, xlab='',
      ylab='', xlim=c(1950,2016), ylim=c(-50,50), cex.lab=1.2, cex.axis=1.2);
   mtext(side=1, text='Year', line=2.3, cex=.9);
   mtext(side=2, text='Ocean heat uptake\n[10^22 J]', line=2.3, cex=.9);
   mtext(side=3, text=expression(bold(' b')), line=.25, cex=.9, adj=0);
-  polygon(c(mod.time[itmp],rev(mod.time[itmp])), c(ocheat.95[itmp],rev(ocheat.05[itmp])), col=rgb(mycol[c45,1],mycol[c45,2],mycol[c45,3],.5), border=NA);
-  lines(obs.ocheat.time, obs.ocheat.norm, type='l', col=rgb(mycol[6,1],mycol[6,2],mycol[6,3]), lwd=2);
+  polygon(c(mod.time[itmp],rev(mod.time[itmp])), c(ocheat.95[itmp],rev(ocheat.05[itmp])), col=rgb(mycol[colmod,1],mycol[colmod,2],mycol[colmod,3],.5), border=NA);
+  lines(obs.ocheat.time, obs.ocheat.norm, type='l', col=rgb(mycol[colobs,1],mycol[colobs,2],mycol[colobs,3]), lwd=2);
 	lines(c(-1e6,1e6),c(0,0),type='l',lty=2,col='black');
   polygon(c(obs.ocheat.time,rev(obs.ocheat.time)), c(obs.ocheat.norm+n.sig*obs.ocheat.err,rev(obs.ocheat.norm-n.sig*obs.ocheat.err)),
-          col=rgb(mycol[6,1],mycol[6,2],mycol[6,3],.5), border=NA);
+          col=rgb(mycol[colobs,1],mycol[colobs,2],mycol[colobs,3],.5), border=NA);
 
 # >>> GSIC <<<
 itmp=midx.gsic[1]:nrow(gsic.hind)
-plot(mod.time[itmp], gsic.50[itmp], type='l', col=rgb(mycol[c45,1],mycol[c45,2],mycol[c45,3]), lwd=2, xlab='',
+plot(mod.time[itmp], gsic.50[itmp], type='l', col=rgb(mycol[colmod,1],mycol[colmod,2],mycol[colmod,3]), lwd=2, xlab='',
      ylab='', xlim=c(1950,2016), ylim=c(-.01,.04), cex.lab=1.2, cex.axis=1.2);
   mtext(side=1, text='Year', line=2.3, cex=.9);
   mtext(side=2, text='Glaciers and\nsmall ice caps [m SLE]', line=2.3, cex=.9);
   mtext(side=3, text=expression(bold(' c')), line=.25, cex=.9, adj=0);
-  polygon(c(mod.time[itmp],rev(mod.time[itmp])), c(gsic.95[itmp],rev(gsic.05[itmp])), col=rgb(mycol[c45,1],mycol[c45,2],mycol[c45,3],.5), border=NA);
-  lines(obs.gsic.time, obs.gsic.norm, type='l', col=rgb(mycol[6,1],mycol[6,2],mycol[6,3]), lwd=2);
+  polygon(c(mod.time[itmp],rev(mod.time[itmp])), c(gsic.95[itmp],rev(gsic.05[itmp])), col=rgb(mycol[colmod,1],mycol[colmod,2],mycol[colmod,3],.5), border=NA);
+  lines(obs.gsic.time, obs.gsic.norm, type='l', col=rgb(mycol[colobs,1],mycol[colobs,2],mycol[colobs,3]), lwd=2);
 	lines(c(-1e6,1e6),c(0,0),type='l',lty=2,col='black');
   polygon(c(obs.gsic.time,rev(obs.gsic.time)), c(obs.gsic.norm+n.sig*obs.gsic.err,rev(obs.gsic.norm-n.sig*obs.gsic.err)),
-          col=rgb(mycol[6,1],mycol[6,2],mycol[6,3],.5), border=NA);
+          col=rgb(mycol[colobs,1],mycol[colobs,2],mycol[colobs,3],.5), border=NA);
 
 # >>> GIS <<<
-plot(mod.time, gis.50, type='l', col=rgb(mycol[c45,1],mycol[c45,2],mycol[c45,3]), lwd=2, xlab='',
+plot(mod.time, gis.50, type='l', col=rgb(mycol[colmod,1],mycol[colmod,2],mycol[colmod,3]), lwd=2, xlab='',
      ylab='', xlim=c(1950,2016), ylim=c(-.003,.01), cex.lab=1.2, cex.axis=1.2);
   mtext(side=1, text='Year', line=2.3, cex=.9);
   mtext(side=2, text='Greenland Ice Sheet\n[m SLE]', line=2.3, cex=.9);
   mtext(side=3, text=expression(bold(' d')), line=.25, cex=.9, adj=0);
-  polygon(c(mod.time,rev(mod.time)), c(gis.95,rev(gis.05)), col=rgb(mycol[c45,1],mycol[c45,2],mycol[c45,3],.5), border=NA);
-  lines(obs.gis.time, obs.gis.norm, type='l', col=rgb(mycol[6,1],mycol[6,2],mycol[6,3]), lwd=2);
+  polygon(c(mod.time,rev(mod.time)), c(gis.95,rev(gis.05)), col=rgb(mycol[colmod,1],mycol[colmod,2],mycol[colmod,3],.5), border=NA);
+  lines(obs.gis.time, obs.gis.norm, type='l', col=rgb(mycol[colobs,1],mycol[colobs,2],mycol[colobs,3]), lwd=2);
 	lines(c(-1e6,1e6),c(0,0),type='l',lty=2,col='black');
   polygon(c(obs.gis.time,rev(obs.gis.time)), c(obs.gis.norm+n.sig*sqrt(obs.gis.err^2),rev(obs.gis.norm-n.sig*sqrt(obs.gis.err^2))),
-          col=rgb(mycol[6,1],mycol[6,2],mycol[6,3],.5), border=NA);
+          col=rgb(mycol[colobs,1],mycol[colobs,2],mycol[colobs,3],.5), border=NA);
 
 # >>> TE <<<
 x1971=seq(trends.te[1,4],trends.te[1,5])
@@ -253,48 +264,48 @@ lo1993 = yc1993+(trends.te[2,2]/1000)*(x1993-c1993)
 hi1993 = yc1993+(trends.te[2,3]/1000)*(x1993-c1993)
 y1993 = yc1993+(trends.te[2,1]/1000)*(x1993-c1993)
 
-plot(mod.time, te.50, type='l', col=rgb(mycol[c45,1],mycol[c45,2],mycol[c45,3]), lwd=2, xlab='',
+plot(mod.time, te.50, type='l', col=rgb(mycol[colmod,1],mycol[colmod,2],mycol[colmod,3]), lwd=2, xlab='',
      ylab='', xlim=c(1950,2016), ylim=c(-.04,.04), cex.lab=1.2, cex.axis=1.2);
   mtext(side=1, text='Year', line=2.3, cex=.9);
   mtext(side=2, text='Thermal expansion\n[m SLE]', line=2.3, cex=.9);
   mtext(side=3, text=expression(bold(' e')), line=.25, cex=.9, adj=0);
-  polygon(c(mod.time,rev(mod.time)), c(te.95,rev(te.05)), col=rgb(mycol[c45,1],mycol[c45,2],mycol[c45,3],.5), border=NA);
-	lines(x1971,y1971, type='l', col=rgb(mycol[6,1],mycol[6,2],mycol[6,3]), lwd=2);
-  polygon(c(x1971,rev(x1971)), c(lo1971,rev(hi1971)), col=rgb(mycol[6,1],mycol[6,2],mycol[6,3],.5), border=NA);
-	lines(x1993,y1993, type='l', col=rgb(mycol[6,1],mycol[6,2],mycol[6,3]), lwd=2);
+  polygon(c(mod.time,rev(mod.time)), c(te.95,rev(te.05)), col=rgb(mycol[colmod,1],mycol[colmod,2],mycol[colmod,3],.5), border=NA);
+	lines(x1971,y1971, type='l', col=rgb(mycol[colobs,1],mycol[colobs,2],mycol[colobs,3]), lwd=2);
+  polygon(c(x1971,rev(x1971)), c(lo1971,rev(hi1971)), col=rgb(mycol[colobs,1],mycol[colobs,2],mycol[colobs,3],.5), border=NA);
+	lines(x1993,y1993, type='l', col=rgb(mycol[colobs,1],mycol[colobs,2],mycol[colobs,3]), lwd=2);
 	lines(c(-1e6,1e6),c(0,0),type='l',lty=2,col='black');
-	polygon(c(x1993,rev(x1993)), c(lo1993,rev(hi1993)), col=rgb(mycol[6,1],mycol[6,2],mycol[6,3],.5), border=NA);
+	polygon(c(x1993,rev(x1993)), c(lo1993,rev(hi1993)), col=rgb(mycol[colobs,1],mycol[colobs,2],mycol[colobs,3],.5), border=NA);
 
 # >>> TOTAL SLR <<<
-plot(mod.time, slr.50, type='l', col=rgb(mycol[c45,1],mycol[c45,2],mycol[c45,3]), lwd=2, xlab='',
+plot(mod.time, slr.50, type='l', col=rgb(mycol[colmod,1],mycol[colmod,2],mycol[colmod,3]), lwd=2, xlab='',
      ylab='', xlim=c(1850,2016), ylim=c(-.3,.2), cex.lab=1.2, cex.axis=1.2);
   mtext(side=1, text='Year', line=2.3, cex=.9);
   mtext(side=2, text='Total sea level [m]', line=2.3, cex=.9);
   mtext(side=3, text=expression(bold(' f')), line=.25, cex=.9, adj=0);
-  polygon(c(mod.time,rev(mod.time)), c(slr.95,rev(slr.05)), col=rgb(mycol[c45,1],mycol[c45,2],mycol[c45,3],.5), border=NA);
-  lines(obs.sl.time, obs.sl.norm, type='l', col=rgb(mycol[6,1],mycol[6,2],mycol[6,3]), lwd=2);
+  polygon(c(mod.time,rev(mod.time)), c(slr.95,rev(slr.05)), col=rgb(mycol[colmod,1],mycol[colmod,2],mycol[colmod,3],.5), border=NA);
+  lines(obs.sl.time, obs.sl.norm, type='l', col=rgb(mycol[colobs,1],mycol[colobs,2],mycol[colobs,3]), lwd=2);
 	lines(c(-1e6,1e6),c(0,0),type='l',lty=2,col='black');
   polygon(c(obs.sl.time,rev(obs.sl.time)), c(obs.sl.norm+n.sig*obs.sl.err,rev(obs.sl.norm-n.sig*obs.sl.err)),
-          col=rgb(mycol[6,1],mycol[6,2],mycol[6,3],.5), border=NA);
+          col=rgb(mycol[colobs,1],mycol[colobs,2],mycol[colobs,3],.5), border=NA);
 
 # >>> AIS PALEO, SMOOTHED <<<
 ipaleo=which(t.paleo==-149999):which(t.paleo==1)
-plot(t.paleo[ipaleo], ais.paleo.50[ipaleo], type='l', col=rgb(mycol[c45,1],mycol[c45,2],mycol[c45,3]), lwd=2, xlab='',
+plot(t.paleo[ipaleo], ais.paleo.50[ipaleo], type='l', col=rgb(mycol[colmod,1],mycol[colmod,2],mycol[colmod,3]), lwd=2, xlab='',
      ylab='', xlim=c(t.paleo[ipaleo[1]],t.paleo[ipaleo[length(ipaleo)]]), ylim=c(-20,10),
 		 cex.lab=1.2, cex.axis=1.2);
   mtext(side=1, text='Year [before present]', line=2.3, cex=.9);
   mtext(side=2, text='Antarctic Ice Sheet\n[m SLE]', line=2.3, cex=.9);
   mtext(side=3, text=expression(bold(' g')), line=.25, cex=.9, adj=0);
-  polygon(c(t.paleo[ipaleo],rev(t.paleo[ipaleo])), c(ais.paleo.95[ipaleo],rev(ais.paleo.05[ipaleo])), col=rgb(mycol[c45,1],mycol[c45,2],mycol[c45,3],.5), border=NA);
+  polygon(c(t.paleo[ipaleo],rev(t.paleo[ipaleo])), c(ais.paleo.95[ipaleo],rev(ais.paleo.05[ipaleo])), col=rgb(mycol[colmod,1],mycol[colmod,2],mycol[colmod,3],.5), border=NA);
 	for (i in 1:3) {
   	polygon(c( date[c(obs.years[i]-1000,obs.years[i]+1000)], rev(date[c(obs.years[i]-1000,obs.years[i]+1000)]) ),
 	 			  	c( c(windows[i,2],windows[i,2])                , rev(c(windows[i,1],windows[i,1]))                 ),
-          	col=rgb(mycol[6,1],mycol[6,2],mycol[6,3],.7), border=NA);
+          	col=rgb(mycol[colobs,1],mycol[colobs,2],mycol[colobs,3],.7), border=NA);
 	}
-	i=4; points(date[obs.years[i]],mean(windows[i,]),pch=15,col=rgb(mycol[6,1],mycol[6,2],mycol[6,3]))
+	i=4; points(date[obs.years[i]],mean(windows[i,]),pch=15,col=rgb(mycol[colobs,1],mycol[colobs,2],mycol[colobs,3]))
 	lines(c(-1e6,1e6),c(0,0),type='l',lty=2,col='black');
-  legend(-90000,29,c("5-95% range, model","2-sigma range, observations"),
-         col=c(rgb(mycol[c45,1],mycol[c45,2],mycol[c45,3]),rgb(mycol[6,1],mycol[6,2],mycol[6,3]),rgb(mycol[c26,1],mycol[c26,2],mycol[c26,3])), lwd=2, bty='n', cex=1.2)
+  legend(-90000,12,c("5-95% range, model","2-sigma range, observations"),
+         col=c(rgb(mycol[colmod,1],mycol[colmod,2],mycol[colmod,3]),rgb(mycol[colobs,1],mycol[colobs,2],mycol[colobs,3]),rgb(col26[1],col26[2],col26[3])), lwd=2, bty='n', cex=1.2)
 
 dev.off()
 
@@ -399,7 +410,7 @@ print('==============================================================')
 
 i2050 <- which(t.proj==2050)
 print('==============================================================')
-print('min/5%/50%/95%/max of 2100 sea level relative to 1986-2005:')
+print('min/5%/50%/95%/max of 2050 sea level relative to 1986-2005:')
 print(paste('RCP2.6: ',quantile(slr.rcp26[i2050,],c(0,.05,.50,.95,1))))
 print(paste('RCP4.5: ',quantile(slr.rcp45[i2050,],c(0,.05,.50,.95,1))))
 print(paste('RCP8.5: ',quantile(slr.rcp85[i2050,],c(0,.05,.50,.95,1))))
@@ -523,27 +534,27 @@ pdf(paste(plotdir,'projections_SLR_total_vs_Mengel.pdf',sep=''),width=5,height=3
 par(mfrow=c(1,1))
 # UNIFORM RCP85
 par(mai=c(.65,.65,.20,.4))
-plot(t.proj[iproj],slr.rcp85.50[iproj],type='l',col=rgb(mycol[c85,1],mycol[c85,2],mycol[c85,3]),lwd=2, ann='',
+plot(t.proj[iproj],slr.rcp85.50[iproj],type='l',col=rgb(col85[1],col85[2],col85[3]),lwd=2, ann='',
 		 xlim=c(2000,2111), ylim=c(0,1.7), xaxt='n', yaxt='n', xaxs='i', yaxs='i');
 		 axis(1, seq(2000,2100,by=20)); axis(2, seq(0,2,by=.25), lab=c('0','','0.5','','1','','1.5','','2'));
 		 mtext(side=2, text='Total sea level [m]', line=2.2, cex=1);
      mtext(side=1, text='Year', line=2.2, cex=1);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(slr.rcp85.95[iproj],rev(slr.rcp85.05[iproj])),
-          col=rgb(mycol[c85,1],mycol[c85,2],mycol[c85,3],.5), border=NA);
+          col=rgb(col85[1],col85[2],col85[3],.5), border=NA);
 # + UNIFORM RCP45
-	lines(t.proj[iproj],slr.rcp45.50[iproj],type='l',col=rgb(mycol[c45,1],mycol[c45,2],mycol[c45,3]),lwd=2);
+	lines(t.proj[iproj],slr.rcp45.50[iproj],type='l',col=rgb(col45[1],col45[2],col45[3]),lwd=2);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(slr.rcp45.95[iproj],rev(slr.rcp45.05[iproj])),
-          col=rgb(mycol[c45,1],mycol[c45,2],mycol[c45,3],.5), border=NA);
+          col=rgb(col45[1],col45[2],col45[3],.5), border=NA);
 # + UNIFORM RCP26
-	lines(t.proj[iproj],slr.rcp26.50[iproj],type='l',col=rgb(mycol[c26,1],mycol[c26,2],mycol[c26,3]),lwd=2);
+	lines(t.proj[iproj],slr.rcp26.50[iproj],type='l',col=rgb(col26[1],col26[2],col26[3]),lwd=2);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(slr.rcp26.95[iproj],rev(slr.rcp26.05[iproj])),
-          col=rgb(mycol[c26,1],mycol[c26,2],mycol[c26,3],.5), border=NA);
+          col=rgb(col26[1],col26[2],col26[3],.5), border=NA);
 # + legend
-  legend(t.proj[iproj[1]]+10,1.5,c("5-95% range,",
+  legend(t.proj[iproj[1]]+5,1.7,c("5-95% range,",
                                 "RCP2.6",
 																"RCP4.5",
 																"RCP8.5"),
-         lty=c(NA,1,1,1), lwd=3, col=c(NA,rgb(mycol[c26,1],mycol[c26,2],mycol[c26,3]),rgb(mycol[c45,1],mycol[c45,2],mycol[c45,3]),rgb(mycol[c85,1],mycol[c85,2],mycol[c85,3])), bty='n', cex=1)
+         lty=c(NA,1,1,1), lwd=3, col=c(NA,rgb(col26[1],col26[2],col26[3]),rgb(col45[1],col45[2],col45[3]),rgb(col85[1],col85[2],col85[3])), bty='n', cex=1)
 
 # + "Mengel" label
 #	text(2110, 1.8, "Mengel et al, 2016", pos = 2, cex = 1, srt = 90)
@@ -555,18 +566,18 @@ plot(t.proj[iproj],slr.rcp85.50[iproj],type='l',col=rgb(mycol[c85,1],mycol[c85,2
 # + Mengel RCP26
   polygon(c(t.proj[i2100]+1,t.proj[i2100]+4,t.proj[i2100]+4,t.proj[i2100]+1),
 					c(slr.rcp26.m16[3],slr.rcp26.m16[3],slr.rcp26.m16[1],slr.rcp26.m16[1]),
-          col=rgb(mycol[c26,1],mycol[c26,2],mycol[c26,3],.5), border=NA)
-  lines(c(t.proj[i2100]+1,t.proj[i2100]+4),c(slr.rcp26.m16[2],slr.rcp26.m16[2]),type='l',lwd=2,col=rgb(mycol[c26,1],mycol[c26,2],mycol[c26,3]));
+          col=rgb(col26[1],col26[2],col26[3],.5), border=NA)
+  lines(c(t.proj[i2100]+1,t.proj[i2100]+4),c(slr.rcp26.m16[2],slr.rcp26.m16[2]),type='l',lwd=2,col=rgb(col26[1],col26[2],col26[3]));
 # + Mengel RCP45
   polygon(c(t.proj[i2100]+4,t.proj[i2100]+7,t.proj[i2100]+7,t.proj[i2100]+4),
 					c(slr.rcp45.m16[3],slr.rcp45.m16[3],slr.rcp45.m16[1],slr.rcp45.m16[1]),
-          col=rgb(mycol[c45,1],mycol[c45,2],mycol[c45,3],.5), border=NA)
-  lines(c(t.proj[i2100]+4,t.proj[i2100]+7),c(slr.rcp45.m16[2],slr.rcp45.m16[2]),type='l',lwd=2,col=rgb(mycol[c45,1],mycol[c45,2],mycol[c45,3]));
+          col=rgb(col45[1],col45[2],col45[3],.5), border=NA)
+  lines(c(t.proj[i2100]+4,t.proj[i2100]+7),c(slr.rcp45.m16[2],slr.rcp45.m16[2]),type='l',lwd=2,col=rgb(col45[1],col45[2],col45[3]));
 # + Mengel RCP85
   polygon(c(t.proj[i2100]+7,t.proj[i2100]+10,t.proj[i2100]+10,t.proj[i2100]+7),
 					c(slr.rcp85.m16[3],slr.rcp85.m16[3],slr.rcp85.m16[1],slr.rcp85.m16[1]),
-          col=rgb(mycol[c85,1],mycol[c85,2],mycol[c85,3],0.5), border=NA)
-  lines(c(t.proj[i2100]+7,t.proj[i2100]+10),c(slr.rcp85.m16[2],slr.rcp85.m16[2]),type='l',lwd=2,col=rgb(mycol[c85,1],mycol[c85,2],mycol[c85,3]));
+          col=rgb(col85[1],col85[2],col85[3],0.5), border=NA)
+  lines(c(t.proj[i2100]+7,t.proj[i2100]+10),c(slr.rcp85.m16[2],slr.rcp85.m16[2]),type='l',lwd=2,col=rgb(col85[1],col85[2],col85[3]));
 
 dev.off()
 
@@ -601,13 +612,13 @@ i2095=which(t.proj==2095)
 pdf(paste(plotdir,'projections_SLR_total_DP16_wais.pdf',sep=''),width=5,height=5,colormodel='cmyk')
 par(mfrow=c(1,1), mai=c(.7,.7,.2,.25))
 # RCP85
-plot(t.proj[iproj],slr.rcp85.50[iproj],type='l',col=rgb(mycol[c85,1],mycol[c85,2],mycol[c85,3]),lwd=2, xlab='', ylab='',
+plot(t.proj[iproj],slr.rcp85.50[iproj],type='l',col=rgb(col85[1],col85[2],col85[3]),lwd=2, xlab='', ylab='',
 		 xlim=c(2000,2100), ylim=c(0,5), xaxt='n', yaxt='n', xaxs='i', yaxs='i', lty=1);
 		 axis(1, seq(1960,2100,by=20)); axis(2, seq(0,5,by=.50), lab=c('0','','1','','2','','3','','4','','5'))
 		 mtext(side=1, text='Year', line=2.1, cex=1.2);
 		 mtext(side=2, text='Sea level [m]', line=2.1, cex=1.2);
 	polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(slr.rcp85.95[iproj],rev(slr.rcp85.05[iproj])),
-	        col=rgb(mycol[c85,1],mycol[c85,2],mycol[c85,3],0.5), border=NA);
+	        col=rgb(col85[1],col85[2],col85[3],0.5), border=NA);
 
 lines(t.proj[iproj],slr.rcp85.50[iproj]+wais.worst[iproj], col=rgb(mycol[11,1],mycol[11,2],mycol[11,3]), lwd=2)
 	polygon(c(t.proj[iproj],rev(t.proj[iproj])),
@@ -631,7 +642,7 @@ lines(t.proj[iproj],slr.rcp85.50[iproj]+wais.dp16[iproj], col=rgb(mycol[12,1],my
   legend(t.proj[iproj[1]],4.9,c("5-95% range, RCP8.5",
 																"+ WAIS, DP16",
 																"+ WAIS, worst-case"),
-    lty=c(1,1,1), lwd=3, col=c(rgb(mycol[c85,1],mycol[c85,2],mycol[c85,3]),rgb(mycol[12,1],mycol[12,2],mycol[12,3]),rgb(mycol[11,1],mycol[11,2],mycol[11,3])), bty='n')
+    lty=c(1,1,1), lwd=3, col=c(rgb(col85[1],col85[2],col85[3]),rgb(mycol[12,1],mycol[12,2],mycol[12,3]),rgb(mycol[11,1],mycol[11,2],mycol[11,3])), bty='n')
 dev.off()
 
 ##==============================================================================
@@ -658,83 +669,83 @@ par(mfrow=c(3,2))
 ## >>> SURFACE TEMPERATURE <<<
 # RCP85
 par(mai=c(.4,.5,.1,.05))
-plot(t.proj[iproj],temp.rcp85.50[iproj],type='l',col=rgb(mycol[c85,1],mycol[c85,2],mycol[c85,3]),lwd=2, xlab='', ylab='',
+plot(t.proj[iproj],temp.rcp85.50[iproj],type='l',col=rgb(col85[1],col85[2],col85[3]),lwd=2, xlab='', ylab='',
 		 xlim=c(2000,2111), ylim=c(0,5), xaxt='n', yaxt='n', xaxs='i', yaxs='i', cex.lab=1.1);
 		 axis(1, seq(1960,2100,by=20), cex.axis=1.1); axis(2, seq(0,5,by=.50), cex.axis=1.1)
 		 mtext(side = 2, text = "Surface temperature [deg C]", line = 2.2, cex=0.8)
      mtext(side=3, text=expression(bold(' a')), line=-1.2, cex=.9, adj=0);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(temp.rcp85.95[iproj],rev(temp.rcp85.05[iproj])),
-          col=rgb(mycol[c85,1],mycol[c85,2],mycol[c85,3],.5), border=NA);
+          col=rgb(col85[1],col85[2],col85[3],.5), border=NA);
 # + RCP26
-lines(t.proj[iproj],temp.rcp26.50[iproj],type='l',col=rgb(mycol[c26,1],mycol[c26,2],mycol[c26,3]),lwd=2);
+lines(t.proj[iproj],temp.rcp26.50[iproj],type='l',col=rgb(col26[1],col26[2],col26[3]),lwd=2);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(temp.rcp26.95[iproj],rev(temp.rcp26.05[iproj])),
-          col=rgb(mycol[c26,1],mycol[c26,2],mycol[c26,3],.5), border=NA);
+          col=rgb(col26[1],col26[2],col26[3],.5), border=NA);
 # + RCP45
-lines(t.proj[iproj],temp.rcp45.50[iproj],type='l',col=rgb(mycol[c45,1],mycol[c45,2],mycol[c45,3]),lwd=2);
+lines(t.proj[iproj],temp.rcp45.50[iproj],type='l',col=rgb(col45[1],col45[2],col45[3]),lwd=2);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(temp.rcp45.95[iproj],rev(temp.rcp45.05[iproj])),
-          col=rgb(mycol[c45,1],mycol[c45,2],mycol[c45,3],.5), border=NA);
+          col=rgb(col45[1],col45[2],col45[3],.5), border=NA);
 # + Legend
 legend(t.proj[iproj[1]]-2,4.7,c("5-95% range, RCP2.6",
 																	"5-95% range, RCP4.5",
 																	"5-95% range, RCP8.5"),
          lty=c(1,1,1), lwd=3,
-         col=c(rgb(mycol[c26,1],mycol[c26,2],mycol[c26,3]),rgb(mycol[c45,1],mycol[c45,2],mycol[c45,3]),rgb(mycol[c85,1],mycol[c85,2],mycol[c85,3])),
+         col=c(rgb(col26[1],col26[2],col26[3]),rgb(col45[1],col45[2],col45[3]),rgb(col85[1],col85[2],col85[3])),
          bty='n', cex=1.1)
 
 ## >>> OCEAN HEAT UPTAKE <<<
 # RCP85
 par(mai=c(.4,.5,.1,.05))
-plot(t.proj[iproj],ocheat.rcp85.50[iproj],type='l',col=rgb(mycol[c85,1],mycol[c85,2],mycol[c85,3]),lwd=2, xlab='', ylab='',
+plot(t.proj[iproj],ocheat.rcp85.50[iproj],type='l',col=rgb(col85[1],col85[2],col85[3]),lwd=2, xlab='', ylab='',
 		 xlim=c(2000,2111), ylim=c(0,400), xaxt='n', yaxt='n', xaxs='i', yaxs='i', cex.lab=1.1);
 		 axis(1, seq(1960,2100,by=20),cex.axis=1.1); axis(2, seq(0,400,by=50),cex.axis=1.1)
 		 mtext(side = 2, text = "Ocean heat uptake [10^22 J]", line = 2.2, cex=0.8)
      mtext(side=3, text=expression(bold(' b')), line=-1.2, cex=.9, adj=0);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(ocheat.rcp85.95[iproj],rev(ocheat.rcp85.05[iproj])),
-          col=rgb(mycol[c85,1],mycol[c85,2],mycol[c85,3],.5), border=NA);
+          col=rgb(col85[1],col85[2],col85[3],.5), border=NA);
 # + RCP26
-lines(t.proj[iproj],ocheat.rcp26.50[iproj],type='l',col=rgb(mycol[c26,1],mycol[c26,2],mycol[c26,3]),lwd=2);
+lines(t.proj[iproj],ocheat.rcp26.50[iproj],type='l',col=rgb(col26[1],col26[2],col26[3]),lwd=2);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(ocheat.rcp26.95[iproj],rev(ocheat.rcp26.05[iproj])),
-          col=rgb(mycol[c26,1],mycol[c26,2],mycol[c26,3],.5), border=NA);
+          col=rgb(col26[1],col26[2],col26[3],.5), border=NA);
 # + RCP45
-lines(t.proj[iproj],ocheat.rcp45.50[iproj],type='l',col=rgb(mycol[c45,1],mycol[c45,2],mycol[c45,3]),lwd=2);
+lines(t.proj[iproj],ocheat.rcp45.50[iproj],type='l',col=rgb(col45[1],col45[2],col45[3]),lwd=2);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(ocheat.rcp45.95[iproj],rev(ocheat.rcp45.05[iproj])),
-          col=rgb(mycol[c45,1],mycol[c45,2],mycol[c45,3],.5), border=NA);
+          col=rgb(col45[1],col45[2],col45[3],.5), border=NA);
 
 ## >>> AIS SLR <<<
 # RCP85
 par(mai=c(.4,.5,.1,.05))
-plot(t.proj[iproj],ais.rcp85.50[iproj],type='l',col=rgb(mycol[c85,1],mycol[c85,2],mycol[c85,3]),lwd=2, xlab='', ylab='',
+plot(t.proj[iproj],ais.rcp85.50[iproj],type='l',col=rgb(col85[1],col85[2],col85[3]),lwd=2, xlab='', ylab='',
 		 xlim=c(2000,2111), ylim=c(0,1), xaxt='n', yaxt='n', xaxs='i', yaxs='i');
 		 axis(1, seq(1960,2100,by=20), cex.axis=1.1); axis(2, seq(0,1,by=.10), cex.axis=1.1)
 		 mtext(side = 2, text = "Antarctic Ice Sheet [m SLE]", line = 2.2, cex=0.8)
      mtext(side=3, text=expression(bold(' c')), line=-1.2, cex=.9, adj=0);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(ais.rcp85.95[iproj],rev(ais.rcp85.05[iproj])),
-          col=rgb(mycol[c85,1],mycol[c85,2],mycol[c85,3],.5), border=NA);
+          col=rgb(col85[1],col85[2],col85[3],.5), border=NA);
 # + RCP26
-lines(t.proj[iproj],ais.rcp26.50[iproj],type='l',col=rgb(mycol[c26,1],mycol[c26,2],mycol[c26,3]),lwd=2);
+lines(t.proj[iproj],ais.rcp26.50[iproj],type='l',col=rgb(col26[1],col26[2],col26[3]),lwd=2);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(ais.rcp26.95[iproj],rev(ais.rcp26.05[iproj])),
-          col=rgb(mycol[c26,1],mycol[c26,2],mycol[c26,3],.5), border=NA);
+          col=rgb(col26[1],col26[2],col26[3],.5), border=NA);
 # + RCP45
-lines(t.proj[iproj],ais.rcp45.50[iproj],type='l',col=rgb(mycol[c45,1],mycol[c45,2],mycol[c45,3]),lwd=2);
+lines(t.proj[iproj],ais.rcp45.50[iproj],type='l',col=rgb(col45[1],col45[2],col45[3]),lwd=2);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(ais.rcp45.95[iproj],rev(ais.rcp45.05[iproj])),
-          col=rgb(mycol[c45,1],mycol[c45,2],mycol[c45,3],.5), border=NA);
+          col=rgb(col45[1],col45[2],col45[3],.5), border=NA);
 # + "Mengel" label
 	text(2109, .9, "Mengel et al, 2016", pos = 2, cex = 1.1, srt = 90)
 # + Mengel RCP26
   polygon(c(t.proj[i2100]+1,t.proj[i2100]+4,t.proj[i2100]+4,t.proj[i2100]+1),
 					c(ais.rcp26.m16[3],ais.rcp26.m16[3],ais.rcp26.m16[1],ais.rcp26.m16[1]),
-          col=rgb(mycol[c26,1],mycol[c26,2],mycol[c26,3],.5), border=NA)
-  lines(c(t.proj[i2100]+1,t.proj[i2100]+4),c(ais.rcp26.m16[2],ais.rcp26.m16[2]),type='l',lwd=2,col=rgb(mycol[c26,1],mycol[c26,2],mycol[c26,3]));
+          col=rgb(col26[1],col26[2],col26[3],.5), border=NA)
+  lines(c(t.proj[i2100]+1,t.proj[i2100]+4),c(ais.rcp26.m16[2],ais.rcp26.m16[2]),type='l',lwd=2,col=rgb(col26[1],col26[2],col26[3]));
 # + Mengel RCP45
   polygon(c(t.proj[i2100]+4,t.proj[i2100]+7,t.proj[i2100]+7,t.proj[i2100]+4),
 					c(ais.rcp45.m16[3],ais.rcp45.m16[3],ais.rcp45.m16[1],ais.rcp45.m16[1]),
-          col=rgb(mycol[c45,1],mycol[c45,2],mycol[c45,3],.5), border=NA)
-  lines(c(t.proj[i2100]+4,t.proj[i2100]+7),c(ais.rcp45.m16[2],ais.rcp45.m16[2]),type='l',lwd=2,col=rgb(mycol[c45,1],mycol[c45,2],mycol[c45,3]));
+          col=rgb(col45[1],col45[2],col45[3],.5), border=NA)
+  lines(c(t.proj[i2100]+4,t.proj[i2100]+7),c(ais.rcp45.m16[2],ais.rcp45.m16[2]),type='l',lwd=2,col=rgb(col45[1],col45[2],col45[3]));
 # + Mengel RCP85
   polygon(c(t.proj[i2100]+7,t.proj[i2100]+10,t.proj[i2100]+10,t.proj[i2100]+7),
 					c(ais.rcp85.m16[3],ais.rcp85.m16[3],ais.rcp85.m16[1],ais.rcp85.m16[1]),
-          col=rgb(mycol[c85,1],mycol[c85,2],mycol[c85,3],.5), border=NA)
-  lines(c(t.proj[i2100]+7,t.proj[i2100]+10),c(ais.rcp85.m16[2],ais.rcp85.m16[2]),type='l',lwd=2,col=rgb(mycol[c85,1],mycol[c85,2],mycol[c85,3]));
+          col=rgb(col85[1],col85[2],col85[3],.5), border=NA)
+  lines(c(t.proj[i2100]+7,t.proj[i2100]+10),c(ais.rcp85.m16[2],ais.rcp85.m16[2]),type='l',lwd=2,col=rgb(col85[1],col85[2],col85[3]));
 # + Shaded box around Mengel
 	polygon(c(t.proj[i2100]+0.5,t.proj[i2100]+11,t.proj[i2100]+11,t.proj[i2100]+.5),
 					c(10,10,-10,-10), col=rgb(.5,.5,.5,.15), border=NA)
@@ -742,36 +753,36 @@ lines(t.proj[iproj],ais.rcp45.50[iproj],type='l',col=rgb(mycol[c45,1],mycol[c45,
 ## >>> GIS SLR <<<
 # RCP85
 par(mai=c(.4,.5,.1,.05))
-plot(t.proj[iproj],gis.rcp85.50[iproj],type='l',col=rgb(mycol[c85,1],mycol[c85,2],mycol[c85,3]),lwd=2, xlab='', ylab='',
+plot(t.proj[iproj],gis.rcp85.50[iproj],type='l',col=rgb(col85[1],col85[2],col85[3]),lwd=2, xlab='', ylab='',
 		 xlim=c(2000,2111), ylim=c(0,1), xaxt='n', yaxt='n', xaxs='i', yaxs='i', cex.lab=1.1);
 		 axis(1, seq(1960,2100,by=20), cex.axis=1.1); axis(2, seq(0,1,by=.10), cex.axis=1.1)
 		 mtext(side = 2, text = "Greenland Ice Sheet [m SLE]", line = 2.2, cex=0.8)
      mtext(side=3, text=expression(bold(' d')), line=-1.2, cex=.9, adj=0);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(gis.rcp85.95[iproj],rev(gis.rcp85.05[iproj])),
-          col=rgb(mycol[c85,1],mycol[c85,2],mycol[c85,3],.5), border=NA);
+          col=rgb(col85[1],col85[2],col85[3],.5), border=NA);
 # + RCP26
-lines(t.proj[iproj],gis.rcp26.50[iproj],type='l',col=rgb(mycol[c26,1],mycol[c26,2],mycol[c26,3]),lwd=2);
+lines(t.proj[iproj],gis.rcp26.50[iproj],type='l',col=rgb(col26[1],col26[2],col26[3]),lwd=2);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(gis.rcp26.95[iproj],rev(gis.rcp26.05[iproj])),
-          col=rgb(mycol[c26,1],mycol[c26,2],mycol[c26,3],.5), border=NA);
+          col=rgb(col26[1],col26[2],col26[3],.5), border=NA);
 # + RCP45
-lines(t.proj[iproj],gis.rcp45.50[iproj],type='l',col=rgb(mycol[c45,1],mycol[c45,2],mycol[c45,3]),lwd=2);
+lines(t.proj[iproj],gis.rcp45.50[iproj],type='l',col=rgb(col45[1],col45[2],col45[3]),lwd=2);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(gis.rcp45.95[iproj],rev(gis.rcp45.05[iproj])),
-          col=rgb(mycol[c45,1],mycol[c45,2],mycol[c45,3],.5), border=NA);
+          col=rgb(col45[1],col45[2],col45[3],.5), border=NA);
 # + Mengel RCP26
   polygon(c(t.proj[i2100]+1,t.proj[i2100]+4,t.proj[i2100]+4,t.proj[i2100]+1),
 					c(gis.rcp26.m16[3],gis.rcp26.m16[3],gis.rcp26.m16[1],gis.rcp26.m16[1]),
-          col=rgb(mycol[c26,1],mycol[c26,2],mycol[c26,3],.5), border=NA)
-  lines(c(t.proj[i2100]+1,t.proj[i2100]+4),c(gis.rcp26.m16[2],gis.rcp26.m16[2]),type='l',lwd=2,col=rgb(mycol[c26,1],mycol[c26,2],mycol[c26,3]));
+          col=rgb(col26[1],col26[2],col26[3],.5), border=NA)
+  lines(c(t.proj[i2100]+1,t.proj[i2100]+4),c(gis.rcp26.m16[2],gis.rcp26.m16[2]),type='l',lwd=2,col=rgb(col26[1],col26[2],col26[3]));
 # + Mengel RCP45
   polygon(c(t.proj[i2100]+4,t.proj[i2100]+7,t.proj[i2100]+7,t.proj[i2100]+4),
 					c(gis.rcp45.m16[3],gis.rcp45.m16[3],gis.rcp45.m16[1],gis.rcp45.m16[1]),
-          col=rgb(mycol[c45,1],mycol[c45,2],mycol[c45,3],.5), border=NA)
-  lines(c(t.proj[i2100]+4,t.proj[i2100]+7),c(gis.rcp45.m16[2],gis.rcp45.m16[2]),type='l',lwd=2,col=rgb(mycol[c45,1],mycol[c45,2],mycol[c45,3]));
+          col=rgb(col45[1],col45[2],col45[3],.5), border=NA)
+  lines(c(t.proj[i2100]+4,t.proj[i2100]+7),c(gis.rcp45.m16[2],gis.rcp45.m16[2]),type='l',lwd=2,col=rgb(col45[1],col45[2],col45[3]));
 # + Mengel RCP85
   polygon(c(t.proj[i2100]+7,t.proj[i2100]+10,t.proj[i2100]+10,t.proj[i2100]+7),
 					c(gis.rcp85.m16[3],gis.rcp85.m16[3],gis.rcp85.m16[1],gis.rcp85.m16[1]),
-          col=rgb(mycol[c85,1],mycol[c85,2],mycol[c85,3],.5), border=NA)
-  lines(c(t.proj[i2100]+7,t.proj[i2100]+10),c(gis.rcp85.m16[2],gis.rcp85.m16[2]),type='l',lwd=2,col=rgb(mycol[c85,1],mycol[c85,2],mycol[c85,3]));
+          col=rgb(col85[1],col85[2],col85[3],.5), border=NA)
+  lines(c(t.proj[i2100]+7,t.proj[i2100]+10),c(gis.rcp85.m16[2],gis.rcp85.m16[2]),type='l',lwd=2,col=rgb(col85[1],col85[2],col85[3]));
 # + Shaded box around Mengel
 	polygon(c(t.proj[i2100]+0.5,t.proj[i2100]+11,t.proj[i2100]+11,t.proj[i2100]+.5),
 					c(10,10,-10,-10), col=rgb(.5,.5,.5,.15), border=NA)
@@ -779,75 +790,75 @@ lines(t.proj[iproj],gis.rcp45.50[iproj],type='l',col=rgb(mycol[c45,1],mycol[c45,
 ## >>> GSIC SLR <<<
 # RCP85
 par(mai=c(.5,.5,.1,.05))
-plot(t.proj[iproj],gsic.rcp85.50[iproj],type='l',col=rgb(mycol[c85,1],mycol[c85,2],mycol[c85,3]),lwd=2, xlab='', ylab='',
+plot(t.proj[iproj],gsic.rcp85.50[iproj],type='l',col=rgb(col85[1],col85[2],col85[3]),lwd=2, xlab='', ylab='',
 		 xlim=c(2000,2111), ylim=c(0,1), xaxt='n', yaxt='n', xaxs='i', yaxs='i', cex.lab=1.1);
 		 axis(1, seq(1960,2100,by=20), cex.axis=1.1); axis(2, seq(0,1,by=.10), cex.axis=1.1)
      mtext(side = 1, text = "Year", line = 2.1, cex=0.8)
 		 mtext(side = 2, text = "Glaciers, small ice caps [m SLE]", line = 2.2, cex=0.8)
      mtext(side=3, text=expression(bold(' e')), line=-1.2, cex=.9, adj=0);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(gsic.rcp85.95[iproj],rev(gsic.rcp85.05[iproj])),
-          col=rgb(mycol[c85,1],mycol[c85,2],mycol[c85,3],.5), border=NA);
+          col=rgb(col85[1],col85[2],col85[3],.5), border=NA);
 # + RCP26
-lines(t.proj[iproj],gsic.rcp26.50[iproj],type='l',col=rgb(mycol[c26,1],mycol[c26,2],mycol[c26,3]),lwd=2);
+lines(t.proj[iproj],gsic.rcp26.50[iproj],type='l',col=rgb(col26[1],col26[2],col26[3]),lwd=2);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(gsic.rcp26.95[iproj],rev(gsic.rcp26.05[iproj])),
-          col=rgb(mycol[c26,1],mycol[c26,2],mycol[c26,3],.5), border=NA);
+          col=rgb(col26[1],col26[2],col26[3],.5), border=NA);
 # + RCP45
-lines(t.proj[iproj],gsic.rcp45.50[iproj],type='l',col=rgb(mycol[c45,1],mycol[c45,2],mycol[c45,3]),lwd=2);
+lines(t.proj[iproj],gsic.rcp45.50[iproj],type='l',col=rgb(col45[1],col45[2],col45[3]),lwd=2);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(gsic.rcp45.95[iproj],rev(gsic.rcp45.05[iproj])),
-          col=rgb(mycol[c45,1],mycol[c45,2],mycol[c45,3],.35), border=NA);
+          col=rgb(col45[1],col45[2],col45[3],.35), border=NA);
 # + Shaded box around Mengel
 	polygon(c(t.proj[i2100]+0.5,t.proj[i2100]+11,t.proj[i2100]+11,t.proj[i2100]+.5),
 					c(10,10,-10,-10), col=rgb(.5,.5,.5,.15), border=NA)
 # + Mengel RCP26
   polygon(c(t.proj[i2100]+1,t.proj[i2100]+4,t.proj[i2100]+4,t.proj[i2100]+1),
 					c(gsic.rcp26.m16[3],gsic.rcp26.m16[3],gsic.rcp26.m16[1],gsic.rcp26.m16[1]),
-          col=rgb(mycol[c26,1],mycol[c26,2],mycol[c26,3],.5), border=NA)
-  lines(c(t.proj[i2100]+1,t.proj[i2100]+4),c(gsic.rcp26.m16[2],gsic.rcp26.m16[2]),type='l',lwd=2,col=rgb(mycol[c26,1],mycol[c26,2],mycol[c26,3]));
+          col=rgb(col26[1],col26[2],col26[3],.5), border=NA)
+  lines(c(t.proj[i2100]+1,t.proj[i2100]+4),c(gsic.rcp26.m16[2],gsic.rcp26.m16[2]),type='l',lwd=2,col=rgb(col26[1],col26[2],col26[3]));
 # + Mengel RCP45
   polygon(c(t.proj[i2100]+4,t.proj[i2100]+7,t.proj[i2100]+7,t.proj[i2100]+4),
 					c(gsic.rcp45.m16[3],gsic.rcp45.m16[3],gsic.rcp45.m16[1],gsic.rcp45.m16[1]),
-          col=rgb(mycol[c45,1],mycol[c45,2],mycol[c45,3],.5), border=NA)
-  lines(c(t.proj[i2100]+4,t.proj[i2100]+7),c(gsic.rcp45.m16[2],gsic.rcp45.m16[2]),type='l',lwd=2,col=rgb(mycol[c45,1],mycol[c45,2],mycol[c45,3]));
+          col=rgb(col45[1],col45[2],col45[3],.5), border=NA)
+  lines(c(t.proj[i2100]+4,t.proj[i2100]+7),c(gsic.rcp45.m16[2],gsic.rcp45.m16[2]),type='l',lwd=2,col=rgb(col45[1],col45[2],col45[3]));
 # + Mengel RCP85
   polygon(c(t.proj[i2100]+7,t.proj[i2100]+10,t.proj[i2100]+10,t.proj[i2100]+7),
 					c(gsic.rcp85.m16[3],gsic.rcp85.m16[3],gsic.rcp85.m16[1],gsic.rcp85.m16[1]),
-          col=rgb(mycol[c85,1],mycol[c85,2],mycol[c85,3],.5), border=NA)
-  lines(c(t.proj[i2100]+7,t.proj[i2100]+10),c(gsic.rcp85.m16[2],gsic.rcp85.m16[2]),type='l',lwd=2,col=rgb(mycol[c85,1],mycol[c85,2],mycol[c85,3]));
+          col=rgb(col85[1],col85[2],col85[3],.5), border=NA)
+  lines(c(t.proj[i2100]+7,t.proj[i2100]+10),c(gsic.rcp85.m16[2],gsic.rcp85.m16[2]),type='l',lwd=2,col=rgb(col85[1],col85[2],col85[3]));
 
 ## >>> TE SLR <<<
 # RCP85
 par(mai=c(.5,.5,.1,.05))
-plot(t.proj[iproj],te.rcp85.50[iproj],type='l',col=rgb(mycol[c85,1],mycol[c85,2],mycol[c85,3]),lwd=2, xlab='', ylab='',
+plot(t.proj[iproj],te.rcp85.50[iproj],type='l',col=rgb(col85[1],col85[2],col85[3]),lwd=2, xlab='', ylab='',
 		 xlim=c(2000,2111), ylim=c(0,1), xaxt='n', yaxt='n', xaxs='i', yaxs='i');
 		 axis(1, seq(1960,2100,by=20), cex.axis=1.1); axis(2, seq(0,1,by=.10), cex.axis=1.1)
      mtext(side = 1, text = "Year", line = 2.1, cex=0.8)
 		 mtext(side = 2, text = "Thermal expansion [m SLE]", line = 2.2, cex=0.8)
      mtext(side=3, text=expression(bold(' f')), line=-1.2, cex=.9, adj=0);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(te.rcp85.95[iproj],rev(te.rcp85.05[iproj])),
-          col=rgb(mycol[c85,1],mycol[c85,2],mycol[c85,3],.5), border=NA);
+          col=rgb(col85[1],col85[2],col85[3],.5), border=NA);
 # + RCP26
-lines(t.proj[iproj],te.rcp26.50[iproj],type='l',col=rgb(mycol[c26,1],mycol[c26,2],mycol[c26,3]),lwd=2);
+lines(t.proj[iproj],te.rcp26.50[iproj],type='l',col=rgb(col26[1],col26[2],col26[3]),lwd=2);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(te.rcp26.95[iproj],rev(te.rcp26.05[iproj])),
-          col=rgb(mycol[c26,1],mycol[c26,2],mycol[c26,3],.5), border=NA);
+          col=rgb(col26[1],col26[2],col26[3],.5), border=NA);
 # + RCP45
-lines(t.proj[iproj],te.rcp45.50[iproj],type='l',col=rgb(mycol[c45,1],mycol[c45,2],mycol[c45,3]),lwd=2);
+lines(t.proj[iproj],te.rcp45.50[iproj],type='l',col=rgb(col45[1],col45[2],col45[3]),lwd=2);
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(te.rcp45.95[iproj],rev(te.rcp45.05[iproj])),
-          col=rgb(mycol[c45,1],mycol[c45,2],mycol[c45,3],.35), border=NA);
+          col=rgb(col45[1],col45[2],col45[3],.35), border=NA);
 # + Mengel RCP26
   polygon(c(t.proj[i2100]+1,t.proj[i2100]+4,t.proj[i2100]+4,t.proj[i2100]+1),
 					c(te.rcp26.m16[3],te.rcp26.m16[3],te.rcp26.m16[1],te.rcp26.m16[1]),
-          col=rgb(mycol[c26,1],mycol[c26,2],mycol[c26,3],.5), border=NA)
-  lines(c(t.proj[i2100]+1,t.proj[i2100]+4),c(te.rcp26.m16[2],te.rcp26.m16[2]),type='l',lwd=2,col=rgb(mycol[c26,1],mycol[c26,2],mycol[c26,3]));
+          col=rgb(col26[1],col26[2],col26[3],.5), border=NA)
+  lines(c(t.proj[i2100]+1,t.proj[i2100]+4),c(te.rcp26.m16[2],te.rcp26.m16[2]),type='l',lwd=2,col=rgb(col26[1],col26[2],col26[3]));
 # + Mengel RCP45
   polygon(c(t.proj[i2100]+4,t.proj[i2100]+7,t.proj[i2100]+7,t.proj[i2100]+4),
 					c(te.rcp45.m16[3],te.rcp45.m16[3],te.rcp45.m16[1],te.rcp45.m16[1]),
-          col=rgb(mycol[c45,1],mycol[c45,2],mycol[c45,3],.5), border=NA)
-  lines(c(t.proj[i2100]+4,t.proj[i2100]+7),c(te.rcp45.m16[2],te.rcp45.m16[2]),type='l',lwd=2,col=rgb(mycol[c45,1],mycol[c45,2],mycol[c45,3]));
+          col=rgb(col45[1],col45[2],col45[3],.5), border=NA)
+  lines(c(t.proj[i2100]+4,t.proj[i2100]+7),c(te.rcp45.m16[2],te.rcp45.m16[2]),type='l',lwd=2,col=rgb(col45[1],col45[2],col45[3]));
 # + Mengel RCP85
   polygon(c(t.proj[i2100]+7,t.proj[i2100]+10,t.proj[i2100]+10,t.proj[i2100]+7),
 					c(te.rcp85.m16[3],te.rcp85.m16[3],te.rcp85.m16[1],te.rcp85.m16[1]),
-          col=rgb(mycol[c85,1],mycol[c85,2],mycol[c85,3],.5), border=NA)
-  lines(c(t.proj[i2100]+7,t.proj[i2100]+10),c(te.rcp85.m16[2],te.rcp85.m16[2]),type='l',lwd=2,col=rgb(mycol[c85,1],mycol[c85,2],mycol[c85,3]));
+          col=rgb(col85[1],col85[2],col85[3],.5), border=NA)
+  lines(c(t.proj[i2100]+7,t.proj[i2100]+10),c(te.rcp85.m16[2],te.rcp85.m16[2]),type='l',lwd=2,col=rgb(col85[1],col85[2],col85[3]));
 # + Shaded box around Mengel
 	polygon(c(t.proj[i2100]+0.5,t.proj[i2100]+11,t.proj[i2100]+11,t.proj[i2100]+.5),
 					c(10,10,-10,-10), col=rgb(.5,.5,.5,.15), border=NA)
@@ -865,7 +876,7 @@ dev.off()
 
 ##==============================================================================
 ##==============================================================================
-## FIGURE 4 -- PROJECTIONS, PROBABILITY DISTRIBUTIONS, SURVIVAL FUNCTIONS
+## FIGURE 5? -- PROJECTIONS, PROBABILITY DISTRIBUTIONS, SURVIVAL FUNCTIONS
 ##=========
 
 i2100 = which(t.proj==2100)
@@ -908,26 +919,26 @@ pdf(paste(plotdir,'distributions_SLR2100_pdf+sf.pdf',sep=''),width=5,height=7,co
 par(mfrow=c(2,1), mai=c(.85,.74,.1,.15))
 
 plot(x,pdf.slr2100.rcp85$y, type='l', xlim=c(0,2.5), ylim=c(-1.25,4.7), lty=1,
-     col=rgb(mycol[c85,1],mycol[c85,2],mycol[c85,3]), lwd=1.5, xlab='', ylab='', xaxt='n', yaxt='n', xaxs='i', yaxs='i',axes=FALSE);
+     col=rgb(col85[1],col85[2],col85[3]), lwd=1.5, xlab='', ylab='', xaxt='n', yaxt='n', xaxs='i', yaxs='i',axes=FALSE);
   axis(1,seq(0,3,0.5),lab=c("0","0.5","1","1.5","2","2.5","3"))
   u <- par("usr")
   arrows(0, u[3],0, u[4], code = 2, xpd = TRUE)
   mtext('Probability density', side=2, line=1.3);
   mtext('Projected sea level in 2100\nrelative to 1986-2005 average [m]', side=1, line=3);
   mtext(side=3, text=expression(bold('   a')), line=-1, cex=.9, adj=0);
-  lines(x,pdf.slr2100.rcp45$y, type='l', col=rgb(mycol[c45,1],mycol[c45,2],mycol[c45,3]), lwd=1.5);
-  lines(x,pdf.slr2100.rcp26$y, type='l', col=rgb(mycol[c26,1],mycol[c26,2],mycol[c26,3]), lwd=1.5);
+  lines(x,pdf.slr2100.rcp45$y, type='l', col=rgb(col45[1],col45[2],col45[3]), lwd=1.5);
+  lines(x,pdf.slr2100.rcp26$y, type='l', col=rgb(col26[1],col26[2],col26[3]), lwd=1.5);
 
-	polygon(c(q95.rcp26,q95.rcp26,q05.rcp26,q05.rcp26), c(-0.07,-0.15,-0.15,-0.07), col=rgb(mycol[c26,1],mycol[c26,2],mycol[c26,3]), border=NA)
-	polygon(c(q95.rcp45,q95.rcp45,q05.rcp45,q05.rcp45), c(-0.20,-0.28,-0.28,-0.20), col=rgb(mycol[c45,1],mycol[c45,2],mycol[c45,3]), border=NA)
-	polygon(c(q95.rcp85,q95.rcp85,q05.rcp85,q05.rcp85), c(-0.33,-0.41,-0.41,-0.33), col=rgb(mycol[c85,1],mycol[c85,2],mycol[c85,3]), border=NA)
+	polygon(c(q95.rcp26,q95.rcp26,q05.rcp26,q05.rcp26), c(-0.07,-0.15,-0.15,-0.07), col=rgb(col26[1],col26[2],col26[3]), border=NA)
+	polygon(c(q95.rcp45,q95.rcp45,q05.rcp45,q05.rcp45), c(-0.20,-0.28,-0.28,-0.20), col=rgb(col45[1],col45[2],col45[3]), border=NA)
+	polygon(c(q95.rcp85,q95.rcp85,q05.rcp85,q05.rcp85), c(-0.33,-0.41,-0.41,-0.33), col=rgb(col85[1],col85[2],col85[3]), border=NA)
 
 # + Mengel RCP26 5-95% CI
-  arrows(slr.rcp26.m16[1], -0.7, slr.rcp26.m16[3], -0.7, length=0.05, angle=90, lty=1, lwd=2, code=3, col=rgb(mycol[c26,1],mycol[c26,2],mycol[c26,3]))
+  arrows(slr.rcp26.m16[1], -0.7, slr.rcp26.m16[3], -0.7, length=0.05, angle=90, lty=1, lwd=2, code=3, col=rgb(col26[1],col26[2],col26[3]))
 # + Mengel RCP45 5-95% CI
-  arrows(slr.rcp45.m16[1], -0.85, slr.rcp45.m16[3], -0.85, length=0.05, angle=90, lty=1, lwd=2, code=3, col=rgb(mycol[c45,1],mycol[c45,2],mycol[c45,3]))
+  arrows(slr.rcp45.m16[1], -0.85, slr.rcp45.m16[3], -0.85, length=0.05, angle=90, lty=1, lwd=2, code=3, col=rgb(col45[1],col45[2],col45[3]))
 # + Mengel RCP26 5-95% CI
-  arrows(slr.rcp85.m16[1], -1, slr.rcp85.m16[3], -1, length=0.05, angle=90, lty=1, lwd=2, code=3, col=rgb(mycol[c85,1],mycol[c85,2],mycol[c85,3]))
+  arrows(slr.rcp85.m16[1], -1, slr.rcp85.m16[3], -1, length=0.05, angle=90, lty=1, lwd=2, code=3, col=rgb(col85[1],col85[2],col85[3]))
 
 # + Box around Mengel's estimates
 	polygon(c(-100,-100,100,100), c(-.5,-100,-100,-.5), col=rgb(.5,.5,.5,.15), border=NA)
@@ -937,11 +948,11 @@ plot(x,pdf.slr2100.rcp85$y, type='l', xlim=c(0,2.5), ylim=c(-1.25,4.7), lty=1,
 	text(2.45, -0.3, "This study", pos = 2, cex = 1, srt = 0)
 
   legend(1.1,4.7,c("RCP2.6","RCP4.5","RCP8.5"),
-        lty=c(1,1,1), lwd=2, col=c(rgb(mycol[c26,1],mycol[c26,2],mycol[c26,3]),rgb(mycol[c45,1],mycol[c45,2],mycol[c45,3]),rgb(mycol[c85,1],mycol[c85,2],mycol[c85,3])),
+        lty=c(1,1,1), lwd=2, col=c(rgb(col26[1],col26[2],col26[3]),rgb(col45[1],col45[2],col45[3]),rgb(col85[1],col85[2],col85[3])),
         bty='n')
 
 plot(x,log10(sur.slr2100.rcp85),type='l', xlim=c(0,2.5), ylim=c(-3.5,0), lty=1,
-     col=rgb(mycol[c85,1],mycol[c85,2],mycol[c85,3]), lwd=1.5, xlab='', ylab='', xaxt='n', yaxt='n', xaxs='i', yaxs='i');
+     col=rgb(col85[1],col85[2],col85[3]), lwd=1.5, xlab='', ylab='', xaxt='n', yaxt='n', xaxs='i', yaxs='i');
   axis(1,seq(0,3,0.5),lab=c("0","0.5","1","1.5","2","2.5","3"))
   mtext('Survival function [1-CDF]', side = 2, line=2.6);
   mtext('Projected sea level in 2100\nrelative to 1986-2005 average [m]', side=1, line=3);
@@ -949,8 +960,8 @@ plot(x,log10(sur.slr2100.rcp85),type='l', xlim=c(0,2.5), ylim=c(-3.5,0), lty=1,
 
 	axis(2, at=seq(-4,0), label=parse(text=paste("10^", seq(-4,0), sep="")), las=1)
 
-  lines(x,log10(sur.slr2100.rcp45),type='l',lty=1, col=rgb(mycol[c45,1],mycol[c45,2],mycol[c45,3]), lwd=1.5);
-  lines(x,log10(sur.slr2100.rcp26),type='l',lty=1, col=rgb(mycol[c26,1],mycol[c26,2],mycol[c26,3]), lwd=1.5);
+  lines(x,log10(sur.slr2100.rcp45),type='l',lty=1, col=rgb(col45[1],col45[2],col45[3]), lwd=1.5);
+  lines(x,log10(sur.slr2100.rcp26),type='l',lty=1, col=rgb(col26[1],col26[2],col26[3]), lwd=1.5);
 
 	lines(c(-4,4),c(-2,-2),lty=2,col='black'); text(0.35,-1.85,"1:100 level");
 	lines(c(-4,4),c(-3,-3),lty=2,col='black'); text(0.35,-2.85,"1:1000 level");
