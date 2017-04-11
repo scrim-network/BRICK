@@ -73,11 +73,11 @@ t.beg = proc.time()
 ##==============================================================================
 ## Define the files you want to process/read/create
 
-dais <- 'u'     ## Which DAIS model set-up? (n = no fast dynamics, u = uniform priors, g = gamma priors)
+dais <- 'g'     ## Which DAIS model set-up? (n = no fast dynamics, u = uniform priors, g = gamma priors)
 appen <- ''     ## Append file name? In case you process multiple files in one day
 today <- Sys.Date(); today=format(today,format="%d%b%Y")
 
-n.ensemble = 50000               # total number of parameter samples to send into GMSL rejection sampling
+n.ensemble = 135000               # total number of parameter samples to send into GMSL rejection sampling
 n.ensemble.report = n.ensemble   # save for timing information
 l.dopaleo = FALSE                # skip the paleo AIS simulations?
 

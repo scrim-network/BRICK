@@ -5,7 +5,7 @@
 ## dyanmics scenarios (and the 3 RCP scenarios within each), and both stationary
 ## and non-stationary storm surge. This is so you do not need to re-run the full
 ## processingPipeline_BRICKscenarios.R script 3 times. Instead, once you have the
-## BRICK-model_physical_fd-XXX_[datestamp].nc files, you can feed them in here
+## BRICK_physical_fd-XXX_[datestamp].nc files, you can feed them in here
 ## and just run this one.
 ##
 ## Why, you may ask? Well, the Van Dantzig takes a while. It is not coded in
@@ -38,18 +38,19 @@ rm(list=ls())
 ## Input file names from previous parameter sampling/calibration/simulation
 
 ## Sea-level rise projections
-#filename.allslr <- "../output_model/BRICK_physical_allslr_04Feb2017.nc"
-filename.gamma <- "../output_model/BRICK_physical_fd-gamma_10Apr2017.nc"
-filename.uniform <- "../output_model/BRICK_physical_fd-uniform_10Apr2017.nc"
+filename.allslr <- "../output_model/BRICK_physical_allslr_11Apr2017.nc"
+#filename.gamma <- "../output_model/BRICK_physical_fd-gamma_11Apr2017.nc"
+#filename.uniform <- "../output_model/BRICK_physical_fd-uniform_11Apr2017.nc"
 
 ## GEV parameters, fit from tide gauge data
-filename.gevstat <- '../output_calibration/BRICK_GEVsample-AnnMean_07Mar2017.nc'
+filename.gevstat <- '../output_calibration/BRICK_GEVsample-AnnMean_11Apr2017.nc'
+#filename.gevmcmc <- '../output_calibration/BRICK_estimateGEV-AnnMean_07Mar2017.nc'
 
 ## Surge level increase factors (USACE)
-#filename.surgefactor <- '../output_calibration/BRICK_surgefactor_04Feb2017.nc'
+filename.surgefactor <- '../output_calibration/BRICK_surgefactor_11Apr2017.nc'
 
 ## Van Dantzig model parameters
-#filename.vdparams <- '../output_calibration/BRICK-VanDantzig_parameters_04Feb2017.nc'
+filename.vdparams <- '../output_calibration/BRICK-VanDantzig_parameters_11Apr2017.nc'
 
 ##==============================================================================
 ## What time horizon to consider?
@@ -131,7 +132,7 @@ if(exists('filename.allslr')) {
 
   # write the ensembles to a file so you don't have ot do this again
   today=Sys.Date(); today=format(today,format="%d%b%Y")
-  filename.slrout = paste('../output_model/BRICK-model_physical_allslr_',today,'.nc',sep="")
+  filename.slrout = paste('../output_model/BRICK_physical_allslr_',today,'.nc',sep="")
   dim.time <- ncdim_def('n.time', '', 1:nrow(slr$rcp26$none), unlim=FALSE)
   dim.ensemble <- ncdim_def('n.ensemble', 'ensemble member', 1:ncol(slr$rcp26$none), unlim=TRUE)
   slr.rcp26.none <- ncvar_def('LocalSeaLevel_nofd_RCP26', '', list(dim.time,dim.ensemble), -999)
@@ -199,13 +200,39 @@ if(exists('filename.gevstat')){
 	nc_close(ncdata)
 	colnames(gev.params) <- gev.names
 } else {
-    # sd.prop from a preliminary MLE experiment which found 90% CI for the GEV
-    # parameters that gives stdev estimates of 13.5 (mu), .2 (log(sigma)), .25 (xi)
-    # if interpreted as a 4-sigma window.
-    # sd.prop = [22,.2,.25] is tuned to get about .44 acceptance rate (Rosenthal 2011)
-	gev.est <- BRICK_estimateGEV_NOLA(niter=1e5, burnin=0.5,
-                                      sd.prop=c(22, .2, .25), sd.pri=(4*c(13.5, .2, .25)), N=n.ens)
-    gev.params <- gev.est[[2]]
+    if(exists('filename.gevmcmc')){
+        # sample from the previous MCMC results
+        ncdata <- nc_open(filename.gevmcmc)
+    	gev.names <- ncvar_get(ncdata, 'GEV_names')
+    	gev.mcmc <- t(ncvar_get(ncdata, 'GEV_parameters'))
+    	nc_close(ncdata)
+    	colnames(gev.mcmc) <- gev.names
+        isamp <- sample(x=1:nrow(gev.mcmc), size=n.ens, replace=TRUE)
+        gev.params <- gev.mcmc[isamp,]
+        # and write the results to a file so you can reproduce this later
+        lmax=0
+        for (i in 1:ncol(gev.params)){lmax=max(lmax,nchar(colnames(gev.params)[i]))}
+        today=Sys.Date(); today=format(today,format="%d%b%Y")
+        filename.gevshort = paste('../output_calibration/BRICK_GEVsample-AnnMean_',today,'.nc',sep="")
+        dim.parameters <- ncdim_def('n.parameters', '', 1:ncol(gev.params), unlim=FALSE)
+        dim.name <- ncdim_def('name.len', '', 1:lmax, unlim=FALSE)
+        dim.ensemble <- ncdim_def('n.ensemble', 'ensemble member', 1:nrow(gev.params), unlim=TRUE)
+        parameters.var <- ncvar_def('GEV_parameters', '', list(dim.parameters,dim.ensemble), -999)
+        parnames.var <- ncvar_def('GEV_names', '', list(dim.name,dim.parameters), prec='char')
+        outnc <- nc_create(filename.gevshort, list(parameters.var,parnames.var))
+        ncvar_put(outnc, parameters.var, t(gev.params))
+        ncvar_put(outnc, parnames.var, colnames(gev.params))
+        nc_close(outnc)
+
+    } else {
+        # sd.prop from a preliminary MLE experiment which found 90% CI for the GEV
+        # parameters that gives stdev estimates of 13.5 (mu), .2 (log(sigma)), .25 (xi)
+        # if interpreted as a 4-sigma window.
+        # sd.prop = [22,.2,.25] is tuned to get about .44 acceptance rate (Rosenthal 2011)
+        gev.est <- BRICK_estimateGEV_NOLA(niter=5e5, burnin=0.5,
+                                         sd.prop=c(22, .2, .25), sd.pri=(4*c(13.5, .2, .25)), N=n.ens)
+        gev.params <- gev.est[[2]]
+    }
 }
 
 ##==============================================================================
@@ -297,7 +324,7 @@ if(exists('filename.vdparams')) {
 ## Comment/modify in case you only want to (re-)run a selection of the scenarios
 #scen.ais <- c("none","gamma","uniform")
 #scen.ais <- c("none","gamma")
-scen.ais <- 'uniform'
+scen.ais <- 'none'
 
 for (ais in scen.ais) {
 

@@ -69,12 +69,12 @@ brick_vandantzig <- function(
 source("../R/VD_NOLA.R")
 
 ## Set up
-lowleveeheight	= 0				# lowest levee heightening considered (m)
-highleveeheight	= 0.91			# largest levee heightening considered (m)
-increment				= 0.91		# increment of levee heightening range (m)
+lowleveeheight	= 0         # lowest levee heightening considered (m)
+highleveeheight	= 0.91      # largest levee heightening considered (m)
+increment       = 0.91		# increment of levee heightening range (m)
 H0              = 16*0.3048 # initial levee height (m) (change to 16ft = 4.877m
                             # rough average of NOLA central levee ring)
-H0 = H0-(4*0.3048)        # initial subsidence of 4 ft
+H0 = H0-(4*0.3048)          # initial subsidence of 4 ft
 
 ## Time horizon until next evaluation of levees (years)
 T = endyear - currentyear

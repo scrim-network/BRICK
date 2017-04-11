@@ -531,7 +531,7 @@ export.names <- c('brick_model', 'doeclimF', 'gsic_magiccF', 'simpleF',
                   'intercept.Ta2Tg','mod.time','ind.norm.data', 'i2015',
                   'imodend', 'fp.loc', 'nt', 'H0', 'isca', 'iloc', 'isha', 'parameters.gev.fixed',
                   'ind.norm','luse.brick','i0','lbuild',
-                  'lws.mean', 'lws.sd',
+                  'lws.mean000', 'lws.sd000',
                   'forcing.rcp26', 'forcing.rcp45',
                   'forcing.rcp60', 'forcing.rcp85')
 
@@ -556,6 +556,8 @@ brick_sobol_par <- function(dataframe.in){
     for (pp in 1:length(ind.brick)) {
         parameters.brick[,pp] <- map.range(parameters.brick[,pp], 0, 1, bound.lower.brick[pp], bound.upper.brick[pp])
     }
+
+    lws.mean <- qnorm(dataframe.in[,ind.lws], mean=lws.mean000, sd=lws.sd000)
 
     surge.factor <- map.range(dataframe.in[,ind.surge], 0, 1, bound.lower.surge, bound.upper.surge)
 
@@ -618,7 +620,7 @@ brick_sobol_par <- function(dataframe.in){
         slr.te   <- brick.out$te.out[i2015:imodend]             - brick.out$te.out[i2015]
         slr.gis  <- brick.out$simple.out$sle.gis[i2015:imodend] - brick.out$simple.out$sle.gis[i2015]
         slr.ais  <- brick.out$dais.out$Vais[i2015:imodend]      - brick.out$dais.out$Vais[i2015]
-        slr.lws  <- cumsum(rnorm(n=length(mod.time), mean=lws.mean, sd=lws.sd)) /1000
+        slr.lws  <- cumsum(rnorm(n=length(mod.time), mean=lws.mean[i], sd=lws.sd000)) /1000
         slr.lws  <- slr.lws[i2015:imodend] - slr.lws[i2015]
         lsl.proj <- fp.loc$gsic*slr.gsic + fp.loc$te  *slr.te  +
                     fp.loc$gis *slr.gis  + fp.loc$ais *slr.ais + fp.loc$lws*slr.lws
@@ -757,8 +759,6 @@ write.table(headers.2nd    , file=file.sobolout2, append=FALSE , sep = " ",
 write.table(output.2nd     , file=file.sobolout2, append=TRUE , sep = " ",
             quote=FALSE    , row.names = FALSE , col.names=FALSE)
 ##==============================================================================
-
-
 
 
 ##==============================================================================
