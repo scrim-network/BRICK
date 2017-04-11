@@ -378,7 +378,7 @@ bound.upper.subs <- Inf
 
 library(ncdf4)
 
-filename.gevstat <- '../output_calibration/BRICK_estimateGEV-AnnMean_07Mar2017.nc'
+filename.gevstat <- '../output_calibration/BRICK_estimateGEV-AnnMean_11Apr2017.nc'
 ncdata <- nc_open(filename.gevstat)
 parnames.gev <- ncvar_get(ncdata, 'GEV_names')
 gev.mcmc <- t(ncvar_get(ncdata, 'GEV_parameters'))
@@ -387,7 +387,7 @@ colnames(gev.mcmc) <- parnames.gev
 
 ## Don't allow shape (xi) < 0, because that changes the fundamental behavior
 irem <- which(gev.mcmc[,'shape'] <= 0)
-gev.mcmc <- gev.mcmc[-irem,]
+if(length(irem) > 0) gev.mcmc <- gev.mcmc[-irem,]
 bound.lower.gev <- apply(gev.mcmc, 2, min)
 bound.upper.gev <- apply(gev.mcmc, 2, max)
 iloc <- match('location',parnames.gev)
@@ -660,7 +660,11 @@ brick_sobol_par <- function(dataframe.in){
         H_eff <- H0 - lsl.norm.subs + parameters.build[i]
 
         # failure probability is the survival function of the storm surge GEV at effective dike height
-        p_fail <- as.numeric(1-pgev(q=1000*H_eff, xi=parameters.gev[i,isha], mu=parameters.gev[i,iloc], beta=parameters.gev[i,isca]))
+        # "by hand" calculation faster; assumes shape parameter /= 0 (which is
+        # okay, given that we use 0 as lower bound on prior for it)
+        ###p_fail <- as.numeric(1-pgev(q=1000*H_eff, xi=parameters.gev[i,isha], mu=parameters.gev[i,iloc], beta=parameters.gev[i,isca]))
+        ttmp <- (1+parameters.gev[i,isha]*((1000*H_eff-parameters.gev[i,iloc])/parameters.gev[i,isca]))^(-1/parameters.gev[i,isha])
+        p_fail <- 1-exp(-ttmp)
 
         # using average annual exceedance probability as the response
         output[i] <- mean(p_fail)
@@ -755,7 +759,11 @@ brick_sobol_ser <- function(dataframe.in){
         H_eff <- H0 - lsl.norm.subs + parameters.build[i]
 
         # failure probability is the survival function of the storm surge GEV at effective dike height
-        p_fail <- as.numeric(1-pgev(q=1000*H_eff, xi=parameters.gev[i,isha], mu=parameters.gev[i,iloc], beta=parameters.gev[i,isca]))
+        # "by hand" calculation faster; assumes shape parameter /= 0 (which is
+        # okay, given that we use 0 as lower bound on prior for it)
+        ###p_fail <- as.numeric(1-pgev(q=1000*H_eff, xi=parameters.gev[i,isha], mu=parameters.gev[i,iloc], beta=parameters.gev[i,isca]))
+        ttmp <- (1+parameters.gev[i,isha]*((1000*H_eff-parameters.gev[i,iloc])/parameters.gev[i,isca]))^(-1/parameters.gev[i,isha])
+        p_fail <- 1-exp(-ttmp)
 
         # using average annual exceedance probability as the response
         output[i] <- mean(p_fail)

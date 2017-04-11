@@ -228,9 +228,12 @@ if(exists('filename.gevstat')){
         # sd.prop from a preliminary MLE experiment which found 90% CI for the GEV
         # parameters that gives stdev estimates of 13.5 (mu), .2 (log(sigma)), .25 (xi)
         # if interpreted as a 4-sigma window.
-        # sd.prop = [22,.2,.25] is tuned to get about .44 acceptance rate (Rosenthal 2011)
-        gev.est <- BRICK_estimateGEV_NOLA(niter=5e5, burnin=0.5,
-                                         sd.prop=c(22, .2, .25), sd.pri=(4*c(13.5, .2, .25)), N=n.ens)
+        # sd.prop = [22,.15,.23] is tuned to get about .44 acceptance rate (Rosenthal 2011)
+        # Note that sd.prop and other prior function/parameters are set within
+        # this script. The calibration is not a one-size-fits-all type deal; you
+        # *will* need to make detailed modifications for different data or
+        # different statistical models for fitting.
+        gev.est <- BRICK_estimateGEV_NOLA(niter=5e5, burnin=0.5, N=n.ens)
         gev.params <- gev.est[[2]]
     }
 }
@@ -323,8 +326,8 @@ if(exists('filename.vdparams')) {
 
 ## Comment/modify in case you only want to (re-)run a selection of the scenarios
 #scen.ais <- c("none","gamma","uniform")
-#scen.ais <- c("none","gamma")
-scen.ais <- 'none'
+scen.ais <- c("uniform","gamma")
+#scen.ais <- 'none'
 
 for (ais in scen.ais) {
 
@@ -345,19 +348,25 @@ for (ais in scen.ais) {
   ss.rcp85 <- BRICK_estimateStormSurge_NOLA_usace(time.proj=time.proj, sea_level=sea_level_rcp85, surge.factor=surge.factor)
 
   ## Evaluate flood risk analysis model for each of these realizations
-  source('../R/BRICK_VanDantzig.R')
+
+  ## Set up the Van Dantzig simulations (only need to do this once, so separate)
+  #source('../R/BRICK_VanDantzig.R')
+  source('../R/BRICK_VanDantzig_setup.R')
+
+  ## Set up the model for the actual simulations
+  source('../R/BRICK_VanDantzig_run.R')
 
   # stationary storm surge GEV
-  vandantzig.ensemble.rcp26.ssst <- brick_vandantzig(currentyear, endyear, sea_level=sea_level_rcp26, time=time.proj, ss.gev=gev.params, params.vd=params.vd, l.vosl=FALSE)
-  vandantzig.ensemble.rcp45.ssst <- brick_vandantzig(currentyear, endyear, sea_level=sea_level_rcp45, time=time.proj, ss.gev=gev.params, params.vd=params.vd, l.vosl=FALSE)
-  vandantzig.ensemble.rcp60.ssst <- brick_vandantzig(currentyear, endyear, sea_level=sea_level_rcp60, time=time.proj, ss.gev=gev.params, params.vd=params.vd, l.vosl=FALSE)
-  vandantzig.ensemble.rcp85.ssst <- brick_vandantzig(currentyear, endyear, sea_level=sea_level_rcp85, time=time.proj, ss.gev=gev.params, params.vd=params.vd, l.vosl=FALSE)
+  vandantzig.ensemble.rcp26.ssst <- brick_vandantzig(currentyear, endyear, sea_level=sea_level_rcp26, time=time.proj, ss.gev=gev.params, params.vd=params.vd)
+  vandantzig.ensemble.rcp45.ssst <- brick_vandantzig(currentyear, endyear, sea_level=sea_level_rcp45, time=time.proj, ss.gev=gev.params, params.vd=params.vd)
+  vandantzig.ensemble.rcp60.ssst <- brick_vandantzig(currentyear, endyear, sea_level=sea_level_rcp60, time=time.proj, ss.gev=gev.params, params.vd=params.vd)
+  vandantzig.ensemble.rcp85.ssst <- brick_vandantzig(currentyear, endyear, sea_level=sea_level_rcp85, time=time.proj, ss.gev=gev.params, params.vd=params.vd)
 
   # non-stationary storm surge GEV
-  vandantzig.ensemble.rcp26.ssns <- brick_vandantzig(currentyear, endyear, sea_level=sea_level_rcp26, time=time.proj, ss.gev=gev.params, surge.rise=ss.rcp26$surge.rise, params.vd=params.vd, l.vosl=FALSE)
-  vandantzig.ensemble.rcp45.ssns <- brick_vandantzig(currentyear, endyear, sea_level=sea_level_rcp45, time=time.proj, ss.gev=gev.params, surge.rise=ss.rcp45$surge.rise, params.vd=params.vd, l.vosl=FALSE)
-  vandantzig.ensemble.rcp60.ssns <- brick_vandantzig(currentyear, endyear, sea_level=sea_level_rcp60, time=time.proj, ss.gev=gev.params, surge.rise=ss.rcp60$surge.rise, params.vd=params.vd, l.vosl=FALSE)
-  vandantzig.ensemble.rcp85.ssns <- brick_vandantzig(currentyear, endyear, sea_level=sea_level_rcp85, time=time.proj, ss.gev=gev.params, surge.rise=ss.rcp85$surge.rise, params.vd=params.vd, l.vosl=FALSE)
+  vandantzig.ensemble.rcp26.ssns <- brick_vandantzig(currentyear, endyear, sea_level=sea_level_rcp26, time=time.proj, ss.gev=gev.params, surge.rise=ss.rcp26$surge.rise, params.vd=params.vd)
+  vandantzig.ensemble.rcp45.ssns <- brick_vandantzig(currentyear, endyear, sea_level=sea_level_rcp45, time=time.proj, ss.gev=gev.params, surge.rise=ss.rcp45$surge.rise, params.vd=params.vd)
+  vandantzig.ensemble.rcp60.ssns <- brick_vandantzig(currentyear, endyear, sea_level=sea_level_rcp60, time=time.proj, ss.gev=gev.params, surge.rise=ss.rcp60$surge.rise, params.vd=params.vd)
+  vandantzig.ensemble.rcp85.ssns <- brick_vandantzig(currentyear, endyear, sea_level=sea_level_rcp85, time=time.proj, ss.gev=gev.params, surge.rise=ss.rcp85$surge.rise, params.vd=params.vd)
 
   ## Write output file
   dim.heightening <- ncdim_def('H', 'meters', vandantzig.ensemble.rcp26.ssst$Heightening[,1])

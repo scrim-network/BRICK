@@ -33,7 +33,6 @@ require(lhs)
 # ====================================================================================
 VD_NOLA_R <- function(
   params,
-  I_table,
   T,
   X,
   local_sea_level,
@@ -44,14 +43,6 @@ VD_NOLA_R <- function(
   H0=4.25
   ){
 
-#install.packages("extRemes")
-#install.packages("fExtremes")
-#install.packages('ismev')
-#install.packages('zoo')
-library(extRemes)
-library(fExtremes)
-library(ismev)
-library(zoo)
 
     nx <- length(X)    # number of dike heightenings to be evaluated
     np <- nrow(params) # number of parameter sets
@@ -85,8 +76,13 @@ library(zoo)
     # effective dike height is initial height + heightening - local sea level (accounting for subsidence and sea level rise)
     H_eff <- H0 + matrix(data=rep(X,nt),ncol=nt) - matrix(rep(LSL.norm.subs,nx),nrow=nx,byrow=TRUE)
 
-    # failure probability is the survival function of the storm surge GEV at effective dike height
-    p_fail <- 1-sapply(1:nt, function(j) {pgev(q=1000*H_eff[,j], xi=ss.gev['shape'], mu=ss.gev['location'], beta=ss.gev['scale']) })
+    # Failure probability is the survival function of the storm surge GEV at effective dike height
+    # NOTE: It is about 10x faster to calculate by hand than to use the function pgev
+    # Note that this assumes shape parameter does not equal 0, and will return
+    # NAN if you are outside the support (as determined by the three parameters)
+    ###p_fail <- 1-sapply(1:nt, function(j) {pgev(q=1000*H_eff[,j], xi=ss.gev['shape'], mu=ss.gev['location'], beta=ss.gev['scale']) })
+    ttmp <- (1+ss.gev['shape']*((1000*H_eff-ss.gev['location'])/ss.gev['scale']))^(-1/ss.gev['shape'])
+    p_fail <- 1-exp(-ttmp)
 
     for(i in 1:nx) {
       outcome[i,2:7] <- VanDantzig_outcomes(matrix(p_fail[i,]), failure_loss, investment[i])

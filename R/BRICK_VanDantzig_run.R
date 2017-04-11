@@ -1,9 +1,7 @@
 # =======================================================================================
-# Driver script for the flood risk/Van Dantzig analysis. This module serves as
-# a coupling link between the physical and socioeconomic impacts modules of
+# Driver script to run the flood risk/Van Dantzig analysis. This module serves
+# as a coupling link between the physical and socioeconomic impacts modules of
 # BRICK.
-#
-#
 #
 # Questions? Tony Wong (twong@psu.edu)
 # =======================================================================================
@@ -62,118 +60,57 @@ brick_vandantzig <- function(
   time,
   ss.gev=NULL,
   surge.rise=NULL,
-  params.vd=NULL,
-  l.vosl=FALSE
-  ){
-
-source("../R/VD_NOLA.R")
-
-## Set up
-lowleveeheight	= 0         # lowest levee heightening considered (m)
-highleveeheight	= 0.91      # largest levee heightening considered (m)
-increment       = 0.91		# increment of levee heightening range (m)
-H0              = 16*0.3048 # initial levee height (m) (change to 16ft = 4.877m
-                            # rough average of NOLA central levee ring)
-H0 = H0-(4*0.3048)          # initial subsidence of 4 ft
-
-## Time horizon until next evaluation of levees (years)
-T = endyear - currentyear
-time_frame=time
-
-## Range of considered levee heights (meters)
-X = seq(from = lowleveeheight, to = highleveeheight, by = increment)
+  params.vd=NULL
+){
 
 ## Make sure sea_level has time as the first dimension (number of rows = number of years)
 dims = dim(sea_level)
 if(dims[1]!=length(time)) {sea_level=t(sea_level)}
+n.ensemble = dims[2]
 
 ## Create a matrix of sea-level data starting from the current year for each model simulation.
 ## (but does not include subsidence, which is accounted for as uncertain parameter)
-local_sea_level = data.matrix(sea_level[match(currentyear, time_frame):match(endyear, time_frame),])
-
-## Set up basic information for the van Dantzig model.
-
-## Number of observations (ensemble members):
-n_obs = length(local_sea_level[1, ])
-
-## Conversion from feet to meters:
-feet_to_meter = function(ft) { ft * 0.3048 }
-
-## Investment costs for surge levels. Table # 2 in Jonkman et al. (2009)
-## Correction from previous versions - this is *total* levee height, not just
-## the heightening.
-design_surge_level_ft = c(9, 11, 13, 15, 17, 21, 25)
-design_surge_level_M = feet_to_meter(design_surge_level_ft)
-
-investments_US = c(2.2E09, 2.4E09, 2.6E09, 2.9E09, 3.1E09, 3.6E09, 4.1E09)
-
-I_table = matrix(c(design_surge_level_M, investments_US), ncol=2)
-colnames(I_table) = c("Surge level", "Associated cost")
-
-# Moved to the processingPipeline
-#p_zero_p = 0.0038                 # Initial flood frequency (1/yr) with zero height increase (Van Dantzig (1956))
-#alpha_p = 2.6                     # Exponential flood frequency constant (Van Dantzig (1956))
-#V_p = c(7.5e+9, 3e+10)            # Value of goods protected by dike (based on estimates in Jonkman et al. (2009)) (US$)
-#delta_prime_p = c(0.02, 0.06)     # Discount rate (percent/year) (based on estimates in Jonkman et al. (2009))
-#I_range = c(-0.5,1.0)             # Investment cost uncertainty range (as fraction of investment cost) (Jonkman and Dutch Perspective use -50%, +100%)
-#subs_rate = 0.0056                # Rate of land subsidence (meter/year) (Dixon et al. (2006))
-
-investment.fit <- lm(I_table[,2]~I_table[,1])
-intercept.h2i = investment.fit$coefficients[[1]]
-slope.h2i = investment.fit$coefficients[[2]]
-
-## Sample parameters (using Dutch Perspective as a guide)
-## Uses Latin Hypercube to sample Van Dantzig parameters, assigns each ensemble
-## member of SLR a set of parameters.
-## Note: moved into body of processingPipeline.R
-#params.vd = parameter_sampling_DP(n_obs, p_zero_p, alpha_p, V_p, delta_prime_p, I_range, subs_rate)
-
-## Include value of statistical life? (Jonkman et al 2009, Gauderis et al 2013)
-if(l.vosl) {
-  params.vd$V0 = params.vd$V0 + 1.866279e9
-}
+local_sea_level = data.matrix(sea_level[match(currentyear, time):match(endyear, time), ])
 
 ## Test simulation to get the names
 if(is.null(surge.rise)) {
-  vanDantzig.out = VD_NOLA_R(params=params.vd[1,], I_table=I_table, T=T, X=X,
+  vd.out = VD_NOLA_R(params=params.vd[1,], T=T, X=X,
     local_sea_level=local_sea_level[,1], intercept.h2i=intercept.h2i,
     slope.h2i=slope.h2i, ss.gev=ss.gev[1,], H0=H0)
 } else {
-  vanDantzig.out = VD_NOLA_R(params=params.vd[1,], I_table=I_table, T=T, X=X,
+  vd.out = VD_NOLA_R(params=params.vd[1,], T=T, X=X,
     local_sea_level=local_sea_level[,1], intercept.h2i=intercept.h2i,
     slope.h2i=slope.h2i, ss.gev=ss.gev[1,], surge.rise=surge.rise[,1], H0=H0)
 }
 
-n.ensemble = nrow(params.vd)
-vanDantzig.ensemble = vector("list", ncol(vanDantzig.out))
-names(vanDantzig.ensemble) = names(vanDantzig.out)
-for (i in 1:ncol(vanDantzig.out)) {
-  vanDantzig.ensemble[[i]] = mat.or.vec(nrow(vanDantzig.out), n.ensemble)
+vanDantzig.ensemble = vector("list", ncol(vd.out))
+names(vanDantzig.ensemble) = names(vd.out)
+for (i in 1:ncol(vd.out)) {
+  vanDantzig.ensemble[[i]] = mat.or.vec(nrow(vd.out), n.ensemble)
 }
 
 ## Run the simulations
-
 print(paste('Starting the risk assessment simulations now...',sep=''))
 
 if(is.null(surge.rise)) {
   pb <- txtProgressBar(min=0,max=n.ensemble,initial=0,style=3)
   for (i in 1:n.ensemble) {
-    vanDantzig.out = VD_NOLA_R(params=params.vd[i,], I_table=I_table, T=T, X=X,
+    vd.out = VD_NOLA_R(params=params.vd[i,], T=T, X=X,
       local_sea_level=local_sea_level[,i], intercept.h2i=intercept.h2i,
       slope.h2i=slope.h2i, ss.gev=ss.gev[i,], H0=H0)
-    for (j in 1:ncol(vanDantzig.out)) {
-		  vanDantzig.ensemble[[j]][,i] = vanDantzig.out[,j]
+    for (j in 1:ncol(vd.out)) {
+		  vanDantzig.ensemble[[j]][,i] = vd.out[,j]
 	  }
     setTxtProgressBar(pb, i)
   }
 } else {
   pb <- txtProgressBar(min=0,max=n.ensemble,initial=0,style=3)
   for (i in 1:n.ensemble) {
-    vanDantzig.out = VD_NOLA_R(params=params.vd[i,], I_table=I_table, T=T, X=X,
+    vd.out = VD_NOLA_R(params=params.vd[i,], T=T, X=X,
       local_sea_level=local_sea_level[,i], intercept.h2i=intercept.h2i,
       slope.h2i=slope.h2i, ss.gev=ss.gev[i,], surge.rise=surge.rise[,i], H0=H0)
-    for (j in 1:ncol(vanDantzig.out)) {
-		  vanDantzig.ensemble[[j]][,i] = vanDantzig.out[,j]
+    for (j in 1:ncol(vd.out)) {
+		  vanDantzig.ensemble[[j]][,i] = vd.out[,j]
 	  }
     setTxtProgressBar(pb, i)
   }
@@ -184,3 +121,7 @@ print(paste(' ... done with the risk assessment!',sep=''))
 
   return(vanDantzig.ensemble)
 }
+
+##==============================================================================
+## End
+##==============================================================================

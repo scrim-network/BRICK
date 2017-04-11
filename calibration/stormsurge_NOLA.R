@@ -44,7 +44,6 @@
 ##
 ##  Required input:
 ##  niter               number of MCMC iterations to do (total, with burnin included)
-##  burnin              fraction of the chain to remove for burnin
 ##  sd.prop             standard deviations for the Gaussian random walk
 ##  sd.pri              standard deviations for the normal priors
 ##                      elsements are: [loc, log(scale), shape]
@@ -53,14 +52,11 @@
 ##
 ##  Returns:
 ##  filename.gevstat    netcdf file with MCMC results for GEV parameters (creates this)
-##  gev.est             the gev estimates (chain of them niter*burnin long)
+##  parameters.posterior   the gev estimates (chain of them niter*burnin long)
 ##==============================================================================
 
 BRICK_estimateGEV_NOLA <- function(
-  niter=10000,
-  burnin=0.5,
-  sd.prop=c(13.5,.2,.25),
-  sd.pri=c(27,.4,.5),
+  niter=500000,
   N=NULL
   ){
 
@@ -150,30 +146,85 @@ init[[2]]=gev.mle$results$par[2]
 init[[3]]=gev.mle$results$par[3]
 names(init) <- names(gev.mle$results$par)
 
-# proposal sd estimates from a preliminary longer chain, with the default sd
-# (which is c(0.1, 0.1, 0.1), and terrible for location parameter!)
-# Assume that the resulting 95% CI is a 2-sigma window, so divide the width by
-# 4 and use that as the proposal sd. These give acceptance rates around 40-50%,
-# which is fine for only 3 parameters.
+# Define prior distribution function for the GEV parameters
+fprior <- function( theta, mu, sigma, lb, ub){
+    pri.loc <- dnorm(x=theta[1], mean=mu[1], sd=sigma[1], log=TRUE)
+    pri.sha <- dnorm(x=exp(theta[2]), mean=mu[2], sd=sigma[2], log=TRUE)
+    if(theta[3] > lb[3] & theta[3] < ub[3]) pri.sca <- 0
+    else pri.sca <- -Inf
+    pri <- pri.loc + pri.sha + pri.sca
+    return(pri)
+}
+
+pri.mu <- c(init$location, init$scale, init$shape)
+pri.sd <- c(54, 30, 1)
+pri.lb <- c(-Inf, -Inf, 0  )
+pri.ub <- c( Inf,  Inf, Inf)
+params.pri <- vector('list',4)
+params.pri[[1]] <- pri.mu
+params.pri[[2]] <- pri.sd
+params.pri[[3]] <- pri.lb
+params.pri[[4]] <- pri.ub
+names(params.pri) <- c('mu','sigma','lb','ub')
+
+# These were tuned to obtain acceptance rates ~44% (Rosenthal et al, eg)
 params.prop <- vector('list',1)
-params.prop[[1]] <- sd.prop
+params.prop[[1]] <- c(22, .15, .23)
 names(params.prop) <- 'sd'
 
-params.pri <- vector('list',1)
-params.pri[[1]] <- sd.pri
-names(params.pri) <- 'v'
+# first chain
+# use these as the initial guesses for the Bayesian GEV parameter estimation
+set.seed(111)
+gev.bayes1 <- fevd(coredata(lsl.max), type="GEV", method="Bayesian",
+                  initial=init, iter=niter, proposalParams=params.prop,
+                  priorFun='fprior', priorParams=params.pri)
+gev.est1 <- gev.bayes1$results[ ,1:3]
+gev.est1[,2] <- exp(gev.est1[,2])   # account for log(scale) from MCMC
+colnames(gev.est1) <- c('location','scale','shape')
+apply(gev.bayes1$chain.info[2:niter,1:3],2,sum)/niter
 
-# Second, use these as the initial guesses for the Bayesian GEV parameter estimation
-gev.bayes <- fevd(coredata(lsl.max), type="GEV", method="Bayesian",
-                  initial=init, iter=niter, proposalParams=params.prop, priorParams=params.pri)
+# another chain with different seed and initial condition
+set.seed(222)
+init.new <- init
+init.new$location <- rnorm(n=1, mean=init[[1]], sd=params.pri$sigma[1])
+init.new$shape    <- rnorm(n=1, mean=init[[2]], sd=params.pri$sigma[2])
+init.new$scale    <- rnorm(n=1, mean=init[[3]], sd=params.pri$sigma[3])
+gev.bayes2 <- fevd(coredata(lsl.max), type="GEV", method="Bayesian",
+                  initial=init.new, iter=niter, proposalParams=params.prop,
+                  priorFun='fprior', priorParams=params.pri)
+gev.est2 <- gev.bayes2$results[ ,1:3]
+gev.est2[,2] <- exp(gev.est2[,2])   # account for log(scale) from MCMC
+colnames(gev.est2) <- c('location','scale','shape')
+apply(gev.bayes2$chain.info[2:niter,1:3],2,sum)/niter
 
-gev.est <- gev.bayes$results[(round(burnin*niter)+1):niter, 1:3]
-gev.est[,2] <- exp(gev.est[,2])   # account for log(scale) from MCMC
-colnames(gev.est) <- c('location','scale','shape')
+## Convergence checks
+heidel.diag(gev.est1, eps=0.1, pvalue=0.05)
+heidel.diag(gev.est2, eps=0.1, pvalue=0.05)
 
-# check acceptance rates?
-apply(gev.bayes$chain.info[2:10000,],2,sum)/10000
+niter.test = seq(from=0.2*niter, to=niter, by=50000)
+gr.stat = rep(NA,length(niter.test))
+for (i in 1:length(niter.test)){
+  mcmc1 = as.mcmc(gev.est1[1:niter.test[i],])
+  mcmc2 = as.mcmc(gev.est2[1:niter.test[i],])
+  mcmc_chain_list = mcmc.list(list(mcmc1, mcmc2))
+  gr.stat[i] = gelman.diag(mcmc_chain_list)[2]
+}
 
+plot(niter.test,gr.stat, xlab='iteration', ylab='GR statistic')
+
+for (i in 1:length(niter.test)) {
+    lconv <- all(gr.stat[i:length(niter.test)] < 1.05)
+    if(lconv) {
+        n.burnin <- niter.test[i]
+        break
+    }
+}
+
+n.sample <- niter-n.burnin
+parameters1 <- gev.est1[(n.burnin+1):niter,]
+parameters2 <- gev.est2[(n.burnin+1):niter,]
+parameters.posterior = rbind(parameters1, parameters2)
+n.parameters = ncol(parameters.posterior)
 
 
 
@@ -182,26 +233,26 @@ apply(gev.bayes$chain.info[2:10000,],2,sum)/10000
 ## this code will write an n.parameters (rows) x n.ensemble (columns) netcdf file
 ## to get back into the shape BRICK expects, just transpose it
 lmax=0
-for (i in 1:ncol(gev.est)){lmax=max(lmax,nchar(colnames(gev.est)[i]))}
+for (i in 1:ncol(parameters.posterior)){lmax=max(lmax,nchar(colnames(parameters.posterior)[i]))}
 
 today=Sys.Date(); today=format(today,format="%d%b%Y")
 filename.gevstat = paste('../output_calibration/BRICK_estimateGEV',method.name,'_',today,'.nc',sep="")
 
 library(ncdf4)
-dim.parameters <- ncdim_def('n.parameters', '', 1:ncol(gev.est), unlim=FALSE)
+dim.parameters <- ncdim_def('n.parameters', '', 1:ncol(parameters.posterior), unlim=FALSE)
 dim.name <- ncdim_def('name.len', '', 1:lmax, unlim=FALSE)
-dim.ensemble <- ncdim_def('n.ensemble', 'ensemble member', 1:nrow(gev.est), unlim=TRUE)
+dim.ensemble <- ncdim_def('n.ensemble', 'ensemble member', 1:nrow(parameters.posterior), unlim=TRUE)
 parameters.var <- ncvar_def('GEV_parameters', '', list(dim.parameters,dim.ensemble), -999)
 parnames.var <- ncvar_def('GEV_names', '', list(dim.name,dim.parameters), prec='char')
 outnc <- nc_create(filename.gevstat, list(parameters.var,parnames.var))
-ncvar_put(outnc, parameters.var, t(gev.est))
-ncvar_put(outnc, parnames.var, colnames(gev.est))
+ncvar_put(outnc, parameters.var, t(parameters.posterior))
+ncvar_put(outnc, parnames.var, colnames(parameters.posterior))
 nc_close(outnc)
 
 ## Write shorter file, with only the number (N) for the given ensemble
 today=Sys.Date(); today=format(today,format="%d%b%Y")
 filename.gevshort = paste('../output_calibration/BRICK_GEVsample',method.name,'_',today,'.nc',sep="")
-gev.params <- gev.est[sample(1:nrow(gev.est), size=N, replace=FALSE) , ]
+gev.params <- parameters.posterior[sample(1:nrow(parameters.posterior), size=N, replace=FALSE) , ]
 
 dim.parameters <- ncdim_def('n.parameters', '', 1:ncol(gev.params), unlim=FALSE)
 dim.name <- ncdim_def('name.len', '', 1:lmax, unlim=FALSE)
@@ -215,7 +266,7 @@ nc_close(outnc)
 
 print('...done!')
 
-return(list(gev.est,gev.params))
+return(list(parameters.posterior,gev.params))
 
 }
 
