@@ -62,6 +62,17 @@ To reproduce the results of Bakker et al:
 6. Run ./calibration/plots_and_analysis.R (modify to fit your file names and 
    directory names).
 
+If you prefer to start with our calibrated parameters, or calibrated results,
+you can download our results files here:
+  https://download.scrim.psu.edu/robust_SLR/
+
+Within that directory:
+  The results of Step 3 are: BRICK_calibratedParameters_12Aug2016.nc
+                             and rho_simple_fixed_06Sep2016.csv
+  The result of Step 4 is:   DAIS_calibratedParameters_11Aug2016.nc
+  The results of Step 5 are: BRICK-robustSLR_postcalibratedParameters_14Sep2016.csv
+                             and BRICK-robustSLR_physical_14Sep2016.nc
+                             
 ================================================================================
 Question? Tony Wong (twong@psu.edu)
 ================================================================================
