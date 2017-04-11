@@ -635,9 +635,9 @@ brick_sobol_par <- function(dataframe.in){
         # failure probability is the survival function of the storm surge GEV at effective dike height
         # "by hand" calculation faster; assumes shape parameter /= 0 (which is
         # okay, given that we use 0 as lower bound on prior for it)
-        ###p_fail <- as.numeric(1-pgev(q=1000*H_eff, xi=parameters.gev[i,isha], mu=parameters.gev[i,iloc], beta=parameters.gev[i,isca]))
-        ttmp <- (1+parameters.gev[i,isha]*((1000*H_eff-parameters.gev[i,iloc])/parameters.gev[i,isca]))^(-1/parameters.gev[i,isha])
-        p_fail <- 1-exp(-ttmp)
+        p_fail <- as.numeric(1-pgev(q=1000*H_eff, xi=parameters.gev[i,isha], mu=parameters.gev[i,iloc], beta=parameters.gev[i,isca]))
+        #ttmp <- (1+parameters.gev[i,isha]*((1000*H_eff-parameters.gev[i,iloc])/parameters.gev[i,isca]))^(-1/parameters.gev[i,isha])
+        #p_fail <- 1-exp(-ttmp)
 
         # using average annual exceedance probability as the response
         output[i] <- mean(p_fail)
