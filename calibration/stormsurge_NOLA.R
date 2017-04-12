@@ -149,17 +149,17 @@ names(init) <- names(gev.mle$results$par)
 # Define prior distribution function for the GEV parameters
 fprior <- function( theta, mu, sigma, lb, ub){
     pri.loc <- dnorm(x=theta[1], mean=mu[1], sd=sigma[1], log=TRUE)
-    pri.sha <- dnorm(x=exp(theta[2]), mean=mu[2], sd=sigma[2], log=TRUE)
-    if(theta[3] > lb[3] & theta[3] < ub[3]) pri.sca <- 0
-    else pri.sca <- -Inf
-    pri <- pri.loc + pri.sha + pri.sca
+    pri.sca <- dnorm(x=exp(theta[2]), mean=mu[2], sd=sigma[2], log=TRUE)
+    if(theta[3] > lb[3] & theta[3] < ub[3]) pri.sha <- 0
+    else pri.sha <- -Inf
+    pri <- pri.loc + pri.sca + pri.sha
     return(pri)
 }
 
 pri.mu <- c(init$location, init$scale, init$shape)
 pri.sd <- c(54, 30, 1)
-pri.lb <- c(-Inf, -Inf, 0  )
-pri.ub <- c( Inf,  Inf, Inf)
+pri.lb <- c(-Inf, -Inf, 0 )
+pri.ub <- c( Inf,  Inf, 5 )
 params.pri <- vector('list',4)
 params.pri[[1]] <- pri.mu
 params.pri[[2]] <- pri.sd
@@ -187,8 +187,8 @@ apply(gev.bayes1$chain.info[2:niter,1:3],2,sum)/niter
 set.seed(222)
 init.new <- init
 init.new$location <- rnorm(n=1, mean=init[[1]], sd=params.pri$sigma[1])
-init.new$shape    <- rnorm(n=1, mean=init[[2]], sd=params.pri$sigma[2])
-init.new$scale    <- rnorm(n=1, mean=init[[3]], sd=params.pri$sigma[3])
+init.new$scale    <- rnorm(n=1, mean=init[[2]], sd=params.pri$sigma[2])
+init.new$shape    <- runif(n=1, min=pri.lb[3] , max=pri.ub[3])
 gev.bayes2 <- fevd(coredata(lsl.max), type="GEV", method="Bayesian",
                   initial=init.new, iter=niter, proposalParams=params.prop,
                   priorFun='fprior', priorParams=params.pri)

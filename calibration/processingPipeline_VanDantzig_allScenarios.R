@@ -43,7 +43,7 @@ filename.allslr <- "../output_model/BRICK_physical_allslr_11Apr2017.nc"
 #filename.uniform <- "../output_model/BRICK_physical_fd-uniform_11Apr2017.nc"
 
 ## GEV parameters, fit from tide gauge data
-filename.gevstat <- '../output_calibration/BRICK_GEVsample-AnnMean_11Apr2017.nc'
+filename.gevstat <- '../output_calibration/BRICK_GEVsample-AnnMean_12Apr2017.nc'
 #filename.gevmcmc <- '../output_calibration/BRICK_estimateGEV-AnnMean_07Mar2017.nc'
 
 ## Surge level increase factors (USACE)
@@ -192,6 +192,7 @@ if(exists('filename.allslr')) {
 source('../calibration/stormsurge_NOLA.R')
 library(extRemes)
 library(zoo)
+library(coda)
 
 if(exists('filename.gevstat')){
 	ncdata <- nc_open(filename.gevstat)
@@ -325,8 +326,8 @@ if(exists('filename.vdparams')) {
 ##==============================================================================
 
 ## Comment/modify in case you only want to (re-)run a selection of the scenarios
-#scen.ais <- c("none","gamma","uniform")
-scen.ais <- c("uniform","gamma")
+scen.ais <- c("none","gamma","uniform")
+#scen.ais <- c("uniform","gamma")
 #scen.ais <- 'none'
 
 for (ais in scen.ais) {

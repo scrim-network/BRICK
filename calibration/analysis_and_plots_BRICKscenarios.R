@@ -28,21 +28,21 @@ rm(list=ls())
 library(ncdf4)
 
 ## File name for the BRICK physical model output (netCDF4)
-#filename.brick.nofd = '../output_model/BRICK-model_physical_fd-gamma_08Dec2016.nc'#no-FD case uses gamma, without disintegration
-#filename.brick.uniform = '../output_model/BRICK-model_physical_fd-uniform_08Dec2016.nc'
-#filename.brick.gamma = '../output_model/BRICK-model_physical_fd-gamma_08Dec2016.nc'
-filename.brick.allslr = '../output_model/BRICK-model_physical_allslr_20Feb2017.nc'
+#filename.brick.nofd = '../output_model/BRICK_physical_fd-gamma_08Dec2016.nc'#no-FD case uses gamma, without disintegration
+#filename.brick.uniform = '../output_model/BRICK_physical_fd-uniform_08Dec2016.nc'
+#filename.brick.gamma = '../output_model/BRICK_physical_fd-gamma_08Dec2016.nc'
+filename.brick.allslr = '../output_model/BRICK_physical_allslr_11Apr2017.nc'
 
 ## File name for the Van Dantzig model output (netCDF4)
 ## Each of these also has x3 RCP scenarios, x2 storm surge scenarios
-filename.vandantzig.nofd = '../output_model/VanDantzig_fd-none_2065_07Feb2017.nc'
-filename.vandantzig.uniform = '../output_model/VanDantzig_fd-uniform_2065_07Feb2017.nc'
-filename.vandantzig.gamma = '../output_model/VanDantzig_fd-gamma_2065_07Feb2017.nc'
+filename.vandantzig.nofd = '../output_model/VanDantzig_fd-none_2065_11Apr2017.nc'
+filename.vandantzig.uniform = '../output_model/VanDantzig_fd-uniform_2065_11Apr2017.nc'
+filename.vandantzig.gamma = '../output_model/VanDantzig_fd-gamma_2065_11Apr2017.nc'
 
 ## File name for the BRICK post-calibrated parameters (netcdf) (the BRICK output came from these guys)
-filename.parameters.nofd = '../output_calibration/BRICK-model_postcalibratedParameters_fd-none_08Dec2016.nc'
-filename.parameters.uniform = '../output_calibration/BRICK-model_postcalibratedParameters_fd-uniform_08Dec2016.nc'
-filename.parameters.gamma = '../output_calibration/BRICK-model_postcalibratedParameters_fd-gamma_08Dec2016.nc'
+filename.parameters.nofd = '../output_calibration/BRICK-model_postcalibratedParameters_fd-none_11Apr2017.nc'
+filename.parameters.uniform = '../output_calibration/BRICK-model_postcalibratedParameters_fd-uniform_11Apr2017.nc'
+filename.parameters.gamma = '../output_calibration/BRICK-model_postcalibratedParameters_fd-gamma_11Apr2017.nc'
 
 ## Other files
 filename.rho_simple_fixed = "../output_calibration/rho_simple_fixed_01Nov2016.csv"
@@ -524,6 +524,24 @@ for (i in 1:n.ensemble['none']) {
 }
 fit.surge <- fit.surge[,-n.ensemble['none']]
 
+
+### BEGIN TESTING
+
+# empirical CDF
+ecdf.vals  <- seq(from=0, to=1, length.out=n.ensemble['none'])
+ecdf.rcp26 <- slr2100.rcp26[order(slr2100.rcp26)]
+ecdf.rcp45 <- slr2100.rcp45[order(slr2100.rcp45)]
+ecdf.rcp85 <- slr2100.rcp85[order(slr2100.rcp85)]
+
+# empirical survival function
+esf.vals <- 1-ecdf.vals
+
+
+
+### END TESTING
+
+
+
 # Plot them all
 #plot(fit.surge[1,]/1000, log10(1-q[2:1294]), type='l', xlim=c(0,10), ylim=c(-4,0)); for (i in 1:n.ensemble['none']) {lines(fit.surge[i,]/1000, log10(1-q[2:1294]))}
 
@@ -554,6 +572,9 @@ f.tmp.lsl[which(is.nan(f.tmp.lsl))] <- 0
 # Cut off the storm surge stationary distributions beyond what we can resolve
 # with our model
 max.surge <- fit.surge[,surge.level]/1000
+
+
+
 
 } else {
 
@@ -716,7 +737,9 @@ colnames(return.period.fragile80) <- c('Scenario','ReturnPeriod')
 ##==============================================================================
 ## Sort out Sobol sensitivity analysis for drivers of flood risk
 
-source('BRICK_nola_scenarios_sobol.R')
+#source('BRICK_nola_scenarios_sobol.R')
+
+## This is done separately in BRICK_Sobol_plotting.R
 
 ##==============================================================================
 ##==============================================================================
