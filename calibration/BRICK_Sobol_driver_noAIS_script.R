@@ -32,7 +32,7 @@ rm(list =ls()) #Clear global environment
 # setting things here, not to be touched #
 N.sample000 <- 122000 #122000
 N.use000    <- 122000 #122000
-N.boot000   <- 50000 #50000
+N.boot000   <- 50000  #50000
 N.core000   <- 15     # number of cores for parallel Sobol analysis
 lbuild      <- TRUE
 lfullAIS    <- FALSE   # full prior range from Wong et al 2017 (fast dynamics) for h0 and c? (fixed if FALSE)
@@ -73,10 +73,24 @@ set.seed(1234)
 ##==============================================================================
 ## Model setup and parameters
 
+## Mean and standard deviation for sampling land water storage (LWS)
+## contributions to GMSL
+## -- Using IPCC AR5 (Church et al. 2013) --
+#lws.mean <- 0.38           # mm/y
+#lws.sd   <- (0.49-.26)/4   # mm/y (take the IPCC 5-95% range as +/-2sigma)
+## -- Using Dieng et al 2015 (doi:10.1088/1748-9326/10/12/124010)--
+lws.mean000 <- 0.30           # mm/y
+lws.sd000   <- 0.18           # mm/y
+
 ## Read the calibrated parameter sets (after rejection sampling to GMSL data)
-filename.parameters <- '~/codes/BRICK/output_calibration/BRICK-fastdyn_postcalibratedParameters_gamma_31Jan2017.csv'
-parameters.brick <- read.csv(filename.parameters)
-parnames.brick <- colnames(parameters.brick)
+library(ncdf4)
+
+filename.parameters <- '~/codes/BRICK/output_calibration/BRICK_postcalibratedParameters_fd-gamma_20Apr2017.nc'
+ncdata <- nc_open(filename.parameters)
+parnames.brick   <-   ncvar_get(ncdata, 'parnames')
+parameters.brick <- t(ncvar_get(ncdata, 'BRICK_parameters'))
+nc_close(ncdata)
+colnames(parameters.brick) <- parnames.brick
 
 ## Remove the statistical parameters
 irem <- c(match('sigma.T',parnames.brick),
@@ -367,9 +381,7 @@ bound.upper.subs <- Inf
 ## to the parameter estimates corresponding to those quantiles within the
 ## BRICK_sobol call
 
-library(ncdf4)
-
-filename.gevstat <- '../output_calibration/BRICK_estimateGEV-AnnMean_11Apr2017.nc'
+filename.gevstat <- '../output_calibration/BRICK_estimateGEV-AnnMean_12Apr2017.nc'
 ncdata <- nc_open(filename.gevstat)
 parnames.gev <- ncvar_get(ncdata, 'GEV_names')
 gev.mcmc <- t(ncvar_get(ncdata, 'GEV_parameters'))
@@ -378,7 +390,7 @@ colnames(gev.mcmc) <- parnames.gev
 
 ## Don't allow shape (xi) < 0, because that changes the fundamental behavior
 irem <- which(gev.mcmc[,'shape'] <= 0)
-gev.mcmc <- gev.mcmc[-irem,]
+if(length(irem) > 0) gev.mcmc <- gev.mcmc[-irem,]
 bound.lower.gev <- apply(gev.mcmc, 2, min)
 bound.upper.gev <- apply(gev.mcmc, 2, max)
 iloc <- match('location',parnames.gev)
@@ -405,6 +417,11 @@ for (pp in 1:3) {
                                              ubout=1)
 }
 
+## Add land water storage to parameter bounds. Sampling from normal distribution
+## so these don't really matter
+bound.lower.lws <- -Inf
+bound.upper.lws <- Inf
+
 ## Add build scenario to parameters and bounds. Sample from [-3,3] feet
 bound.lower.build <- -3*.3048
 bound.upper.build <- 3*.3048
@@ -420,8 +437,8 @@ bound.upper.rcp <- 1
 # flood risk.
 library(lhs)
 
-lhs.sample1 <- randomLHS(n.sample, 4)
-lhs.sample2 <- randomLHS(n.sample, 4)
+lhs.sample1 <- randomLHS(n.sample, 5)
+lhs.sample2 <- randomLHS(n.sample, 5)
 parameters.sample1.rcp <- lhs.sample1[,1]
 parameters.sample2.rcp <- lhs.sample2[,1]
 parameters.sample1.surge <- lhs.sample1[,2]
@@ -430,39 +447,51 @@ parameters.sample1.subs <- lhs.sample1[,3]
 parameters.sample2.subs <- lhs.sample2[,3]
 parameters.sample1.build <- lhs.sample1[,4]
 parameters.sample2.build <- lhs.sample2[,4]
+parameters.sample1.lws <- lhs.sample1[,5]
+parameters.sample2.lws <- lhs.sample2[,5]
 
 ## add Van Dantzig, surge, and RCP to parnames and bounds (and optionally build)
 if (lbuild) {
-  parameters.sobol1 <- cbind(parameters.sample1.brick, parameters.sample1.surge,
+  parameters.sobol1 <- cbind(parameters.sample1.brick, parameters.sample1.lws,
+                           parameters.sample1.surge,
                            parameters.sample1.subs , parameters.sample1.gev  ,
                            parameters.sample1.rcp  , parameters.sample1.build)
-  parameters.sobol2 <- cbind(parameters.sample2.brick, parameters.sample2.surge,
+  parameters.sobol2 <- cbind(parameters.sample2.brick, parameters.sample2.lws,
+                           parameters.sample2.surge,
                            parameters.sample2.subs , parameters.sample2.gev  ,
                            parameters.sample2.rcp  , parameters.sample2.build)
-  bound.lower.sobol <- c(bound.lower.brick, bound.lower.surge, bound.lower.subs,
-                       bound.lower.gev  , bound.lower.rcp  , bound.lower.build)
-  bound.upper.sobol <- c(bound.upper.brick, bound.upper.surge, bound.upper.subs,
-                       bound.upper.gev  , bound.upper.rcp  , bound.upper.build)
-  parnames.sobol <- c(parnames.brick, 'surge.factor', 'subs.rate', parnames.gev, 'rcp','build')
+  bound.lower.sobol <- c(bound.lower.brick, bound.lower.lws ,
+                         bound.lower.surge, bound.lower.subs,
+                         bound.lower.gev  , bound.lower.rcp , bound.lower.build)
+  bound.upper.sobol <- c(bound.upper.brick, bound.upper.lws ,
+                         bound.upper.surge, bound.upper.subs,
+                         bound.upper.gev  , bound.upper.rcp , bound.upper.build)
+  parnames.sobol <- c(parnames.brick, 'lws.mean','surge.factor', 'subs.rate', parnames.gev, 'rcp','build')
   ind.brick <- 1:length(parnames.brick)
+  ind.lws   <- length(parnames.brick)+1
   ind.surge <- match('surge.factor',parnames.sobol)
   ind.subs  <- match('subs.rate'   ,parnames.sobol)
   ind.gev   <- match(parnames.gev[1], parnames.sobol):match(parnames.gev[3], parnames.sobol)
   ind.rcp   <- length(parnames.sobol)-1
   ind.build <- length(parnames.sobol)
 } else {
-  parameters.sobol1 <- cbind(parameters.sample1.brick, parameters.sample1.surge,
+  parameters.sobol1 <- cbind(parameters.sample1.brick, parameters.sample1.lws,
+                           parameters.sample1.surge,
                            parameters.sample1.subs , parameters.sample1.gev  ,
                            parameters.sample1.rcp  )#, parameters.sample1.build)
-  parameters.sobol2 <- cbind(parameters.sample2.brick, parameters.sample2.surge,
+  parameters.sobol2 <- cbind(parameters.sample2.brick, parameters.sample2.lws,
+                           parameters.sample2.surge,
                            parameters.sample2.subs , parameters.sample2.gev  ,
                            parameters.sample2.rcp  )#, parameters.sample2.build)
-  bound.lower.sobol <- c(bound.lower.brick, bound.lower.surge, bound.lower.subs,
-                       bound.lower.gev  , bound.lower.rcp  )#, bound.lower.build)
-  bound.upper.sobol <- c(bound.upper.brick, bound.upper.surge, bound.upper.subs,
-                       bound.upper.gev  , bound.upper.rcp  )#, bound.upper.build)
-  parnames.sobol <- c(parnames.brick, 'surge.factor', 'subs.rate', parnames.gev, 'rcp')#,'build')
+  bound.lower.sobol <- c(bound.lower.brick, bound.lower.lws ,
+                         bound.lower.surge, bound.lower.subs,
+                         bound.lower.gev  , bound.lower.rcp  )#, bound.lower.build)
+  bound.upper.sobol <- c(bound.upper.brick, bound.upper.lws ,
+                         bound.upper.surge, bound.upper.subs,
+                         bound.upper.gev  , bound.upper.rcp  )#, bound.upper.build)
+  parnames.sobol <- c(parnames.brick, 'lws.mean','surge.factor', 'subs.rate', parnames.gev, 'rcp')#,'build')
   ind.brick <- 1:length(parnames.brick)
+  ind.lws   <- length(parnames.brick)+1
   ind.surge <- match('surge.factor',parnames.sobol)
   ind.subs  <- match('subs.rate'   ,parnames.sobol)
   ind.gev   <- match(parnames.gev[1], parnames.sobol):match(parnames.gev[3], parnames.sobol)

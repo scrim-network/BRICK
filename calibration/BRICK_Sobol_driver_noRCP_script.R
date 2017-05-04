@@ -36,11 +36,11 @@ N.boot000   <- 50000 #50000
 N.core000   <- 15     # number of cores for parallel Sobol analysis
 lbuild      <- TRUE
 lfullAIS    <- TRUE   # full prior range from Wong et al 2017 (fast dynamics) for h0 and c? (fixed if FALSE)
-lfullGEV    <- FALSE   # full uncertainty in GEV parameters? (fixed if FALSE) (not used)
+lfullGEV    <- TRUE   # full uncertainty in GEV parameters? (fixed if FALSE)
 begyear     <- 1850   # this is just beginning of the projections; assessment begins in 2015
 endyear     <- 2065   # must be equal to end year of flood risk assessment
-appen       <- '-Build-AIS-2065'
-name.output.rdata <- 'BRICK_Sobol_2065noGEV.RData'
+appen       <- '-Build-AIS-GEV-RCP85-2065'
+name.output.rdata <- 'BRICK_Sobol_tmp.RData'
 setwd('/home/scrim/axw322/codes/BRICK/calibration')
 ##########################################
 
@@ -426,66 +426,66 @@ bound.upper.lws <- Inf
 bound.lower.build <- -3*.3048
 bound.upper.build <- 3*.3048
 
-## Finally, add RCP scenario to parameters and bounds. Sample from [0,1], and
-## each 1/4 gives different scenario (2.6, 4.5, 6.0, 8.5).
-bound.lower.rcp <- 0
-bound.upper.rcp <- 1
-
 # Draw the surge and subsidence parameters as part of Latin hypercube with RCP
 # Also draw build heights from [-3 ft to +3 ft]. Note that obviously we will not
 # build -3 ft, but this is to assess the impact of varying levee height on the
-# flood risk.
+# flood risk. Also draw land water storage contribution (mm/y) around mean
+# estimate from Dieng et al.
 library(lhs)
 
-lhs.sample1 <- randomLHS(n.sample, 5)
-lhs.sample2 <- randomLHS(n.sample, 5)
-parameters.sample1.rcp <- lhs.sample1[,1]
-parameters.sample2.rcp <- lhs.sample2[,1]
-parameters.sample1.surge <- lhs.sample1[,2]
-parameters.sample2.surge <- lhs.sample2[,2]
-parameters.sample1.subs <- lhs.sample1[,3]
-parameters.sample2.subs <- lhs.sample2[,3]
-parameters.sample1.build <- lhs.sample1[,4]
-parameters.sample2.build <- lhs.sample2[,4]
-parameters.sample1.lws <- lhs.sample1[,5]
-parameters.sample2.lws <- lhs.sample2[,5]
+lhs.sample1 <- randomLHS(n.sample, 4)
+lhs.sample2 <- randomLHS(n.sample, 4)
+parameters.sample1.surge <- lhs.sample1[,1]
+parameters.sample2.surge <- lhs.sample2[,1]
+parameters.sample1.subs <- lhs.sample1[,2]
+parameters.sample2.subs <- lhs.sample2[,2]
+parameters.sample1.build <- lhs.sample1[,3]
+parameters.sample2.build <- lhs.sample2[,3]
+parameters.sample1.lws <- lhs.sample1[,4]
+parameters.sample2.lws <- lhs.sample2[,4]
 
 ## add Van Dantzig, surge, and RCP to parnames and bounds (and optionally build)
 if (lbuild) {
-  parameters.sobol1 <- cbind(parameters.sample1.brick, parameters.sample1.lws  ,
-                             parameters.sample1.surge, parameters.sample1.subs ,
-                             parameters.sample1.rcp  , parameters.sample1.build)
-  parameters.sobol2 <- cbind(parameters.sample2.brick, parameters.sample2.lws  ,
-                             parameters.sample2.surge, parameters.sample2.subs ,
-                             parameters.sample2.rcp  , parameters.sample2.build)
-  bound.lower.sobol <- c(bound.lower.brick, bound.lower.lws, bound.lower.surge ,
-                         bound.lower.subs , bound.lower.rcp, bound.lower.build )
-  bound.upper.sobol <- c(bound.upper.brick, bound.upper.lws, bound.upper.surge ,
-                         bound.upper.subs , bound.upper.rcp, bound.upper.build )
-  parnames.sobol <- c(parnames.brick, 'lws.mean', 'surge.factor', 'subs.rate', 'rcp','build')
+  parameters.sobol1 <- cbind(parameters.sample1.brick, parameters.sample1.lws,
+                           parameters.sample1.surge,
+                           parameters.sample1.subs , parameters.sample1.gev  ,
+                           parameters.sample1.build)
+  parameters.sobol2 <- cbind(parameters.sample2.brick, parameters.sample2.lws,
+                           parameters.sample2.surge,
+                           parameters.sample2.subs , parameters.sample2.gev  ,
+                           parameters.sample2.build)
+  bound.lower.sobol <- c(bound.lower.brick, bound.lower.lws ,
+                         bound.lower.surge, bound.lower.subs,
+                         bound.lower.gev  , bound.lower.build)
+  bound.upper.sobol <- c(bound.upper.brick, bound.upper.lws ,
+                         bound.upper.surge, bound.upper.subs,
+                         bound.upper.gev  , bound.upper.build)
+  parnames.sobol <- c(parnames.brick, 'lws.mean','surge.factor', 'subs.rate', parnames.gev, 'build')
   ind.brick <- 1:length(parnames.brick)
   ind.lws   <- length(parnames.brick)+1
   ind.surge <- match('surge.factor',parnames.sobol)
   ind.subs  <- match('subs.rate'   ,parnames.sobol)
-  ind.rcp   <- length(parnames.sobol)-1
+  ind.gev   <- match(parnames.gev[1], parnames.sobol):match(parnames.gev[3], parnames.sobol)
   ind.build <- length(parnames.sobol)
 } else {
-  parameters.sobol1 <- cbind(parameters.sample1.brick, parameters.sample1.lws  ,
-                             parameters.sample1.surge, parameters.sample1.subs ,
-                             parameters.sample1.rcp  )#, parameters.sample1.build)
-  parameters.sobol2 <- cbind(parameters.sample2.brick, parameters.sample2.lws  ,
-                             parameters.sample2.surge, parameters.sample2.subs ,
-                             parameters.sample2.rcp  )#, parameters.sample2.build)
-  bound.lower.sobol <- c(bound.lower.brick, bound.lower.lws, bound.lower.surge ,
-                         bound.lower.subs , bound.lower.rcp)#, bound.lower.build )
-  bound.upper.sobol <- c(bound.upper.brick, bound.upper.lws, bound.upper.surge ,
-                         bound.upper.subs , bound.upper.rcp)#, bound.upper.build )
-  parnames.sobol <- c(parnames.brick, 'lws.mean', 'surge.factor', 'subs.rate', 'rcp')#,'build')
+  parameters.sobol1 <- cbind(parameters.sample1.brick, parameters.sample1.lws,
+                           parameters.sample1.surge,
+                           parameters.sample1.subs , parameters.sample1.gev  )
+  parameters.sobol2 <- cbind(parameters.sample2.brick, parameters.sample2.lws,
+                           parameters.sample2.surge,
+                           parameters.sample2.subs , parameters.sample2.gev  )
+  bound.lower.sobol <- c(bound.lower.brick, bound.lower.lws ,
+                         bound.lower.surge, bound.lower.subs,
+                         bound.lower.gev  )#, bound.lower.rcp  )#, bound.lower.build)
+  bound.upper.sobol <- c(bound.upper.brick, bound.upper.lws ,
+                         bound.upper.surge, bound.upper.subs,
+                         bound.upper.gev  )#, bound.upper.rcp  )#, bound.upper.build)
+  parnames.sobol <- c(parnames.brick, 'lws.mean','surge.factor', 'subs.rate', parnames.gev)#, 'rcp')#,'build')
   ind.brick <- 1:length(parnames.brick)
   ind.lws   <- length(parnames.brick)+1
   ind.surge <- match('surge.factor',parnames.sobol)
   ind.subs  <- match('subs.rate'   ,parnames.sobol)
-  ind.rcp   <- length(parnames.sobol)
+  ind.gev   <- match(parnames.gev[1], parnames.sobol):match(parnames.gev[3], parnames.sobol)
 }
 
 parameters.sobol1 <- data.frame(parameters.sobol1)
@@ -543,14 +543,11 @@ library(fExtremes)
 # using mapply is generally faster than a 'for' loop, but no progress bar, which
 # is comforting
 
-# fixed at the MLE GEV parameters
-parameters.gev.fixed <- c(577.051961, 141.104958,   0.360476) #location, scale, shape
-
 export.names <- c('brick_model', 'doeclimF', 'gsic_magiccF', 'simpleF',
                   'brick_te_F', 'daisanto_fastdynF', 'anto', 'forcing_total',
                   'flux.to.heat', 'parnames.brick', 'slope.Ta2Tg',
                   'intercept.Ta2Tg','mod.time','ind.norm.data', 'i2015',
-                  'imodend', 'fp.loc', 'nt', 'H0', 'isca', 'iloc', 'isha', 'parameters.gev.fixed',
+                  'imodend', 'fp.loc', 'nt', 'H0', 'isca', 'iloc', 'isha',
                   'ind.norm','luse.brick','i0','lbuild',
                   'lws.mean000', 'lws.sd000',
                   'forcing.rcp26', 'forcing.rcp45',
@@ -584,7 +581,10 @@ brick_sobol_par <- function(dataframe.in){
 
     subs.rate <- qlnorm(dataframe.in[,ind.subs], log(sub_rate), 0.4) # sdlog to yield about stdev from Dixon et al. (2006), 2.5mm/y
 
-    parameters.rcp <- dataframe.in[,ind.rcp]
+    parameters.gev <- dataframe.in[,ind.gev]
+    parameters.gev[,iloc] <- map.range(parameters.gev[,iloc], 0, 1, bound.lower.gev[iloc], bound.upper.gev[iloc])
+    parameters.gev[,isha] <- map.range(parameters.gev[,isha], 0, 1, bound.lower.gev[isha], bound.upper.gev[isha])
+    parameters.gev[,isca] <- map.range(parameters.gev[,isca], 0, 1, bound.lower.gev[isca], bound.upper.gev[isca])
 
     if (lbuild) {
       parameters.build <- map.range(dataframe.in[,ind.build], 0, 1, bound.lower.build, bound.upper.build)
@@ -616,16 +616,9 @@ brick_sobol_par <- function(dataframe.in){
         dyn.load("../fortran/dais_fastdyn.so")
         dyn.load("../fortran/simple.so")
 
-        # map RCP
-        if(parameters.rcp[i] >= 0 & parameters.rcp[i] <= 0.25) {
-            forcing <- forcing.rcp26
-        } else if(parameters.rcp[i] > 0.25 & parameters.rcp[i] <= 0.5) {
-            forcing <- forcing.rcp45
-        } else if(parameters.rcp[i] > 0.5 & parameters.rcp[i] <= 0.75) {
-            forcing <- forcing.rcp60
-        } else if(parameters.rcp[i] > 0.75 & parameters.rcp[i] <= 1) {
-            forcing <- forcing.rcp85
-        }
+        # map RCP -- fixed version!
+        forcing <- forcing.rcp85
+
         brick.out <- brick_model(parameters.in      = as.numeric(parameters.brick[i,]),
                                  parnames.in        = parnames.brick,
 				 forcing.in         = forcing,
@@ -652,8 +645,8 @@ brick_sobol_par <- function(dataframe.in){
         # failure probability is the survival function of the storm surge GEV at effective dike height
         # "by hand" calculation faster; assumes shape parameter /= 0 (which is
         # okay, given that we use 0 as lower bound on prior for it)
-        p_fail <- as.numeric(1-pgev(q=1000*H_eff, xi=parameters.gev.fixed[isha], mu=parameters.gev.fixed[iloc], beta=parameters.gev.fixed[isca]))
-        #ttmp <- (1+parameters.gev.fixed[i,isha]*((1000*H_eff-parameters.gev.fixed[i,iloc])/parameters.gev.fixed[i,isca]))^(-1/parameters.gev.fixed[i,isha])
+        p_fail <- as.numeric(1-pgev(q=1000*H_eff, xi=parameters.gev[i,isha], mu=parameters.gev[i,iloc], beta=parameters.gev[i,isca]))
+        #ttmp <- (1+parameters.gev[i,isha]*((1000*H_eff-parameters.gev[i,iloc])/parameters.gev[i,isca]))^(-1/parameters.gev[i,isha])
         #p_fail <- 1-exp(-ttmp)
 
         # using average annual exceedance probability as the response
@@ -669,6 +662,101 @@ brick_sobol_par <- function(dataframe.in){
     return(finalOutput)
 }
 
+
+
+##================##
+## serial version ##
+##================##
+
+brick_sobol_ser <- function(dataframe.in){
+
+    # initialize output
+    nr            <- nrow(dataframe.in)
+    lsl.proj      <- rep(0,length(nt))
+    surge.rise    <- rep(0,length(nt))
+    lsl.norm.subs <- rep(0,length(nt))
+    H_eff         <- rep(0,length(nt))
+    output        <- rep(0,nr)
+
+    # map input from [0,1] range to actual parameters
+    parameters.brick  <- dataframe.in[,ind.brick]
+    for (pp in 1:length(ind.brick)) {
+        parameters.brick[,pp] <- map.range(parameters.brick[,pp], 0, 1, bound.lower.brick[pp], bound.upper.brick[pp])
+    }
+
+    lws.mean <- qnorm(dataframe.in[,ind.lws], mean=lws.mean000, sd=lws.sd000)
+
+    surge.factor <- map.range(dataframe.in[,ind.surge], 0, 1, bound.lower.surge, bound.upper.surge)
+
+    subs.rate <- qlnorm(dataframe.in[,ind.subs], log(sub_rate), 0.4) # sdlog to yield about stdev from Dixon et al. (2006), 2.5mm/y
+
+    parameters.gev <- dataframe.in[,ind.gev]
+    parameters.gev[,iloc] <- map.range(parameters.gev[,iloc], 0, 1, bound.lower.gev[iloc], bound.upper.gev[iloc])
+    parameters.gev[,isha] <- map.range(parameters.gev[,isha], 0, 1, bound.lower.gev[isha], bound.upper.gev[isha])
+    parameters.gev[,isca] <- map.range(parameters.gev[,isca], 0, 1, bound.lower.gev[isca], bound.upper.gev[isca])
+
+    if(lbuild){
+      parameters.build <- map.range(dataframe.in[,ind.build], 0, 1, bound.lower.build, bound.upper.build)
+    } else {
+      parameters.build <- rep(0, nr)
+    }
+
+    # make sea-level rise projections
+    print(paste('Starting ',nr,' model projections (inluding flood risk)...',sep=''))
+    pb <- txtProgressBar(min=0,max=nr,initial=0,style=3)
+    for (i in 1:nr) {
+
+        # map RCP -- fixed version!
+        forcing <- forcing.rcp85
+
+        brick.out <- brick_model(parameters.in      = as.numeric(parameters.brick[i,]),
+                                 parnames.in        = parnames.brick,
+								 forcing.in         = forcing,
+								 l.project          = TRUE,
+								 slope.Ta2Tg.in     = slope.Ta2Tg,
+								 intercept.Ta2Tg.in = intercept.Ta2Tg,
+								 mod.time           = mod.time,
+								 ind.norm.data      = ind.norm.data,
+								 ind.norm.sl        = ind.norm,
+								 luse.brick         = luse.brick,
+								 i0                 = i0)
+        slr.gsic <- brick.out$gsic.out[i2015:imodend]           - brick.out$gsic.out[i2015]
+        slr.te   <- brick.out$te.out[i2015:imodend]             - brick.out$te.out[i2015]
+        slr.gis  <- brick.out$simple.out$sle.gis[i2015:imodend] - brick.out$simple.out$sle.gis[i2015]
+        slr.ais  <- brick.out$dais.out$Vais[i2015:imodend]      - brick.out$dais.out$Vais[i2015]
+        slr.lws  <- cumsum(rnorm(n=length(mod.time), mean=lws.mean[i], sd=lws.sd000)) /1000
+        slr.lws  <- slr.lws[i2015:imodend] - slr.lws[i2015]
+        lsl.proj <- fp.loc$gsic*slr.gsic + fp.loc$te  *slr.te  +
+                    fp.loc$gis *slr.gis  + fp.loc$ais *slr.ais + fp.loc$lws*slr.lws
+        surge.rise <- surge.factor[i] * lsl.proj
+        lsl.norm.subs <- subs.rate[i]*nt + lsl.proj + surge.rise
+        H_eff <- H0 - lsl.norm.subs + parameters.build[i]
+
+        # failure probability is the survival function of the storm surge GEV at effective dike height
+        # "by hand" calculation faster; assumes shape parameter /= 0 (which is
+        # okay, given that we use 0 as lower bound on prior for it)
+        p_fail <- as.numeric(1-pgev(q=1000*H_eff, xi=parameters.gev[i,isha], mu=parameters.gev[i,iloc], beta=parameters.gev[i,isca]))
+        #ttmp <- as.numeric( (1+parameters.gev[i,isha]*((1000*H_eff-parameters.gev[i,iloc])/parameters.gev[i,isca]))^(-1/parameters.gev[i,isha]))
+        #p_fail <- 1-exp(-ttmp)
+
+        # using average annual exceedance probability as the response
+        output[i] <- mean(p_fail)
+
+        setTxtProgressBar(pb, i)
+    }
+    close(pb)
+    print(paste(' ... done.'))
+
+    # for Sobol, output must be centered at 0
+    # ... use log10(return period) = -log10(AEP) as response?
+    # (might be better-behaved - much more (skew)normally-distributed, as opposed to
+    # the AEP, which is strictly > 0 and extremely right-skewed)
+    #output <- -log10(output)
+
+    output.avg <- mean(output)
+    output <- output - output.avg
+    return(output)
+}
 ##==============================================================================
 
 
@@ -723,10 +811,6 @@ save.image(file = name.output.rdata)
 
 ##==============================================================================
 ## Write an output file like the modified code from Perry will expect
-
-##TODO
-##TODO -- check how 'Sx_conf' is used; make sure you feed it in correctly
-##TODO
 
 today=Sys.Date(); today=format(today,format="%d%b%Y")
 file.sobolout1 <- paste('../output_calibration/BRICK_Sobol-1-tot_',today,appen,'.txt',sep='')

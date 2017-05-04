@@ -30,9 +30,9 @@ rm(list =ls()) #Clear global environment
 
 ##########################################
 # setting things here, not to be touched #
-N.sample000 <- 1000 #122000
-N.use000    <- 1000 #122000
-N.boot000   <- 500 #50000
+N.sample000 <- 122000 #122000
+N.use000    <- 122000 #122000
+N.boot000   <- 50000 #50000
 N.core000   <- 15     # number of cores for parallel Sobol analysis
 lbuild      <- TRUE
 lfullAIS    <- TRUE   # full prior range from Wong et al 2017 (fast dynamics) for h0 and c? (fixed if FALSE)
@@ -83,9 +83,14 @@ lws.mean000 <- 0.30           # mm/y
 lws.sd000   <- 0.18           # mm/y
 
 ## Read the calibrated parameter sets (after rejection sampling to GMSL data)
-filename.parameters <- '~/codes/BRICK/output_calibration/BRICK-fastdyn_postcalibratedParameters_gamma_31Jan2017.csv'
-parameters.brick <- read.csv(filename.parameters)
-parnames.brick <- colnames(parameters.brick)
+library(ncdf4)
+
+filename.parameters <- '~/codes/BRICK/output_calibration/BRICK_postcalibratedParameters_fd-gamma_20Apr2017.nc'
+ncdata <- nc_open(filename.parameters)
+parnames.brick   <-   ncvar_get(ncdata, 'parnames')
+parameters.brick <- t(ncvar_get(ncdata, 'BRICK_parameters'))
+nc_close(ncdata)
+colnames(parameters.brick) <- parnames.brick
 
 ## Remove the statistical parameters
 irem <- c(match('sigma.T',parnames.brick),
@@ -376,9 +381,7 @@ bound.upper.subs <- Inf
 ## to the parameter estimates corresponding to those quantiles within the
 ## BRICK_sobol call
 
-library(ncdf4)
-
-filename.gevstat <- '../output_calibration/BRICK_estimateGEV-AnnMean_11Apr2017.nc'
+filename.gevstat <- '../output_calibration/BRICK_estimateGEV-AnnMean_12Apr2017.nc'
 ncdata <- nc_open(filename.gevstat)
 parnames.gev <- ncvar_get(ncdata, 'GEV_names')
 gev.mcmc <- t(ncvar_get(ncdata, 'GEV_parameters'))
