@@ -73,7 +73,7 @@ t.beg = proc.time()
 ##==============================================================================
 ## Define the files you want to process/read/create
 
-dais <- 'g'     ## Which DAIS model set-up? (n = no fast dynamics, u = uniform priors, g = gamma priors)
+dais <- 'u'     ## Which DAIS model set-up? (n = no fast dynamics, u = uniform priors, g = gamma priors)
 appen <- ''     ## Append file name? In case you process multiple files in one day
 today <- Sys.Date(); today=format(today,format="%d%b%Y")
 
@@ -808,7 +808,7 @@ ocheat.hind = ocheat.hind[,ind.good]
 brick.rcp26 = proj.out[[1]][ind.good]
 brick.rcp45 = proj.out[[2]][ind.good]
 brick.rcp60 = proj.out[[3]][ind.good]
-brick.rcp85 = proj.out[[3]][ind.good]
+brick.rcp85 = proj.out[[4]][ind.good]
 
 ## Gather the fields for each simulation (easy referencing for plotting and
 ## analysis)
@@ -1155,7 +1155,7 @@ proj.rcp85$slr.nola_nofd = brick_lsl(lat.in=lat.fp,
 
 # And normalize sea-level rise
 for (i in 1:n.ensemble) {
-	proj.rcp85$slr.nola[i,] = proj.rcp26$slr.nola[i,] - mean(proj.rcp26$slr.nola[i,ind.norm])
+	proj.rcp26$slr.nola[i,] = proj.rcp26$slr.nola[i,] - mean(proj.rcp26$slr.nola[i,ind.norm])
 	proj.rcp45$slr.nola[i,] = proj.rcp45$slr.nola[i,] - mean(proj.rcp45$slr.nola[i,ind.norm])
 	proj.rcp60$slr.nola[i,] = proj.rcp60$slr.nola[i,] - mean(proj.rcp60$slr.nola[i,ind.norm])
 	proj.rcp85$slr.nola[i,] = proj.rcp85$slr.nola[i,] - mean(proj.rcp85$slr.nola[i,ind.norm])

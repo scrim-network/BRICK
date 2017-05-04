@@ -36,21 +36,23 @@ rm(list=ls())
 
 ##==============================================================================
 ## Input file names from previous parameter sampling/calibration/simulation
+## If you are running this for the first time (after
+## 'processingPipeline_BRICKscenarios.R', )
 
 ## Sea-level rise projections
-filename.allslr <- "../output_model/BRICK_physical_allslr_11Apr2017.nc"
-#filename.gamma <- "../output_model/BRICK_physical_fd-gamma_11Apr2017.nc"
-#filename.uniform <- "../output_model/BRICK_physical_fd-uniform_11Apr2017.nc"
+#filename.allslr <- "../output_model/BRICK_physical_allslr_16Apr2017.nc"
+filename.gamma <- "../output_model/BRICK_physical_fd-gamma_20Apr2017.nc"
+filename.uniform <- "../output_model/BRICK_physical_fd-uniform_20Apr2017.nc"
 
 ## GEV parameters, fit from tide gauge data
-filename.gevstat <- '../output_calibration/BRICK_GEVsample-AnnMean_12Apr2017.nc'
-#filename.gevmcmc <- '../output_calibration/BRICK_estimateGEV-AnnMean_07Mar2017.nc'
+#filename.gevstat <- '../output_calibration/BRICK_GEVsample-AnnMean_16Apr2017.nc'
+filename.gevmcmc <- '../output_calibration/BRICK_estimateGEV-AnnMean_12Apr2017.nc'
 
 ## Surge level increase factors (USACE)
-filename.surgefactor <- '../output_calibration/BRICK_surgefactor_11Apr2017.nc'
+#filename.surgefactor <- '../output_calibration/BRICK_surgefactor_16Apr2017.nc'
 
 ## Van Dantzig model parameters
-filename.vdparams <- '../output_calibration/BRICK-VanDantzig_parameters_11Apr2017.nc'
+#filename.vdparams <- '../output_calibration/BRICK-VanDantzig_parameters_16Apr2017.nc'
 
 ##==============================================================================
 ## What time horizon to consider?
@@ -224,7 +226,6 @@ if(exists('filename.gevstat')){
         ncvar_put(outnc, parameters.var, t(gev.params))
         ncvar_put(outnc, parnames.var, colnames(gev.params))
         nc_close(outnc)
-
     } else {
         # sd.prop from a preliminary MLE experiment which found 90% CI for the GEV
         # parameters that gives stdev estimates of 13.5 (mu), .2 (log(sigma)), .25 (xi)

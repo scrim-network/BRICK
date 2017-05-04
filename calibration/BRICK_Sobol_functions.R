@@ -15,8 +15,9 @@
 ## (4) include '%' sign and cut legend labels off at the decimal (whole numbers
 ##     only)
 ##
-## Tony also modified the 'sig' test for signifiance to be insignifcant if
-## .. TODO
+## Tony also modified the 'sig' test for significance to test for confidence
+## interval bounds of the same sign (otherwise, 0 is in CI for sensitivity
+## index) and greater than 1%.
 ##==============================================================================
 
 ##==============================================================================
@@ -230,6 +231,7 @@ plotRadCon <- function(df                   # dataframe with S1 and ST indices
                        ,lBuildRCPhoriz=FALSE # horizontal legends for Emissions and Protection?
                        ,lnoGEVhoriz=FALSE   # horizontal legends for Emissions, Protection, Storm Surge, and Land Subsidence?
                        ,lnoHRhoriz=FALSE   # horizontal legends for Emissions, Protection?
+                       ,lsetback=FALSE   # don't rotate, just stagger labels radially?
                        ){
 
   # Shift plot up
@@ -472,7 +474,7 @@ if(lBuildRCPhoriz) {
     }
   }
 } else if(lnoGEVhoriz) {
-  if(sig_gps[i]=='Emissions' | sig_gps[i]=='Protection' | sig_gps[i]=='Storm Surge' | sig_gps[i]=='Land\nSubsidence') {
+  if(sig_gps[i]=='Emissions' | sig_gps[i]=='Protection' | sig_gps[i]=='Storm Surge' | sig_gps[i]=='Land Subsidence') {
       text(gpNameMult*radSc*cos(angle_gp), gpNameMult*radSc*sin(angle_gp) + shift
            , sig_gps[i]
            , col = df$gp_col[which(df$gp_name %in% sig_gps[i])]#[i]]
@@ -510,6 +512,64 @@ if(lBuildRCPhoriz) {
            , cex = cex
            , srt = 0# angle_gp*360/(2*pi) + 90
            , adj = 0.15 # for centering
+           , font = 1
+      )
+  } else {
+    if((angle_gp*360/(2*pi)) >= 0 & (angle_gp*360/(2*pi)) <= 180){
+      text(gpNameMult*radSc*cos(angle_gp), gpNameMult*radSc*sin(angle_gp) + shift
+           , sig_gps[i]
+           , col = df$gp_col[which(df$gp_name %in% sig_gps[i])]#[i]]
+           , cex = cex
+           , srt = angle_gp*360/(2*pi) - 90
+           , adj = 0.5 # for centering
+           , font = 1
+      )
+    } else {
+      text(gpNameMult*radSc*cos(angle_gp), gpNameMult*radSc*sin(angle_gp) + shift
+           , sig_gps[i]
+           , col = df$gp_col[which(df$gp_name %in% sig_gps[i])]#[i]]
+           , cex = cex
+           , srt = angle_gp*360/(2*pi) + 90
+           , adj = 0.5 # for centering
+           , font = 1
+      )
+    }
+  }
+} else if(lsetback) {
+  if(sig_gps[i]=='Emissions') {
+      text(1.08*gpNameMult*radSc*cos(angle_gp), 1.08*gpNameMult*radSc*sin(angle_gp) + shift
+           , sig_gps[i]
+           , col = df$gp_col[which(df$gp_name %in% sig_gps[i])]#[i]]
+           , cex = cex
+           , srt = angle_gp*360/(2*pi) + 90
+           , adj = 0.55 # for centering
+           , font = 1
+      )
+  } else if(sig_gps[i]=='Protection') {
+      text(gpNameMult*radSc*cos(angle_gp), gpNameMult*radSc*sin(angle_gp) + shift
+           , sig_gps[i]
+           , col = df$gp_col[which(df$gp_name %in% sig_gps[i])]#[i]]
+           , cex = cex
+           , srt = angle_gp*360/(2*pi) + 90
+           , adj = 0.35 # for centering
+           , font = 1
+      )
+  } else if(sig_gps[i]=='Land Subsidence') {
+      text(1.15*gpNameMult*radSc*cos(angle_gp), 1.15*gpNameMult*radSc*sin(angle_gp) + shift
+           , sig_gps[i]
+           , col = df$gp_col[which(df$gp_name %in% sig_gps[i])]#[i]]
+           , cex = cex
+           , srt = angle_gp*360/(2*pi) + 90 + 5
+           , adj = 0.35 # for centering
+           , font = 1
+      )
+  } else if(sig_gps[i]=='Sea Level:\nLand Water Storage') {
+      text(gpNameMult*radSc*cos(angle_gp), gpNameMult*radSc*sin(angle_gp) + shift
+           , sig_gps[i]
+           , col = df$gp_col[which(df$gp_name %in% sig_gps[i])]#[i]]
+           , cex = cex
+           , srt = angle_gp*360/(2*pi) + 90
+           , adj = 0.75 # for centering
            , font = 1
       )
   } else {
