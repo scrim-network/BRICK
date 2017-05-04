@@ -748,6 +748,7 @@ thing1 <- preturn$rcp85$gamma$ns[1,]
 thing2 <- thing1[order(thing1)]
 print(paste('Fraction of SOW in RCP8.5, gamma FD priors, non-stationary storm surge that miss 500-year protection: ',ecdf.vals[which.min(abs(thing2-500))],sep=''))
 
+##==============================================================================
 ## ... best/worst case SOW that miss the 100-year protection standard:
 thing1 <- preturn$rcp26$uniform$st[1,]
 thing2 <- thing1[order(thing1)]
@@ -757,7 +758,7 @@ thing1 <- preturn$rcp85$gamma$ns[1,]
 thing2 <- thing1[order(thing1)]
 print(paste('Fraction of SOW in RCP8.5, gamma FD priors, non-stationary storm surge that miss 100-year protection: ',ecdf.vals[which.min(abs(thing2-100))],sep=''))
 
-## ... best/worst case SOW that miss the 100-year protection standard:
+## ... best/worst case SOW that miss the 500-year protection standard:
 thing1 <- preturn$rcp26$uniform$st[1,]
 thing2 <- thing1[order(thing1)]
 print(paste('Fraction of SOW in RCP2.6, no AIS FD, stationary storm surge that miss 500-year protection: ',ecdf.vals[which.min(abs(thing2-500))],sep=''))
@@ -766,6 +767,7 @@ thing1 <- preturn$rcp85$gamma$ns[1,]
 thing2 <- thing1[order(thing1)]
 print(paste('Fraction of SOW in RCP8.5, gamma FD priors, non-stationary storm surge that miss 500-year protection: ',ecdf.vals[which.min(abs(thing2-500))],sep=''))
 
+##==============================================================================
 ## ... best/worst case SOW that fulfill the 100-year protection standard:
 thing1 <- preturn$rcp26$uniform$st[1,]
 thing2 <- thing1[order(thing1)]
@@ -774,6 +776,15 @@ print(paste('Fraction of SOW in RCP2.6, no AIS FD, stationary storm surge that f
 thing1 <- preturn$rcp85$gamma$ns[1,]
 thing2 <- thing1[order(thing1)]
 print(paste('Fraction of SOW in RCP8.5, gamma FD priors, non-stationary storm surge that fulfill 100-year protection: ',esf.vals[which.min(abs(thing2-100))],sep=''))
+
+## ... best/worst case SOW that fulfill the 500-year protection standard:
+thing1 <- preturn$rcp26$uniform$st[1,]
+thing2 <- thing1[order(thing1)]
+print(paste('Fraction of SOW in RCP2.6, no AIS FD, stationary storm surge that fulfill 500-year protection: ',esf.vals[which.min(abs(thing2-500))],sep=''))
+
+thing1 <- preturn$rcp85$gamma$ns[1,]
+thing2 <- thing1[order(thing1)]
+print(paste('Fraction of SOW in RCP8.5, gamma FD priors, non-stationary storm surge that fulfill 500-year protection: ',esf.vals[which.min(abs(thing2-500))],sep=''))
 ##==============================================================================
 
 
