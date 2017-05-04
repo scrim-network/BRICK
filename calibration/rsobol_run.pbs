@@ -4,6 +4,6 @@
 #PBS -j oe
 #PBS -m abe
 #PBS -M twong@psu.edu
-R --vanilla < /home/scrim/axw322/codes/BRICK/calibration/BRICK_Sobol_driver_noAIS_script.R > /home/scrim/axw322/codes/BRICK/calibration/brick_sobol2.log
+R --vanilla < /home/scrim/axw322/codes/BRICK/calibration/BRICK_Sobol_driver_script.R > /home/scrim/axw322/codes/BRICK/calibration/brick_sobol.log
+###R --vanilla < /home/scrim/axw322/codes/BRICK/calibration/BRICK_Sobol_driver_noAIS_script.R > /home/scrim/axw322/codes/BRICK/calibration/brick_sobol.log
 ###R --vanilla < /home/scrim/axw322/codes/BRICK/calibration/BRICK_Sobol_driver_noGEV_script.R > /home/scrim/axw322/codes/BRICK/calibration/brick_sobol.log
-###R --vanilla < /home/scrim/axw322/codes/BRICK/calibration/BRICK_Sobol_driver_script.R > /home/scrim/axw322/codes/BRICK/calibration/brick_sobol.log
