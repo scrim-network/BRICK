@@ -84,62 +84,6 @@ install.packages('sn')
 install.packages('stats')
 ~~~~
 
-## Workflow
-
-### To reproduce the work of Wong, Bakker et al., 2017 (model description paper)
-
-1. Checkout the model codes. Specifically, the `BRICKms` branch reproduces the model description paper.
-~~~~
-git clone https://github.com/scrim-network/BRICK.git
-git checkout BRICKms
-~~~~
-
-2. Create the dynamic libraries necessary to run the model in Fortran. You might need to modify the `Makefile` to use your preferred Fortran compiler. Further help can be found at `BRICK/fortran/README`.
-~~~~
-cd BRICK/fortran
-mkdir obj
-make
-~~~~
-
-3. Open R and install the relevant R packages.
-~~~~
-R
-setwd('BRICK/calibration')
-source('BRICK_install_packages.R')
-~~~~
-
-4. Calibrate the default BRICK model configuration (DOECLIM+SIMPLE+GSIC+TE) parameters using modern data. This should not take longer than an hour or two on a modern multi-core computer.
-~~~~
-source('BRICK_calib_driver.R')
-~~~~
-
-5. Calibrate the DAIS parameters using paleoclimate data. This will take about 12 hours with a modern laptop.
-~~~~
-source('DAIS_calib_driver.R')
-~~~~
-
-6. Calibrate global mean sea-level rise model parameters using modern data and the Rahmstorf 2007 model.
-~~~~
-source('BRICK_calib_driver_R07.R')
-~~~~
-
-7. Calibrate the SIMPLE-GSIC parameters using modern data.
-~~~~
-source('BRICK_calib_driver_SIMPLE-GSIC.R')
-~~~~
-
-8. Combine modern and paleo calibration parameters, and calibrate the joint set to sea level data using rejection sampling; make hindcasts and projections of sea level; project local sea level and assess flood risks for the control model configuration. Note: if you run your own calibrations, files names must be edited to point to the correct files. By default, they point to the file names as used in the GMDD model description paper. To fully reproduce all of the experiments from that work, you must run the following script three times, where `experiment` is set to (i) c (control), (ii) e (SIMPLE-GSIC), and (iii) g (BRICK-GMSL).
-~~~~
-source('processingPipeline_BRICKexperiments.R')
-~~~~
-
-9. Create plots and analysis, as seen in the GMDD description paper. Note: file names must be edited to point to the correct files, if you have run your own calibrations. Also note: the directory in which you save the plots must be changed to match somewhere on your own machine.
-~~~~
-source('analysis_and_plots_BRICKexperiments.R')
-~~~~
-
-Note that in each of these scripts, some edits will be necessary. These will include pointing at the proper file names. The BRICK and DAIS calibration driver scripts produce calibrated parameter files with date-stamps in their names. You will need to make sure the processing pipeline script points at the current calibrated parameters files. The processing pipeline script, in turn, produces several netCDF output files from your fully calibrated BRICK parameters. These file names also include date-stamps. You will need to make sure the analysis and plotting script points at the current files. You will also need to modify the directory in which your plots will be saved.
-
 ## Code Example: Projecting local sea level
 
 Suppose you are a researcher who wishes to use the sea level projections from the [BRICK model description paper](http://www.geosci-model-dev-discuss.net/gmd-2016-303/) in your own work. The following example will demonstrate how to use these projections and fingerprint the global sea level contributions to local mean sea level rise. This process is automated in the R function `BRICK_projectLocalSeaLevel.R`.
@@ -195,13 +139,69 @@ ncvar_put(outnc, lsl.rcp85, lsl.proj)
 nc_close(outnc)
 ~~~~
 
-7. Reflection: Note that the same result would be achieved by running `BRICK_projectLocalSeaLevel`, as demonstrated below. NB: this include normalization of local sea level to 1986-2005 period. Also, this function includes RCP26, 45 and 85, as well as the ensemble global mean temperatures and ocean heat uptake.
+7. *Reflection:* Note that the same result would be achieved by running `BRICK_projectLocalSeaLevel`, as demonstrated below. NB: this include normalization of local sea level to 1986-2005 period. Also, this function includes RCP26, 45 and 85, as well as the ensemble global mean temperatures and ocean heat uptake.
 ~~~~
 source('BRICK_projectLocalSeaLevel.R')
 rc <- BRICK_projectLocalSeaLevel(lat.in=24.5551, lon.in=-81.7800,
     filename.brickin='../output_model/BRICK-model_physical_control_02Apr2017.nc',
     filename.brickout='../output_model/BRICK_LSL_KeyWest_RCP85.nc')
 ~~~~
+
+## Workflow
+
+### To reproduce the work of Wong, Bakker et al., 2017 (model description paper)
+
+1. Checkout the model codes. Specifically, the `BRICKms` branch reproduces the model description paper.
+~~~~
+git clone https://github.com/scrim-network/BRICK.git
+git checkout BRICKms
+~~~~
+
+2. Create the dynamic libraries necessary to run the model in Fortran. You might need to modify the `Makefile` to use your preferred Fortran compiler. Further help can be found at `BRICK/fortran/README`.
+~~~~
+cd BRICK/fortran
+mkdir obj
+make
+~~~~
+
+3. Open R and install the relevant R packages.
+~~~~
+R
+setwd('BRICK/calibration')
+source('BRICK_install_packages.R')
+~~~~
+
+4. Calibrate the default BRICK model configuration (DOECLIM+SIMPLE+GSIC+TE) parameters using modern data. This should not take longer than an hour or two on a modern multi-core computer.
+~~~~
+source('BRICK_calib_driver.R')
+~~~~
+
+5. Calibrate the DAIS parameters using paleoclimate data. This will take about 12 hours with a modern laptop.
+~~~~
+source('DAIS_calib_driver.R')
+~~~~
+
+6. Calibrate global mean sea-level rise model parameters using modern data and the Rahmstorf 2007 model.
+~~~~
+source('BRICK_calib_driver_R07.R')
+~~~~
+
+7. Calibrate the SIMPLE-GSIC parameters using modern data.
+~~~~
+source('BRICK_calib_driver_SIMPLE-GSIC.R')
+~~~~
+
+8. Combine modern and paleo calibration parameters, and calibrate the joint set to sea level data using rejection sampling; make hindcasts and projections of sea level; project local sea level and assess flood risks for the control model configuration. Note: if you run your own calibrations, files names must be edited to point to the correct files. By default, they point to the file names as used in the GMDD model description paper. To fully reproduce all of the experiments from that work, you must run the following script three times, where `experiment` is set to (i) c (control), (ii) e (SIMPLE-GSIC), and (iii) g (BRICK-GMSL).
+~~~~
+source('processingPipeline_BRICKexperiments.R')
+~~~~
+
+9. Create plots and analysis, as seen in the GMDD description paper. Note: file names must be edited to point to the correct files, if you have run your own calibrations. Also note: the directory in which you save the plots must be changed to match somewhere on your own machine.
+~~~~
+source('analysis_and_plots_BRICKexperiments.R')
+~~~~
+
+Note that in each of these scripts, some edits will be necessary. These will include pointing at the proper file names. The BRICK and DAIS calibration driver scripts produce calibrated parameter files with date-stamps in their names. You will need to make sure the processing pipeline script points at the current calibrated parameters files. The processing pipeline script, in turn, produces several netCDF output files from your fully calibrated BRICK parameters. These file names also include date-stamps. You will need to make sure the analysis and plotting script points at the current files. You will also need to modify the directory in which your plots will be saved.
 
 ## Reference documentation to get new users started
 
