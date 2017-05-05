@@ -318,7 +318,8 @@ luse.gsic     = TRUE    # glaciers and small ice caps contribution to SLR
 luse.te       = TRUE    # thermal expansion contribution to SLR
 luse.simple   = TRUE    # Greenland ice sheet model
 luse.dais     = TRUE    # Antarctic ice sheet model
-luse.brick = cbind(luse.sneasy,luse.doeclim, luse.gsic, luse.te, luse.simple, luse.dais)
+luse.lws      = FALSE   # for now, use LWS sampler hard-coded
+luse.brick = cbind(luse.sneasy,luse.doeclim, luse.gsic, luse.te, luse.simple, luse.dais, luse.lws)
 
 ## Source the appropriate BRICK model for your purposes
 if(experiment=='c') {source('../R/BRICK_coupledModel.R')}
@@ -331,7 +332,8 @@ if(experiment=='g') {
 	luse.simple   = FALSE   # Greenland ice sheet model
 	luse.dais     = FALSE   # Antarctic ice sheet model
 	luse.gmsl     = TRUE    # Example of adding your own model component - GMSL
-	luse.brick = cbind(luse.sneasy,luse.doeclim, luse.gsic, luse.te, luse.simple, luse.dais, luse.gmsl)
+	luse.lws      = FALSE   # land water storage
+	luse.brick = cbind(luse.sneasy,luse.doeclim, luse.gsic, luse.te, luse.simple, luse.dais, luse.gmsl, luse.lws)
 	source('../R/BRICK_coupledModel_R07.R')
 }
 
@@ -1113,10 +1115,10 @@ dim.ensemble <- ncdim_def('ens', 'ensemble member', as.double(1:nrow(proj.rcp26$
 dim.thind <- ncdim_def('time_hind', 'years', as.double(t.hind))
 
 if(experiment!='g') {
-	dim.tpaleo <- ncdim_def('time_paleo', 'year paleo', as.double(t.paleo))
-	dim.tpaleo.avg <- ncdim_def('time_paleo_avg', 'year avg paleo', as.double(date.avg))
+  dim.tpaleo <- ncdim_def('time_paleo', 'year paleo', as.double(t.paleo))
+  dim.tpaleo.avg <- ncdim_def('time_paleo_avg', 'year avg paleo', as.double(date.avg))
 
-	ais.paleo.05 <- ncvar_def('AIS_paleo_q05', 'meters', list(dim.tpaleo), -999,
+  ais.paleo.05 <- ncvar_def('AIS_paleo_q05', 'meters', list(dim.tpaleo), -999,
                   longname = 'AIS paleo contribution to sea level (5th quantile)')
   ais.paleo.50 <- ncvar_def('AIS_paleo_q50', 'meters', list(dim.tpaleo), -999,
                   longname = 'AIS paleo contribution to sea level (median)')

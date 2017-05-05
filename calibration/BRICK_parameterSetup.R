@@ -99,8 +99,22 @@ if (luse.dais) {
 	index.model.dais=c(1,2,3,4,5,6,7,8,9,10,11,12,13)			# which are model parameters? (index within parnames.dais)
 }
 
+## LWS (Dieng et al, 2015 (doi:10.1088/1748-9326/10/12/124010)
+## **not calibrated**
+parnames.lws   =NULL; p0.lws       =NULL; bound.lower.lws=NULL;
+bound.upper.lws=NULL; step.mcmc.lws=NULL; index.model.lws=NULL;
+if (luse.lws) {
+	parnames.lws   =c("lws.mean","lws.sd"  , "lws0"  )        # parameters names
+	p0.lws         =c(0.30/1000 , 0.18/1000, 0.0     )        # initial parameter guesses
+	bound.lower.lws=c(0.30/1000 , 0.18/1000, 0.0     )        # prior range lower bounds
+	bound.upper.lws=c(0.30/1000 , 0.18/1000, 0.0     )        # prior range upper bounds
+	step.mcmc.lws  =0.05*(bound.upper.lws-bound.lower.lws)    # set size for parameters in MCMC (proposals)
+	index.model.lws=c(1,2,3)                                  # which are model parameters? (index within parnames.lws)
+}
+
 ##==============================================================================
 ## Combine for coupled model
+## Leave LWS out, because not calibrated
 parnames    = c(parnames.doeclim, parnames.sneasy, parnames.gsic, parnames.te, parnames.simple, parnames.dais)
 p0          = c(p0.doeclim      , p0.sneasy      , p0.gsic      , p0.te      , p0.simple      , p0.dais      )
 bound.lower = c(bound.lower.doeclim, bound.lower.sneasy, bound.lower.gsic,

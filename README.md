@@ -140,9 +140,9 @@ source('analysis_and_plots_BRICKexperiments.R')
 
 Note that in each of these scripts, some edits will be necessary. These will include pointing at the proper file names. The BRICK and DAIS calibration driver scripts produce calibrated parameter files with date-stamps in their names. You will need to make sure the processing pipeline script points at the current calibrated parameters files. The processing pipeline script, in turn, produces several netCDF output files from your fully calibrated BRICK parameters. These file names also include date-stamps. You will need to make sure the analysis and plotting script points at the current files. You will also need to modify the directory in which your plots will be saved.
 
-## Code Example
+## Code Example: Projecting local sea level
 
-Suppose you are a researcher who wishes to use the sea level projections from the [BRICK model description paper](http://www.geosci-model-dev-discuss.net/gmd-2016-303/) in your own work. The following example will demonstrate how to use these projections and fingerprint the global sea level contributions to local mean sea level rise.
+Suppose you are a researcher who wishes to use the sea level projections from the [BRICK model description paper](http://www.geosci-model-dev-discuss.net/gmd-2016-303/) in your own work. The following example will demonstrate how to use these projections and fingerprint the global sea level contributions to local mean sea level rise. This process is automated in the R function `BRICK_projectLocalSeaLevel.R`.
 
 1. Checkout the model codes and download the projections from the [BRICK model description paper](http://www.geosci-model-dev-discuss.net/gmd-2016-303/). If you do not have `curl`, you can either install it using `sudo apt-get install curl`, or use `wget`, or - if all else fails - navigate to the URL below to download the relevant results files.
 ~~~~
@@ -172,6 +172,7 @@ slr.gsic <- ncvar_get(ncdata, 'GSIC_RCP85')
 slr.gis <- ncvar_get(ncdata, 'GIS_RCP85')
 slr.ais <- ncvar_get(ncdata, 'AIS_RCP85')
 slr.te <- ncvar_get(ncdata, 'TE_RCP85')
+slr.lws <- ncvar_get(ncdata, 'LWS_RCP85')
 t.proj <- ncvar_get(ncdata, 'time_proj')
 n.ens <- length(ncvar_get(ncdata, 'ens'))
 nc_close(ncdata)
@@ -180,7 +181,7 @@ nc_close(ncdata)
 5. Use the `BRICK_LSL.R` script to project local mean sea level.
 ~~~~
 source('BRICK_LSL.R')
-lsl.proj <- brick_lsl(lat.in=lat, lon.in=lon, n.time=length(t.proj), slr_gis=slr.gis, slr_gsic=slr.gsic, slr_ais=slr.ais, slr_te=slr.te)
+lsl.proj <- brick_lsl(lat.in=lat, lon.in=lon, n.time=length(t.proj), slr_gis=slr.gis, slr_gsic=slr.gsic, slr_ais=slr.ais, slr_te=slr.te, slr_lws=slr.lws)
 ~~~~
 
 6. Write output to a netCDF file
@@ -190,8 +191,16 @@ dim.tproj <- ncdim_def('time_proj', 'years', as.double(t.proj))
 dim.ensemble <- ncdim_def('ens', 'ensemble member', as.double(1:n.ens), unlim=TRUE)
 lsl.rcp85 <- ncvar_def('LocalSeaLevel_RCP85', 'meters', list(dim.tproj, dim.ensemble), -999, longname = 'Local sea level (RCP85)')
 outnc <- nc_create(filename.output, list(lsl.rcp85), force_v4 = TRUE)
-ncvar_put(outnc, lsl.rcp85, t(lsl.proj))
+ncvar_put(outnc, lsl.rcp85, lsl.proj)
 nc_close(outnc)
+~~~~
+
+7. Reflection: Note that the same result would be achieved by running `BRICK_projectLocalSeaLevel`, as demonstrated below. NB: this include normalization of local sea level to 1986-2005 period. Also, this function includes RCP26, 45 and 85, as well as the ensemble global mean temperatures and ocean heat uptake.
+~~~~
+source('BRICK_projectLocalSeaLevel.R')
+rc <- BRICK_projectLocalSeaLevel(lat.in=24.5551, lon.in=-81.7800,
+    filename.brickin='../output_model/BRICK-model_physical_control_02Apr2017.nc',
+    filename.brickout='../output_model/BRICK_LSL_KeyWest_RCP85.nc')
 ~~~~
 
 ## Reference documentation to get new users started

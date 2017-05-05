@@ -4,22 +4,23 @@
 ## is given below.
 ##
 ## Input:
-##	parameters.in					input vector of model parameters
-##	parnames.in						vector of parameter names
-##	forcing.in						matrix of radiative forcing input
-##	l.project							making projections or hindcasts?
-##	slope.Ta2Tg.in				slope of Antarctic vs global mean temperature regression
-##	intercept.Ta2Tg.in		intercept of Antarctic vs global mean temperature regression
-##	mod.time							time (in years) of the model simulation
-##	obs.temp							mean global surface temperature anomalies, used if no climate module
-##	ind.norm.data					indices within the model output for setting zero anomaly of calibration data fields
-##	ind.norm.sl						indices within model output for setting zero sea level
-##	tstep							model tstep [years]
-##	i0										index of reference year, within mod.time. For initial conditions to sub-models.
+##	parameters.in          input vector of model parameters
+##	parnames.in	           vector of parameter names
+##	forcing.in             matrix of radiative forcing input
+##	l.project              making projections or hindcasts?
+##	slope.Ta2Tg.in         slope of Antarctic vs global mean temperature regression
+##	intercept.Ta2Tg.in     intercept of Antarctic vs global mean temperature regression
+##  lws.params             mean and stdev of lws trend (in m/year)
+##	mod.time               time (in years) of the model simulation
+##	obs.temp               mean global surface temperature anomalies, used if no climate module
+##	ind.norm.data          indices within the model output for setting zero anomaly of calibration data fields
+##	ind.norm.sl            indices within model output for setting zero sea level
+##	tstep                  model tstep [years]
+##	i0                     index of reference year, within mod.time. For initial conditions to sub-models.
 ##
 ## Requires:
 ##  luse.brick, includes: luse.doeclim, luse.gsic, luse.te, luse.simple,
-##                        luse.dais, and luse.XXX, where XXX
+##                        luse.dais, luse.lws, and luse.XXX, where XXX
 ##                        may be replaced with your favorite model component
 ##
 ## Questions? Tony Wong <twong@psu.edu>
@@ -46,6 +47,7 @@ brick_model = function(parameters.in,
 					   l.project = FALSE,
 					   slope.Ta2Tg.in = 1,
 					   intercept.Ta2Tg.in = 0,
+                       lws.params = NULL,
 					   tstep = 1,
 					   mod.time,
 					   obs.temp = NULL,
@@ -310,6 +312,28 @@ brick_model = function(parameters.in,
 
   	    }
 	}
+
+	#=============================================================================
+	# LWS - land water storage contributions
+
+	if (luse.brick[,"luse.lws"]) {
+
+	    ## Grab LWS parameters
+        # (fed in from lws.params)
+
+        ## Run SIMPLE (Greenland Ice Sheet model)
+        lws.out <- brick_lws(lws.mean=lws.params$mean, lws.sd=lws.params$sd,
+                             lws0=lws.params$lws0, Tg=temp.couple)
+
+		## Subtract off normalization period
+		lws.out <- lws.out - mean(lws.out[ind.norm.sl])
+
+		## Add this contribution to the total sea level rise
+		slr.out = slr.out + lws.out
+
+		brick.out[[outcnt]] = simple.out; names(brick.out)[outcnt]="lws.out"; outcnt=outcnt+1;
+
+    }
 
 	#=============================================================================
 	# Total sea-level rise

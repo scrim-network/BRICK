@@ -53,6 +53,7 @@ source('../fortran/R/GSIC_magiccF.R')   # the GSIC model
 source('../fortran/R/brick_te_F.R')     # TE (thermosteric expansion) model
 source('../fortran/R/simpleF.R')        # GIS (Greenland Ice Sheet) model
 source('../fortran/R/daisantoF.R')      # DAIS (Antarctic Ice Sheet) model
+source('../R/brick_lws.R')              # LWS (land water storage)
 
 ## Source some useful functions for manipulating data
 source('../R/forcing_total.R')          # function to add up the total forcing
@@ -119,7 +120,9 @@ luse.gsic     = TRUE    # glaciers and small ice caps contribution to SLR
 luse.te       = TRUE    # thermosteric expansion contribution to SLR
 luse.simple   = TRUE    # Greenland ice sheet model
 luse.dais     = FALSE    # Antarctic ice sheet model
-luse.brick = cbind(luse.sneasy, luse.doeclim, luse.gsic, luse.te, luse.simple, luse.dais)
+luse.lws      = FALSE    # land water storage
+luse.brick = cbind(luse.sneasy, luse.doeclim, luse.gsic, luse.te, luse.simple,
+                   luse.dais, luse.lws)
 
 ##==============================================================================
 ## Define parameters and their prior ranges
@@ -349,7 +352,7 @@ require('adaptMCMC')
 library(adaptMCMC)                # use robust adaptive Metropolis
 accept.mcmc = 0.234               # Optimal as # parameters->infinity
                                   # (Gelman et al, 1996; Roberts et al, 1997)
-niter.mcmc = 1e6                  # number of iterations for MCMC
+niter.mcmc = 1e4                  # number of iterations for MCMC
 gamma.mcmc = 0.5                  # rate of adaptation (between 0.5 and 1, lower is faster adaptation)
 burnin = round(niter.mcmc*0.5)    # remove first ?? of chains for burn-in (not used)
 stopadapt.mcmc = round(niter.mcmc*1.0)# stop adapting after ?? iterations? (niter*1 => don't stop)
