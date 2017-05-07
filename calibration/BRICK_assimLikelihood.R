@@ -129,7 +129,7 @@ log.lik = function( parameters.in,
     # Grab the DOECLIM statistical parameters
     T0        =parameters.in[match("T0"     ,parnames.in)]
   	sigma.T   =parameters.in[match("sigma.T",parnames.in)]
-  	rho.T     =parameters.in[match("rho.H"  ,parnames.in)]
+  	rho.T     =parameters.in[match("rho.T"  ,parnames.in)]
 
     # Calculate the DOECLIM temperature residuals; apply AR1 error model
     resid.temp= obs$temp[oidx$temp] - (brick.out$doeclim.out$temp[midx$temp]+T0)
