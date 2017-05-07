@@ -158,7 +158,7 @@ log.lik = function( parameters.in,
 
     # Get the DOECLIM statistical parameters
   	sigma.T   =parameters.in[match("sigma.T",parnames.in)]
-  	rho.T     =parameters.in[match("rho.H"  ,parnames.in)]
+  	rho.T     =parameters.in[match("rho.T"  ,parnames.in)]
 
     # Normalize temperature
 	itmp <- ind.norm.data[which(ind.norm.data[,1]=='temp'),2]:ind.norm.data[which(ind.norm.data[,1]=='temp'),3]
