@@ -5,7 +5,7 @@ for (i in 1:4) {
     today=Sys.Date(); today=format(today,format="%d%b%Y")
 	if(i==1) {
         print('processing RCP85, gamma priors...')
-        filename.in = "../output_model/BRICK-fastdyn_physical_gamma_31Jan2017.nc"
+        filename.in = "../output_model/BRICK-fastdyn_physical_gamma_07May2017.nc"
 	    ncdata <- nc_open(filename.in)
 	    sea_level = ncvar_get(ncdata, 'LocalSeaLevel_RCP85')
         sea_level_nofd = ncvar_get(ncdata, 'LocalSeaLevel_nofd_RCP85')
@@ -14,7 +14,7 @@ for (i in 1:4) {
         filename.vdout = paste('../output_model/vanDantzig_RCP85_gamma_',today,'.nc',sep="")
     } else if(i==2) {
         print('processing RCP45, gamma priors...')
-        filename.in = "../output_model/BRICK-fastdyn_physical_gamma_31Jan2017.nc"
+        filename.in = "../output_model/BRICK-fastdyn_physical_gamma_07May2017.nc"
 	    ncdata <- nc_open(filename.in)
 	    sea_level = ncvar_get(ncdata, 'LocalSeaLevel_RCP45')
         sea_level_nofd = ncvar_get(ncdata, 'LocalSeaLevel_nofd_RCP45')
@@ -23,7 +23,7 @@ for (i in 1:4) {
         filename.vdout = paste('../output_model/vanDantzig_RCP45_gamma_',today,'.nc',sep="")
     } else if(i==3) {
         print('processing RCP26, gamma priors...')
-        filename.in = "../output_model/BRICK-fastdyn_physical_gamma_31Jan2017.nc"
+        filename.in = "../output_model/BRICK-fastdyn_physical_gamma_07May2017.nc"
 	    ncdata <- nc_open(filename.in)
 	    sea_level = ncvar_get(ncdata, 'LocalSeaLevel_RCP26')
         sea_level_nofd = ncvar_get(ncdata, 'LocalSeaLevel_nofd_RCP26')
@@ -32,7 +32,7 @@ for (i in 1:4) {
         filename.vdout = paste('../output_model/vanDantzig_RCP26_gamma_',today,'.nc',sep="")
     } else if(i==4) {
         print('processing RCP85, uniform priors...')
-        filename.in = "../output_model/BRICK-fastdyn_physical_uniform_31Jan2017.nc"
+        filename.in = "../output_model/BRICK-fastdyn_physical_uniform_07May2017.nc"
 	    ncdata <- nc_open(filename.in)
 	    sea_level = ncvar_get(ncdata, 'LocalSeaLevel_RCP85')
         sea_level_nofd = ncvar_get(ncdata, 'LocalSeaLevel_nofd_RCP85')

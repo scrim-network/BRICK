@@ -350,8 +350,8 @@ gr.stat = rep(NA,length(niter.test))
 for (i in 1:length(niter.test)){
   mcmc1 = as.mcmc(chain1[1:niter.test[i],])
   mcmc2 = as.mcmc(chain2[1:niter.test[i],])
-	mcmc3 = as.mcmc(chain3[1:niter.test[i],])
-	mcmc4 = as.mcmc(chain4[1:niter.test[i],])
+  mcmc3 = as.mcmc(chain3[1:niter.test[i],])
+  mcmc4 = as.mcmc(chain4[1:niter.test[i],])
   mcmc_chain_list = mcmc.list(list(mcmc1, mcmc2, mcmc3, mcmc4))
   gr.stat[i] = gelman.diag(mcmc_chain_list)[2]
 }

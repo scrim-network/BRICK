@@ -28,11 +28,11 @@ t.beg = proc.time()
 ##==============================================================================
 ## Define the files you want to process
 
-filename.BRICKcalibration = "../output_calibration/BRICK_calibratedParameters_12Aug2016.nc"
+filename.BRICKcalibration = "../output_calibration/BRICK_calibratedParameters_07May2017.nc"
 #filename.BRICKcalibration = "../output_calibration/BRICK_calibratedParameters_12Aug2016.csv"
 filename.rho_simple_fixed = "../output_calibration/rho_simple_fixed_06Sep2016.csv"
 
-priors='u'	## Which priors? u=uniform, g=gamma
+priors='g'	## Which priors? u=uniform, g=gamma
 appen=''		## Append file name? In case you process multiple files in one day
 today=Sys.Date(); today=format(today,format="%d%b%Y")
 
@@ -52,6 +52,15 @@ if(priors=='g'){
 
 n.ensemble = 30000
 n.ensemble.report = n.ensemble
+
+## Mean and standard deviation for sampling land water storage (LWS)
+## contributions to GMSL
+## -- Using IPCC AR5 (Church et al. 2013) --
+#lws.mean <- 0.38           # mm/y
+#lws.sd   <- (0.49-.26)/4   # mm/y (take the IPCC 5-95% range as +/-2sigma)
+## -- Using Dieng et al 2015 (doi:10.1088/1748-9326/10/12/124010)--
+lws.mean <- 0.30           # mm/y
+lws.sd   <- 0.18           # mm/y
 
 ##==============================================================================
 ##==============================================================================
@@ -297,9 +306,9 @@ for (i in 1:n.ensemble) {
   ocheat.out[i,] = brick.out[[i]]$doeclim.out$ocheat + H0
   gsic.out[i,]   = brick.out[[i]]$gsic.out
   gis.out[i,]    = brick.out[[i]]$simple.out$sle.gis
-	ais.out[i,]    = brick.out[[i]]$dais.out$Vais
-	disint.out[i,] = brick.out[[i]]$dais.out$Vdisint
-	te.out[i,]     = brick.out[[i]]$te.out
+  ais.out[i,]    = brick.out[[i]]$dais.out$Vais
+  disint.out[i,] = brick.out[[i]]$dais.out$Vdisint
+  te.out[i,]     = brick.out[[i]]$te.out
 
   # Normalize the output to "ind.norm.data"
   temp.out.norm[i,]   = temp.out[i,]  -mean(temp.out[i,1:20])
@@ -307,36 +316,36 @@ for (i in 1:n.ensemble) {
   gsic.out.norm[i,]   = gsic.out[i,]  -mean(gsic.out[i,ind.norm.data[which(ind.norm.data[,1]=='gsic'),2]:ind.norm.data[which(ind.norm.data[,1]=='gsic'),3]])
   gis.out.norm[i,]    = gis.out[i,]   -mean(gis.out[i,ind.norm.data[which(ind.norm.data[,1]=='gis'),2]:ind.norm.data[which(ind.norm.data[,1]=='gis'),3]])
   ais.out.norm[i,]    = ais.out[i,]   -mean(ais.out[i,ind.norm.data[which(ind.norm.data[,1]=='ais'),2]:ind.norm.data[which(ind.norm.data[,1]=='ais'),3]])
-	te.out.norm[i,]     = te.out[i,]    -mean(te.out[i,ind.norm.data[which(ind.norm.data[,1]=='te'),2]:ind.norm.data[which(ind.norm.data[,1]=='te'),3]])
+  te.out.norm[i,]     = te.out[i,]    -mean(te.out[i,ind.norm.data[which(ind.norm.data[,1]=='te'),2]:ind.norm.data[which(ind.norm.data[,1]=='te'),3]])
 
-	# Add the statistcal model for AR1 (or otherwise) noise
-	sigma.T     =parameters[i,match("sigma.T"     ,parnames)]
-	rho.T       =parameters[i,match("rho.T"       ,parnames)]
-	sigma.H     =parameters[i,match("sigma.H"     ,parnames)]
-	rho.H       =parameters[i,match("rho.H"       ,parnames)]
-	sigma.gsic  =parameters[i,match("sigma.gsic"  ,parnames)]
-	rho.gsic    =parameters[i,match("rho.gsic"    ,parnames)]
+  # Add the statistcal model for AR1 (or otherwise) noise
+  sigma.T     =parameters[i,match("sigma.T"     ,parnames)]
+  rho.T       =parameters[i,match("rho.T"       ,parnames)]
+  sigma.H     =parameters[i,match("sigma.H"     ,parnames)]
+  rho.H       =parameters[i,match("rho.H"       ,parnames)]
+  sigma.gsic  =parameters[i,match("sigma.gsic"  ,parnames)]
+  rho.gsic    =parameters[i,match("rho.gsic"    ,parnames)]
   sigma.simple=parameters[i,match("sigma.simple",parnames)]
   rho.simple  =parameters[i,match("rho.simple"  ,parnames)]
-	var.dais    =parameters[i,match("var.dais"    ,parnames)]
-	if(is.null(rho.simple) | is.na(rho.simple)) rho.simple=rho.simple.fixed
+  var.dais    =parameters[i,match("var.dais"    ,parnames)]
+  if(is.null(rho.simple) | is.na(rho.simple)) rho.simple=rho.simple.fixed
 
-	# Edit: do NOT include the DAIS noise, because it was modeled using paleo
-	# data, which have very different uncertainties than modern instrumental
-	# period data.
-	err.temp = rep(sigma.T,n.time); err.temp[midx.temp]=sqrt(sigma.T^2 + obs.temp.err[oidx.temp]^2)
-	err.ocheat = rep(sigma.H,n.time); err.ocheat[midx.ocheat]=sqrt(sigma.H^2+obs.ocheat.err[oidx.ocheat]^2)
-	err.gsic = rep(sigma.gsic,n.time); err.gsic[midx.gsic]=sqrt(sigma.gsic^2+obs.gsic.err[oidx.gsic]^2)
-	err.gis = rep(sigma.simple,n.time); err.gis[midx.gis]=sqrt(sigma.simple^2+obs.gis.err^2)
+  # Edit: do NOT include the DAIS noise, because it was modeled using paleo
+  # data, which have very different uncertainties than modern instrumental
+  # period data.
+  err.temp = rep(sigma.T,n.time); err.temp[midx.temp]=sqrt(sigma.T^2 + obs.temp.err[oidx.temp]^2)
+  err.ocheat = rep(sigma.H,n.time); err.ocheat[midx.ocheat]=sqrt(sigma.H^2+obs.ocheat.err[oidx.ocheat]^2)
+  err.gsic = rep(sigma.gsic,n.time); err.gsic[midx.gsic]=sqrt(sigma.gsic^2+obs.gsic.err[oidx.gsic]^2)
+  err.gis = rep(sigma.simple,n.time); err.gis[midx.gis]=sqrt(sigma.simple^2+obs.gis.err^2)
 
-	temp.norm.stat[i,]   = temp.out.norm[i,]   + ar1.sim(n.time, rho.T, err.temp)
-	ocheat.norm.stat[i,] = ocheat.out.norm[i,] + ar1.sim(n.time, rho.H, err.ocheat)
-	gsic.norm.stat[i,]   = gsic.out.norm[i,]   + ar1.sim(n.time, rho.gsic, err.gsic)
-	gis.norm.stat[i,]    = gis.out.norm[i,]    + ar1.sim(n.time, rho.simple, err.gis)
-	ais.norm.stat[i,]    = ais.out.norm[i,]    #+ rnorm(  n.time, mean=0,sd=sqrt(var.dais))
-	te.norm.stat[i,]     = te.out.norm[i,]
+  temp.norm.stat[i,]   = temp.out.norm[i,]   + ar1.sim(n.time, rho.T, err.temp)
+  ocheat.norm.stat[i,] = ocheat.out.norm[i,] + ar1.sim(n.time, rho.H, err.ocheat)
+  gsic.norm.stat[i,]   = gsic.out.norm[i,]   + ar1.sim(n.time, rho.gsic, err.gsic)
+  gis.norm.stat[i,]    = gis.out.norm[i,]    + ar1.sim(n.time, rho.simple, err.gis)
+  ais.norm.stat[i,]    = ais.out.norm[i,]    #+ rnorm(  n.time, mean=0,sd=sqrt(var.dais))
+  te.norm.stat[i,]     = te.out.norm[i,]
 
-	slr.norm.stat[i,] = gsic.norm.stat[i,] +
+  slr.norm.stat[i,] = gsic.norm.stat[i,] +
 										  gis.norm.stat[i,]  +
 										  ais.norm.stat[i,]  +
 										  te.norm.stat[i,]
@@ -359,8 +368,8 @@ obs.sl = obs.sl - mean(obs.sl[ibeg:iend])
 
 if(FALSE) {
 
-	# calibrate to the Church and White data with an assumed closed sea level
-	# budget (TE+AIS+GIS+GSIC = GMSL)
+# calibrate to the Church and White data with an assumed closed sea level
+# budget (TE+AIS+GIS+GSIC = GMSL)
 
 # maximum likelihood of sea-level rise data would occur if you saw the exact
 # same data out in the wild
@@ -452,7 +461,6 @@ colnames(parameters.good) = parnames
 
 }
 
-
 ##==============================================================================
 ##==============================================================================
 ## DAIS paleo runs with the post-calibrated parameters
@@ -491,7 +499,7 @@ Vmin = 0	# minimum AIS volume in LIG (m^3)
 pb <- txtProgressBar(min=0,max=n.sample,initial=0,style=3);
 for (i in 1:n.sample) {
 
-	anto.a=parameters.sample[i,match("anto.a",parnames)]
+  anto.a=parameters.sample[i,match("anto.a",parnames)]
   anto.b=parameters.sample[i,match("anto.b",parnames)]
   gamma =parameters.sample[i,match("gamma" ,parnames)]
   alpha =parameters.sample[i,match("alpha.dais" ,parnames)]
@@ -508,7 +516,7 @@ for (i in 1:n.sample) {
   Tcrit =parameters.sample[i,match("Tcrit" ,parnames)]
   var.dais =parameters.sample[i,match("var.dais" ,parnames)]
 
-	dais.tmp = daisanto_fastdynF(
+  dais.tmp = daisanto_fastdynF(
                        anto.a=anto.a, anto.b=anto.b,
                        slope.Ta2Tg=slope.Ta2Tg, intercept.Ta2Tg=intercept.Ta2Tg,
                        gamma=gamma  , alpha=alpha  ,
@@ -518,16 +526,15 @@ for (i in 1:n.sample) {
                        c=c          , b0=b0        ,
                        slope=slope  ,
                        Tg=Tg.recon  , SL=SL , dSL=dSL, includes_dSLais=1,
-											 Tcrit=Tcrit	, lambda=lambda
-											 )
+					   Tcrit=Tcrit	, lambda=lambda)
 
-	# Subtract off the 1961-1990 normalization period
-	dais.norm = dais.tmp$Vais - mean(dais.tmp$Vais[ind.norm.paleo])
+  # Subtract off the 1961-1990 normalization period
+  dais.norm = dais.tmp$Vais - mean(dais.tmp$Vais[ind.norm.paleo])
 
-	# Add the modeled error back in
-	dais.paleo[i,] = dais.norm + rnorm(n.paleo, mean=0,sd=sqrt(var.dais))
+  # Add the modeled error back in
+  dais.paleo[i,] = dais.norm + rnorm(n.paleo, mean=0,sd=sqrt(var.dais))
 
-	if(min(dais.tmp$Vm3)<Vmin) {ind.vmin[i]=1}
+  if(min(dais.tmp$Vm3)<Vmin) {ind.vmin[i]=1}
 
   setTxtProgressBar(pb, i)
 }
@@ -554,7 +561,7 @@ source('../Useful/MultipleOutput.R') # defines the ":=" operator
 ## Actually tally up the data
 pb <- txtProgressBar(min=0,max=length(date),initial=0,style=3);
 for (t in 1:length(date)){
-	c(dais.paleo.05[t] , dais.paleo.50[t] , dais.paleo.95[t] , dais.paleo.max[t], dais.paleo.min[t]) := quantile(dais.paleo[,t],c(0.05,.50,.95,1,0), na.rm=TRUE)
+  c(dais.paleo.05[t] , dais.paleo.50[t] , dais.paleo.95[t] , dais.paleo.max[t], dais.paleo.min[t]) := quantile(dais.paleo[,t],c(0.05,.50,.95,1,0), na.rm=TRUE)
   setTxtProgressBar(pb, t)
 }
 close(pb)
@@ -576,7 +583,7 @@ for (t in 1:(n.time.avg-1)){
 	dais.paleo.95.avg[t] = mean(dais.paleo.95[((t-1)*n.avg+1) : (t*n.avg)])
 	dais.paleo.max.avg[t] = mean(dais.paleo.max[((t-1)*n.avg+1) : (t*n.avg)])
 	dais.paleo.min.avg[t] = mean(dais.paleo.min[((t-1)*n.avg+1) : (t*n.avg)])
-  setTxtProgressBar(pb, t)
+	setTxtProgressBar(pb, t)
 }
 dais.paleo.05.avg[n.time.avg] = mean(dais.paleo.05[((n.time.avg-1)*n.avg+1) : length(date)])
 dais.paleo.50.avg[n.time.avg] = mean(dais.paleo.50[((n.time.avg-1)*n.avg+1) : length(date)])
@@ -627,13 +634,12 @@ n.node=100
 for (pp in 1:n.parameters){
 	lower.bound = 0.5*min(parameters.good[,pp])
 	upper.bound = 1.5*max(parameters.good[,pp])
-  tmp = density(parameters.good[,pp],kernel='gaussian',
-                n=n.node, from=lower.bound, to=upper.bound)
-  pdf.all[[pp]] = tmp; names(pdf.all)[pp]=parnames[pp]
+	tmp = density(parameters.good[,pp],kernel='gaussian', n=n.node, from=lower.bound, to=upper.bound)
+	pdf.all[[pp]] = tmp; names(pdf.all)[pp]=parnames[pp]
 }
 bandwidths=rep(NA,n.parameters)
 for (i in 1:n.parameters){
-  bandwidths[i]=pdf.all[[i]]$bw
+	bandwidths[i]=pdf.all[[i]]$bw
 }
 
 ## Write these post-calibrated parameter sets to a CSV file for easy grabbing
@@ -768,6 +774,7 @@ fp.ais = 1.1
 fp.gsic = 0.89
 fp.gis = 0.81
 fp.te = 1.0
+fp.lws = 1.0
 
 brick.rcp26 = proj.out[[1]][ind.good]
 brick.rcp45 = proj.out[[2]][ind.good]
@@ -782,7 +789,7 @@ proj.rcp85 = vector("list", n.scen)
 ## Make each projections list a list of the SLR contributions and other fields
 ## Get the 90% CI at each time step, of all model output fields
 
-names.output = c('slr','gsic','gis','ais','disint','te','temp','ocheat','slr.nofd','slr.nola','slr.nola.nofd')
+names.output = c('slr','gsic','gis','ais','disint','te','lws','temp','ocheat','slr.nofd','slr.nola','slr.nola.nofd')
 n.output = length(names.output)
 
 proj.rcp26 = vector("list", n.output)
@@ -888,33 +895,57 @@ for (i in 1:n.ensemble) {
 	proj.rcp85$gsic[i,] = proj.rcp85$gsic[i,] + ar1.sim(n.time, rho.gsic, sigma.gsic)
 	proj.rcp85$gis[i,] = proj.rcp85$gis[i,] + ar1.sim(n.time, rho.simple, sigma.simple)
 
+    # Add contributions to land water storage. /1000 to convert to meters.
+	# This is done for each ensemble member and each RCP.
+	# All other contributions are normalized to 1986-2005 (some have the
+	# estimated noise added, so mean(1986-2005) not nec. equall to 0), so
+	# normalize the lws.est contribution to this period.
+
+	# RCP2.6
+	proj.rcp26$lws[i,] <- cumsum(rnorm(n=n.time, mean=lws.mean, sd=lws.sd)) /1000
+	proj.rcp26$lws[i,] <- proj.rcp26$lws[i,] - mean(proj.rcp26$lws[i,ind.norm])
+
+	# RCP4.5
+	proj.rcp45$lws[i,] <- cumsum(rnorm(n=n.time, mean=lws.mean, sd=lws.sd)) /1000
+	proj.rcp45$lws[i,] <- proj.rcp45$lws[i,] - mean(proj.rcp45$lws[i,ind.norm])
+
+	# RCP8.5
+	proj.rcp85$lws[i,] <- cumsum(rnorm(n=n.time, mean=lws.mean, sd=lws.sd)) /1000
+	proj.rcp85$lws[i,] <- proj.rcp85$lws[i,] - mean(proj.rcp85$lws[i,ind.norm])
+
 	# Add up to total sea-level rise
 	proj.rcp26$slr[i,] = proj.rcp26$gsic[i,] +
 												proj.rcp26$gis[i,] +
 												proj.rcp26$ais[i,] +
-												proj.rcp26$te[i,]
+												proj.rcp26$te[i,] +
+												proj.rcp26$lws[i,]
 	proj.rcp26$slr.nola[i,] = fp.gsic*proj.rcp26$gsic[i,] +
 												    fp.gis*proj.rcp26$gis[i,] +
 												    fp.ais*proj.rcp26$ais[i,] +
-												    fp.te*proj.rcp26$te[i,]
+												    fp.te*proj.rcp26$te[i,] +
+													fp.lws*proj.rcp26$lws[i,]
 
 	proj.rcp45$slr[i,] = proj.rcp45$gsic[i,] +
 												proj.rcp45$gis[i,] +
 												proj.rcp45$ais[i,] +
-												proj.rcp45$te[i,]
+												proj.rcp45$te[i,] +
+												proj.rcp45$lws[i,]
 	proj.rcp45$slr.nola[i,] = fp.gsic*proj.rcp45$gsic[i,] +
 												    fp.gis*proj.rcp45$gis[i,] +
 												    fp.ais*proj.rcp45$ais[i,] +
-												    fp.te*proj.rcp45$te[i,]
+												    fp.te*proj.rcp45$te[i,] +
+													fp.lws*proj.rcp45$lws[i,]
 
 	proj.rcp85$slr[i,] = proj.rcp85$gsic[i,] +
 												proj.rcp85$gis[i,] +
 												proj.rcp85$ais[i,] +
-												proj.rcp85$te[i,]
+												proj.rcp85$te[i,] +
+												proj.rcp85$lws[i,]
 	proj.rcp85$slr.nola[i,] = fp.gsic*proj.rcp85$gsic[i,] +
 												    fp.gis*proj.rcp85$gis[i,] +
 												    fp.ais*proj.rcp85$ais[i,] +
-												    fp.te*proj.rcp85$te[i,]
+												    fp.te*proj.rcp85$te[i,] +
+													fp.lws*proj.rcp85$lws[i,]
 
 	proj.rcp26$slr.nofd[i,] = proj.rcp26$slr[i,] - fp.ais*proj.rcp26$disint[i,]
 	proj.rcp45$slr.nofd[i,] = proj.rcp45$slr[i,] - fp.ais*proj.rcp45$disint[i,]
@@ -1001,19 +1032,6 @@ temp.hindcast <- ncvar_def('temp_hind', 'deg C', list(dim.thind, dim.ensemble), 
 ocheat.hindcast <- ncvar_def('ocheat_hind', '10^22 J', list(dim.thind, dim.ensemble), -999,
                   		longname = 'Ocean heat uptake (hindcast)')
 
-gsic.rcp26 <- ncvar_def('GSIC_RCP26', 'meters', list(dim.tproj, dim.ensemble), -999,
-                  longname = 'GSIC contribution to sea level (RCP26)')
-te.rcp26 <- ncvar_def('TE_RCP26', 'meters', list(dim.tproj, dim.ensemble), -999,
-                  longname = 'TE contribution to sea level (RCP26)')
-gis.rcp26 <- ncvar_def('GIS_RCP26', 'meters', list(dim.tproj, dim.ensemble), -999,
-                  longname = 'GIS contribution to sea level (RCP26)')
-ais.rcp26 <- ncvar_def('AIS_RCP26', 'meters', list(dim.tproj, dim.ensemble), -999,
-                  longname = 'AIS contribution to sea level (RCP26)')
-temp.rcp26 <- ncvar_def('temp_RCP26', 'deg C', list(dim.tproj, dim.ensemble), -999,
-                  longname = 'global mean surface temperature anomaly (RCP26)')
-ocheat.rcp26 <- ncvar_def('ocheat_RCP26', '10^22 J', list(dim.tproj, dim.ensemble), -999,
-                  longname = 'ocean heat uptake (RCP26)')
-
 gsl.rcp26 <- ncvar_def('GlobalSeaLevel_RCP26', 'meters', list(dim.tproj, dim.ensemble), -999,
                   longname = 'Global sea level accounting for fast dynamics (RCP26)')
 gsl.nofd.rcp26 <- ncvar_def('GlobalSeaLevel_nofd_RCP26', 'meters', list(dim.tproj, dim.ensemble), -999,
@@ -1034,6 +1052,8 @@ temp.rcp26 <- ncvar_def('temp_RCP26', 'deg C', list(dim.tproj, dim.ensemble), -9
                   longname = 'global mean surface temperature anomaly (RCP26)')
 ocheat.rcp26 <- ncvar_def('ocheat_RCP26', '10^22 J', list(dim.tproj, dim.ensemble), -999,
                   longname = 'ocean heat uptake (RCP26)')
+lws.rcp26 <- ncvar_def('LWS_RCP26', 'meters', list(dim.tproj, dim.ensemble), -999,
+                  longname = 'estimated LWS contribution to sea level (RCP26)')
 
 gsl.rcp45 <- ncvar_def('GlobalSeaLevel_RCP45', 'meters', list(dim.tproj, dim.ensemble), -999,
                   longname = 'Global sea level accounting for fast dynamics (RCP45)')
@@ -1055,6 +1075,8 @@ temp.rcp45 <- ncvar_def('temp_RCP45', 'deg C', list(dim.tproj, dim.ensemble), -9
                   longname = 'global mean surface temperature anomaly (RCP45)')
 ocheat.rcp45 <- ncvar_def('ocheat_RCP45', '10^22 J', list(dim.tproj, dim.ensemble), -999,
                   longname = 'ocean heat uptake (RCP45)')
+lws.rcp45 <- ncvar_def('LWS_RCP45', 'meters', list(dim.tproj, dim.ensemble), -999,
+                  longname = 'estimated LWS contribution to sea level (RCP45)')
 
 gsl.rcp85 <- ncvar_def('GlobalSeaLevel_RCP85', 'meters', list(dim.tproj, dim.ensemble), -999,
                   longname = 'Global sea level accounting for fast dynamics (RCP85)')
@@ -1076,6 +1098,8 @@ temp.rcp85 <- ncvar_def('temp_RCP85', 'deg C', list(dim.tproj, dim.ensemble), -9
                   longname = 'global mean surface temperature anomaly (RCP85)')
 ocheat.rcp85 <- ncvar_def('ocheat_RCP85', '10^22 J', list(dim.tproj, dim.ensemble), -999,
                   longname = 'ocean heat uptake (RCP85)')
+lws.rcp85 <- ncvar_def('LWS_RCP85', 'meters', list(dim.tproj, dim.ensemble), -999,
+                  longname = 'estimated LWS contribution to sea level (RCP85)')
 
 today=Sys.Date(); today=format(today,format="%d%b%Y")
 
@@ -1086,6 +1110,7 @@ outnc <- nc_create(filename.brickout,
 													gsic.rcp26, te.rcp26, gis.rcp26, ais.rcp26, temp.rcp26, ocheat.rcp26,
 													gsic.rcp45, te.rcp45, gis.rcp45, ais.rcp45, temp.rcp45, ocheat.rcp45,
 													gsic.rcp85, te.rcp85, gis.rcp85, ais.rcp85, temp.rcp85, ocheat.rcp85,
+													lws.rcp26, lws.rcp45, lws.rcp85,
 													gsl.hindcast, gsic.hindcast, te.hindcast, gis.hindcast, ais.hindcast, temp.hindcast, ocheat.hindcast,
 													ais.paleo.05, ais.paleo.50, ais.paleo.95, ais.paleo.max, ais.paleo.min,
 													ais.paleo.05.avg, ais.paleo.50.avg, ais.paleo.95.avg, ais.paleo.max.avg, ais.paleo.min.avg),
@@ -1101,6 +1126,7 @@ ncvar_put(outnc, gis.rcp26, t(proj.rcp26$gis))
 ncvar_put(outnc, ais.rcp26, t(proj.rcp26$ais))
 ncvar_put(outnc, temp.rcp26, t(proj.rcp26$temp))
 ncvar_put(outnc, ocheat.rcp26, t(proj.rcp26$ocheat))
+ncvar_put(outnc, lws.rcp26, t(proj.rcp26$lws))
 
 ncvar_put(outnc, gsl.rcp45, t(proj.rcp45$slr))
 ncvar_put(outnc, gsl.nofd.rcp45, t(proj.rcp45$slr.nofd))
@@ -1112,6 +1138,7 @@ ncvar_put(outnc, gis.rcp45, t(proj.rcp45$gis))
 ncvar_put(outnc, ais.rcp45, t(proj.rcp45$ais))
 ncvar_put(outnc, temp.rcp45, t(proj.rcp45$temp))
 ncvar_put(outnc, ocheat.rcp45, t(proj.rcp45$ocheat))
+ncvar_put(outnc, lws.rcp45, t(proj.rcp45$lws))
 
 ncvar_put(outnc, gsl.rcp85, t(proj.rcp85$slr))
 ncvar_put(outnc, gsl.nofd.rcp85, t(proj.rcp85$slr.nofd))
@@ -1123,6 +1150,7 @@ ncvar_put(outnc, gis.rcp85, t(proj.rcp85$gis))
 ncvar_put(outnc, ais.rcp85, t(proj.rcp85$ais))
 ncvar_put(outnc, temp.rcp85, t(proj.rcp85$temp))
 ncvar_put(outnc, ocheat.rcp85, t(proj.rcp85$ocheat))
+ncvar_put(outnc, lws.rcp85, t(proj.rcp85$lws))
 
 ncvar_put(outnc, gsl.hindcast, gsl.hind)
 ncvar_put(outnc, gsic.hindcast, gsic.hind)

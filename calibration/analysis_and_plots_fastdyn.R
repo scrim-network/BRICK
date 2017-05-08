@@ -10,21 +10,21 @@
 library(ncdf4)
 
 ## File name for the BRICK physical model output (netCDF4)
-filename.brick.uniform  = '../output_model/BRICK-fastdyn_physical_uniform_31Jan2017.nc'
-filename.brick.gamma    = '../output_model/BRICK-fastdyn_physical_gamma_31Jan2017.nc'
+filename.brick.uniform  = '../output_model/BRICK-fastdyn_physical_uniform_07May2017.nc'
+filename.brick.gamma    = '../output_model/BRICK-fastdyn_physical_gamma_07May2017.nc'
 
 ## File name for the Van Dantzig model output (netCDF4)
-filename.vandantzig.uniform = '../output_model/vanDantzig_RCP85_uniform_31Jan2017.nc'
-filename.vandantzig.gamma   = '../output_model/vanDantzig_RCP85_gamma_31Jan2017.nc'
+filename.vandantzig.uniform = '../output_model/vanDantzig_RCP85_uniform_08May2017.nc'
+filename.vandantzig.gamma   = '../output_model/vanDantzig_RCP85_gamma_08May2017.nc'
 
 ## File name for the BRICK post-calibrated parameters (csv) (the BRICK and van Dantzig output came from these guys)
-filename.parameters.uniform = '../output_calibration/BRICK-fastdyn_postcalibratedParameters_uniform_31Jan2017.csv'
-filename.parameters.gamma   = '../output_calibration/BRICK-fastdyn_postcalibratedParameters_gamma_31Jan2017.csv'
+filename.parameters.uniform = '../output_calibration/BRICK-fastdyn_postcalibratedParameters_uniform_07May2017.csv'
+filename.parameters.gamma   = '../output_calibration/BRICK-fastdyn_postcalibratedParameters_gamma_07May2017.csv'
 
 ## Other files
-filename.rho_simple_fixed = "../output_calibration/rho_simple_fixed_06Sep2016.csv"
+filename.rho_simple_fixed = "../output_calibration/rho_simple_fixed_07May2017.csv"
 filename.daisnofd = '../output_model/DAISfastdyn_noFD-paleo-ensemble_08Sep2016.nc'
-filename.DAIScalibration = "../output_calibration/DAISfastdyn_precalibrationMCMC_parameters_gamma_21Aug2016.csv"
+filename.DAIScalibration = "../output_calibration/DAISfastdyn_calibratedParameters_gamma_29Jan2017.nc"
 
 ## Get nice plotting colors: mycol array
 source('../Useful/colorblindPalette.R')
@@ -672,7 +672,7 @@ sur.slr2100.nofd.rcp85.gam = 1-cdf.slr2100.nofd.rcp85.gam
 pdf(paste(plotdir,'distributions_SLR2100_pdf+sf.pdf',sep=''),width=5,height=7,colormodel='cmyk')
 par(mfrow=c(2,1), mai=c(.85,.74,.1,.15))
 
-plot(x,pdf.slr2100.rcp85.uni$y, type='l', xlim=c(0,3), ylim=c(0,4.7), lty=1,
+plot(x,pdf.slr2100.rcp85.gam$y, type='l', xlim=c(0,3), ylim=c(0,4.7), lty=1,
      col=rgb(col85[1],col85[2],col85[3]), lwd=1.5, xlab='', ylab='', xaxt='n', yaxt='n', xaxs='i', yaxs='i',axes=FALSE);
   axis(1,seq(0,3,0.5),lab=c("0","0.5","1","1.5","2","2.5","3"))
   u <- par("usr")
@@ -681,18 +681,18 @@ plot(x,pdf.slr2100.rcp85.uni$y, type='l', xlim=c(0,3), ylim=c(0,4.7), lty=1,
   mtext('Projected sea level in 2100\nrelative to 1986-2005 average [m]', side=1, line=3);
   mtext(side=3, text=expression(bold('   a')), line=-1, cex=.9, adj=0);
 
-  lines(x,pdf.slr2100.rcp45.uni$y, type='l', col=rgb(col45[1],col45[2],col45[3]), lwd=1.5);
-  lines(x,pdf.slr2100.rcp26.uni$y, type='l', col=rgb(col26[1],col26[2],col26[3]), lwd=1.5);
+  lines(x,pdf.slr2100.rcp45.gam$y, type='l', col=rgb(col45[1],col45[2],col45[3]), lwd=1.5);
+  lines(x,pdf.slr2100.rcp26.gam$y, type='l', col=rgb(col26[1],col26[2],col26[3]), lwd=1.5);
 
-  lines(x,pdf.slr2100.nofd.rcp85.uni$y, type='l', col=rgb(col85[1],col85[2],col85[3]), lwd=1.5, lty=2);
-  lines(x,pdf.slr2100.nofd.rcp45.uni$y, type='l', col=rgb(col45[1],col45[2],col45[3]), lwd=1.5, lty=2);
-  lines(x,pdf.slr2100.nofd.rcp26.uni$y, type='l', col=rgb(col26[1],col26[2],col26[3]), lwd=1.5, lty=2);
+  lines(x,pdf.slr2100.nofd.rcp85.gam$y, type='l', col=rgb(col85[1],col85[2],col85[3]), lwd=1.5, lty=2);
+  lines(x,pdf.slr2100.nofd.rcp45.gam$y, type='l', col=rgb(col45[1],col45[2],col45[3]), lwd=1.5, lty=2);
+  lines(x,pdf.slr2100.nofd.rcp26.gam$y, type='l', col=rgb(col26[1],col26[2],col26[3]), lwd=1.5, lty=2);
 
   legend(1.1,4.7,c("RCP2.6","RCP4.5","RCP8.5","including fast dynamics","neglecting fast dynamics"),
         lty=c(1,1,1,1,2), lwd=2, col=c(rgb(col26[1],col26[2],col26[3]),rgb(col45[1],col45[2],col45[3]),rgb(col85[1],col85[2],col85[3]),'black','black'),
         bty='n')
 
-plot(x,log10(sur.slr2100.rcp85.uni),type='l', xlim=c(0,3), ylim=c(-3.3,0), lty=1,
+plot(x,log10(sur.slr2100.rcp85.gam),type='l', xlim=c(0,3), ylim=c(-3.3,0), lty=1,
      col=rgb(col85[1],col85[2],col85[3]), lwd=1.5, xlab='', ylab='', xaxt='n', yaxt='n', xaxs='i', yaxs='i');
   axis(1,seq(0,3,0.5),lab=c("0","0.5","1","1.5","2","2.5","3"))
   mtext('Survival function [1-CDF]', side = 2, line=2.6);
@@ -701,9 +701,9 @@ plot(x,log10(sur.slr2100.rcp85.uni),type='l', xlim=c(0,3), ylim=c(-3.3,0), lty=1
 
 	axis(2, at=seq(-4,0), label=parse(text=paste("10^", seq(-4,0), sep="")), las=1)
 
-  lines(x,log10(sur.slr2100.nofd.rcp85.uni),type='l',col=rgb(col85[1],col85[2],col85[3]), lty=2, lwd=1.5);
-  lines(x,log10(sur.slr2100.rcp45.uni),type='l',lty=1, col=rgb(col45[1],col45[2],col45[3]), lwd=1.5);    lines(x,log10(sur.slr2100.nofd.rcp45.uni),type='l',col=rgb(col45[1],col45[2],col45[3]), lty=2, lwd=1.5);
-  lines(x,log10(sur.slr2100.rcp26.uni),type='l',lty=1, col=rgb(col26[1],col26[2],col26[3]), lwd=1.5); lines(x,log10(sur.slr2100.nofd.rcp26.uni),type='l',col=rgb(col26[1],col26[2],col26[3]), lty=2, lwd=1.5);
+  lines(x,log10(sur.slr2100.nofd.rcp85.gam),type='l',col=rgb(col85[1],col85[2],col85[3]), lty=2, lwd=1.5);
+  lines(x,log10(sur.slr2100.rcp45.gam),type='l',lty=1, col=rgb(col45[1],col45[2],col45[3]), lwd=1.5);    lines(x,log10(sur.slr2100.nofd.rcp45.gam),type='l',col=rgb(col45[1],col45[2],col45[3]), lty=2, lwd=1.5);
+  lines(x,log10(sur.slr2100.rcp26.gam),type='l',lty=1, col=rgb(col26[1],col26[2],col26[3]), lwd=1.5); lines(x,log10(sur.slr2100.nofd.rcp26.gam),type='l',col=rgb(col26[1],col26[2],col26[3]), lty=2, lwd=1.5);
 
 	lines(c(-4,4),c(-2,-2),lty=2,col='black'); text(0.35,-1.85,"1:100 level");
 	lines(c(-4,4),c(-3,-3),lty=2,col='black'); text(0.35,-2.85,"1:1000 level");
@@ -924,8 +924,8 @@ text(0.95*log10(preturn.avg[ipre.nofd.avg]), .97*investment.avg[ipre.nofd.avg]/c
 
 ## HEIGHTENING
 
-inset.x = c(1.34,1.61)
-inset.y = c(2.22e9,2.405e9)
+inset.x = c(1.34,1.7)
+inset.y = c(2.22e9,2.44e9)
 conv=1e9  # convert from $ to billions or millions of $? (for nicer looking axes)
 
 par(fig=c(pfig,1,0,1), new=TRUE, mai=c(.7,.1,.06,.06))
@@ -1073,8 +1073,8 @@ plot(log10(preturn.avg),cost.avg/conv, col=rgb(col85[1],col85[2],col85[3]),
 
 ## HEIGHTENING
 
-inset.x = c(1.34,1.61)
-inset.y = c(2.22e9,2.38e9)
+inset.x = c(1.34,1.7)
+inset.y = c(2.22e9,2.4e9)
 conv=1e9  # convert from $ to billions or millions of $? (for nicer looking axes)
 
 par(fig=c(pfig,1,0,1), new=TRUE, mai=c(.7,.1,.06,.06))
@@ -1522,13 +1522,14 @@ dev.off()
 ##                            AFTER PALEO CALIBRATION ONLY
 ##=======================
 
-dat.dais = read.csv(filename.DAIScalibration)
-parameters.dais = dat.dais[1:(nrow(dat.dais)-1),]
-bandwidths.dais = dat.dais[nrow(dat.dais)      ,]
-parnames.dais   = colnames(parameters.dais)
+ncdata <- nc_open(filename.DAIScalibration)
+  parameters.dais = t(ncvar_get(ncdata, 'DAIS_parameters'))
+  parnames.dais   = ncvar_get(ncdata, 'parnames')
+nc_close(ncdata)
+colnames(parameters.dais) <- parnames.dais
 
-Tcrit = slope.Ta2Tg*parameters.dais[,match("Tcrit",parnames.dais)]+intercept.Ta2Tg
-lambda= parameters.dais[,match("lambda",parnames.dais)]
+Tcrit = slope.Ta2Tg*parameters.dais[,"Tcrit"]+intercept.Ta2Tg
+lambda= parameters.dais[,"lambda"]
 
 #itmp=seq(1,nrow(Tcrit),by=100) # thin so plotting is faster/smaller file sizes
 fdpar=data.frame(Tcrit,lambda)
