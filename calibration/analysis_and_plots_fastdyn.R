@@ -436,10 +436,7 @@ plot(t.proj[iproj],gsl.rcp85.gam.50[iproj],type='l',col=rgb(col85[1],col85[2],co
   polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(gsl.rcp26.gam.95[iproj],rev(gsl.rcp26.gam.05[iproj])),
           col=rgb(col26[1],col26[2],col26[3],.5), border=NA);
 # + legend
-  legend(t.proj[iproj[1]]+10,2,c("5-95% range,",
-                                "RCP2.6",
-																"RCP4.5",
-																"RCP8.5"),
+  legend(t.proj[iproj[1]]+10,2,c("5-95% range,", "RCP8.5", "RCP4.5", "RCP2.6"),
          lty=c(NA,1,1,1), lwd=3, col=c(NA,rgb(col85[1],col85[2],col85[3]),rgb(col45[1],col45[2],col45[3]),rgb(col26[1],col26[2],col26[3])), bty='n', cex=1)
 # GAMMA RCP85, FD contribution
 par(mai=c(.65,.83,.2,.2))
