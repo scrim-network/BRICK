@@ -28,20 +28,20 @@ rm(list=ls())
 library(ncdf4)
 
 ## File name for the BRICK physical model output (netCDF4)
-filename.brick.allslr = '../output_model/BRICK_physical_allslr_20Apr2017.nc'
+filename.brick.allslr = '../output_model/BRICK_physical_allslr_08May2017.nc'
 
 ## File name for the Van Dantzig model output (netCDF4)
 ## Each of these also has x3 RCP scenarios, x2 storm surge scenarios
-filename.vandantzig.nofd = '../output_model/VanDantzig_fd-none_2065_20Apr2017.nc'
-filename.vandantzig.uniform = '../output_model/VanDantzig_fd-uniform_2065_20Apr2017.nc'
-filename.vandantzig.gamma = '../output_model/VanDantzig_fd-gamma_2065_20Apr2017.nc'
+filename.vandantzig.nofd = '../output_model/VanDantzig_fd-none_2065_08May2017.nc'
+filename.vandantzig.uniform = '../output_model/VanDantzig_fd-uniform_2065_08May2017.nc'
+filename.vandantzig.gamma = '../output_model/VanDantzig_fd-gamma_2065_08May2017.nc'
 
 ## File name for the BRICK post-calibrated parameters (netcdf) (the BRICK output came from these guys)
-filename.parameters.uniform = '../output_calibration/BRICK-model_postcalibratedParameters_fd-uniform_20Apr2017.nc'
-filename.parameters.gamma = '../output_calibration/BRICK-model_postcalibratedParameters_fd-gamma_20Apr2017.nc'
+filename.parameters.uniform = '../output_calibration/BRICK-model_postcalibratedParameters_fd-uniform_08May2017.nc'
+filename.parameters.gamma = '../output_calibration/BRICK-model_postcalibratedParameters_fd-gamma_08May2017.nc'
 
 ## Other files
-filename.rho_simple_fixed = "../output_calibration/rho_simple_fixed_01Nov2016.csv"
+filename.rho_simple_fixed = "../output_calibration/rho_simple_fixed_07May2017.csv"
 filename.fingerprints = "../fingerprints/FINGERPRINTS_SLANGEN_Bakker.nc"
 
 ## Other useful scripts
@@ -76,9 +76,6 @@ source('../Useful/colorblindPalette.R')
 # first level are RCP scenarios
 gev.names <- c('location','scale','shape')
 scen.rcp <- c('rcp26','rcp45','rcp60','rcp85'); n.rcp <- length(scen.rcp)
-cost = vector("list",n.rcp); names(cost)=scen.rcp
-loss = vector("list",n.rcp); names(loss)=scen.rcp
-investment = vector("list",n.rcp); names(investment)=scen.rcp
 preturn = vector("list",n.rcp); names(preturn)=scen.rcp
 lsl = vector("list",n.rcp); names(lsl)=scen.rcp
 sf.level.all = vector("list",n.rcp); names(sf.level.all)=scen.rcp
@@ -90,9 +87,6 @@ scen.ais = c('none','gamma','uniform'); n.ais <- length(scen.ais)
 scen.ss = c('st','ns'); n.ss <- length(scen.ss)
 surge.factor <- vector('list',n.ss); names(surge.factor) <- scen.ss
 for (rcp in scen.rcp) {
-  cost[[rcp]] = vector("list",n.ais); names(cost[[rcp]])=scen.ais
-  loss[[rcp]] = vector("list",n.ais); names(loss[[rcp]])=scen.ais
-  investment[[rcp]] = vector("list",n.ais); names(investment[[rcp]])=scen.ais
   preturn[[rcp]] = vector("list",n.ais); names(preturn[[rcp]])=scen.ais
   lsl[[rcp]] = vector("list",n.ais); names(lsl[[rcp]])=scen.ais
   sf.level.all[[rcp]] = vector("list",n.ais); names(sf.level.all[[rcp]])=scen.ais
@@ -101,9 +95,6 @@ for (rcp in scen.rcp) {
 
 # third level are storm surge scenarios
   for (ais in scen.ais) {
-    cost[[rcp]][[ais]] = vector("list",n.ss); names(cost[[rcp]][[ais]])=scen.ss
-    loss[[rcp]][[ais]] = vector("list",n.ss); names(loss[[rcp]][[ais]])=scen.ss
-    investment[[rcp]][[ais]] = vector("list",n.ss); names(investment[[rcp]][[ais]])=scen.ss
     preturn[[rcp]][[ais]] = vector("list",n.ss); names(preturn[[rcp]][[ais]])=scen.ss
     sf.level.all[[rcp]][[ais]] = vector("list",n.ss); names(sf.level.all[[rcp]][[ais]])=scen.ss
     sf.surge.all[[rcp]][[ais]] = vector("list",n.ss); names(sf.surge.all[[rcp]][[ais]])=scen.ss
@@ -119,44 +110,14 @@ ncdata <- nc_open(filename.vandantzig.nofd)
   VD.params <- ncvar_get(ncdata, 'VD_params')
   colnames(gev.stat) <- gev.names
 
-  cost$rcp26$none$st<- ncvar_get(ncdata, 'ExpectedCost_RCP26_stat')
-  loss$rcp26$none$st<- ncvar_get(ncdata, 'ExpectedLoss_RCP26_stat')
-  investment$rcp26$none$st<- ncvar_get(ncdata, 'ExpectedInvestment_RCP26_stat')
   preturn$rcp26$none$st<- ncvar_get(ncdata, 'ExpectedPreturn_RCP26_stat')
-
-  cost$rcp45$none$st<- ncvar_get(ncdata, 'ExpectedCost_RCP45_stat')
-  loss$rcp45$none$st<- ncvar_get(ncdata, 'ExpectedLoss_RCP45_stat')
-  investment$rcp45$none$st<- ncvar_get(ncdata, 'ExpectedInvestment_RCP45_stat')
   preturn$rcp45$none$st<- ncvar_get(ncdata, 'ExpectedPreturn_RCP45_stat')
-
-  cost$rcp60$none$st<- ncvar_get(ncdata, 'ExpectedCost_RCP60_stat')
-  loss$rcp60$none$st<- ncvar_get(ncdata, 'ExpectedLoss_RCP60_stat')
-  investment$rcp60$none$st<- ncvar_get(ncdata, 'ExpectedInvestment_RCP60_stat')
   preturn$rcp60$none$st<- ncvar_get(ncdata, 'ExpectedPreturn_RCP60_stat')
-
-  cost$rcp85$none$st<- ncvar_get(ncdata, 'ExpectedCost_RCP85_stat')
-  loss$rcp85$none$st<- ncvar_get(ncdata, 'ExpectedLoss_RCP85_stat')
-  investment$rcp85$none$st<- ncvar_get(ncdata, 'ExpectedInvestment_RCP85_stat')
   preturn$rcp85$none$st<- ncvar_get(ncdata, 'ExpectedPreturn_RCP85_stat')
 
-  cost$rcp26$none$ns<- ncvar_get(ncdata, 'ExpectedCost_RCP26_nonstat')
-  loss$rcp26$none$ns<- ncvar_get(ncdata, 'ExpectedLoss_RCP26_nonstat')
-  investment$rcp26$none$ns<- ncvar_get(ncdata, 'ExpectedInvestment_RCP26_nonstat')
   preturn$rcp26$none$ns<- ncvar_get(ncdata, 'ExpectedPreturn_RCP26_nonstat')
-
-  cost$rcp45$none$ns<- ncvar_get(ncdata, 'ExpectedCost_RCP45_nonstat')
-  loss$rcp45$none$ns<- ncvar_get(ncdata, 'ExpectedLoss_RCP45_nonstat')
-  investment$rcp45$none$ns<- ncvar_get(ncdata, 'ExpectedInvestment_RCP45_nonstat')
   preturn$rcp45$none$ns<- ncvar_get(ncdata, 'ExpectedPreturn_RCP45_nonstat')
-
-  cost$rcp60$none$ns<- ncvar_get(ncdata, 'ExpectedCost_RCP60_nonstat')
-  loss$rcp60$none$ns<- ncvar_get(ncdata, 'ExpectedLoss_RCP60_nonstat')
-  investment$rcp60$none$ns<- ncvar_get(ncdata, 'ExpectedInvestment_RCP60_nonstat')
   preturn$rcp60$none$ns<- ncvar_get(ncdata, 'ExpectedPreturn_RCP60_nonstat')
-
-  cost$rcp85$none$ns<- ncvar_get(ncdata, 'ExpectedCost_RCP85_nonstat')
-  loss$rcp85$none$ns<- ncvar_get(ncdata, 'ExpectedLoss_RCP85_nonstat')
-  investment$rcp85$none$ns<- ncvar_get(ncdata, 'ExpectedInvestment_RCP85_nonstat')
   preturn$rcp85$none$ns<- ncvar_get(ncdata, 'ExpectedPreturn_RCP85_nonstat')
 nc_close(ncdata)
 
@@ -166,44 +127,14 @@ ncdata <- nc_open(filename.vandantzig.gamma)
   gev.stat <- ncvar_get(ncdata, 'gev_stat')
   colnames(gev.stat) <- gev.names
 
-  cost$rcp26$gamma$st<- ncvar_get(ncdata, 'ExpectedCost_RCP26_stat')
-  loss$rcp26$gamma$st<- ncvar_get(ncdata, 'ExpectedLoss_RCP26_stat')
-  investment$rcp26$gamma$st<- ncvar_get(ncdata, 'ExpectedInvestment_RCP26_stat')
   preturn$rcp26$gamma$st<- ncvar_get(ncdata, 'ExpectedPreturn_RCP26_stat')
-
-  cost$rcp45$gamma$st<- ncvar_get(ncdata, 'ExpectedCost_RCP45_stat')
-  loss$rcp45$gamma$st<- ncvar_get(ncdata, 'ExpectedLoss_RCP45_stat')
-  investment$rcp45$gamma$st<- ncvar_get(ncdata, 'ExpectedInvestment_RCP45_stat')
   preturn$rcp45$gamma$st<- ncvar_get(ncdata, 'ExpectedPreturn_RCP45_stat')
-
-  cost$rcp60$gamma$st<- ncvar_get(ncdata, 'ExpectedCost_RCP60_stat')
-  loss$rcp60$gamma$st<- ncvar_get(ncdata, 'ExpectedLoss_RCP60_stat')
-  investment$rcp60$gamma$st<- ncvar_get(ncdata, 'ExpectedInvestment_RCP60_stat')
   preturn$rcp60$gamma$st<- ncvar_get(ncdata, 'ExpectedPreturn_RCP60_stat')
-
-  cost$rcp85$gamma$st<- ncvar_get(ncdata, 'ExpectedCost_RCP85_stat')
-  loss$rcp85$gamma$st<- ncvar_get(ncdata, 'ExpectedLoss_RCP85_stat')
-  investment$rcp85$gamma$st<- ncvar_get(ncdata, 'ExpectedInvestment_RCP85_stat')
   preturn$rcp85$gamma$st<- ncvar_get(ncdata, 'ExpectedPreturn_RCP85_stat')
 
-  cost$rcp26$gamma$ns<- ncvar_get(ncdata, 'ExpectedCost_RCP26_nonstat')
-  loss$rcp26$gamma$ns<- ncvar_get(ncdata, 'ExpectedLoss_RCP26_nonstat')
-  investment$rcp26$gamma$ns<- ncvar_get(ncdata, 'ExpectedInvestment_RCP26_nonstat')
   preturn$rcp26$gamma$ns<- ncvar_get(ncdata, 'ExpectedPreturn_RCP26_nonstat')
-
-  cost$rcp45$gamma$ns<- ncvar_get(ncdata, 'ExpectedCost_RCP45_nonstat')
-  loss$rcp45$gamma$ns<- ncvar_get(ncdata, 'ExpectedLoss_RCP45_nonstat')
-  investment$rcp45$gamma$ns<- ncvar_get(ncdata, 'ExpectedInvestment_RCP45_nonstat')
   preturn$rcp45$gamma$ns<- ncvar_get(ncdata, 'ExpectedPreturn_RCP45_nonstat')
-
-  cost$rcp60$gamma$ns<- ncvar_get(ncdata, 'ExpectedCost_RCP60_nonstat')
-  loss$rcp60$gamma$ns<- ncvar_get(ncdata, 'ExpectedLoss_RCP60_nonstat')
-  investment$rcp60$gamma$ns<- ncvar_get(ncdata, 'ExpectedInvestment_RCP60_nonstat')
   preturn$rcp60$gamma$ns<- ncvar_get(ncdata, 'ExpectedPreturn_RCP60_nonstat')
-
-  cost$rcp85$gamma$ns<- ncvar_get(ncdata, 'ExpectedCost_RCP85_nonstat')
-  loss$rcp85$gamma$ns<- ncvar_get(ncdata, 'ExpectedLoss_RCP85_nonstat')
-  investment$rcp85$gamma$ns<- ncvar_get(ncdata, 'ExpectedInvestment_RCP85_nonstat')
   preturn$rcp85$gamma$ns<- ncvar_get(ncdata, 'ExpectedPreturn_RCP85_nonstat')
 nc_close(ncdata)
 
@@ -213,48 +144,18 @@ ncdata <- nc_open(filename.vandantzig.uniform)
   gev.stat <- ncvar_get(ncdata, 'gev_stat')
   colnames(gev.stat) <- gev.names
 
-  cost$rcp26$uniform$st<- ncvar_get(ncdata, 'ExpectedCost_RCP26_stat')
-  loss$rcp26$uniform$st<- ncvar_get(ncdata, 'ExpectedLoss_RCP26_stat')
-  investment$rcp26$uniform$st<- ncvar_get(ncdata, 'ExpectedInvestment_RCP26_stat')
   preturn$rcp26$uniform$st<- ncvar_get(ncdata, 'ExpectedPreturn_RCP26_stat')
-
-  cost$rcp45$uniform$st<- ncvar_get(ncdata, 'ExpectedCost_RCP45_stat')
-  loss$rcp45$uniform$st<- ncvar_get(ncdata, 'ExpectedLoss_RCP45_stat')
-  investment$rcp45$uniform$st<- ncvar_get(ncdata, 'ExpectedInvestment_RCP45_stat')
   preturn$rcp45$uniform$st<- ncvar_get(ncdata, 'ExpectedPreturn_RCP45_stat')
-
-  cost$rcp60$uniform$st<- ncvar_get(ncdata, 'ExpectedCost_RCP60_stat')
-  loss$rcp60$uniform$st<- ncvar_get(ncdata, 'ExpectedLoss_RCP60_stat')
-  investment$rcp60$uniform$st<- ncvar_get(ncdata, 'ExpectedInvestment_RCP60_stat')
   preturn$rcp60$uniform$st<- ncvar_get(ncdata, 'ExpectedPreturn_RCP60_stat')
-
-  cost$rcp85$uniform$st<- ncvar_get(ncdata, 'ExpectedCost_RCP85_stat')
-  loss$rcp85$uniform$st<- ncvar_get(ncdata, 'ExpectedLoss_RCP85_stat')
-  investment$rcp85$uniform$st<- ncvar_get(ncdata, 'ExpectedInvestment_RCP85_stat')
   preturn$rcp85$uniform$st<- ncvar_get(ncdata, 'ExpectedPreturn_RCP85_stat')
 
-  cost$rcp26$uniform$ns<- ncvar_get(ncdata, 'ExpectedCost_RCP26_nonstat')
-  loss$rcp26$uniform$ns<- ncvar_get(ncdata, 'ExpectedLoss_RCP26_nonstat')
-  investment$rcp26$uniform$ns<- ncvar_get(ncdata, 'ExpectedInvestment_RCP26_nonstat')
   preturn$rcp26$uniform$ns<- ncvar_get(ncdata, 'ExpectedPreturn_RCP26_nonstat')
-
-  cost$rcp45$uniform$ns<- ncvar_get(ncdata, 'ExpectedCost_RCP45_nonstat')
-  loss$rcp45$uniform$ns<- ncvar_get(ncdata, 'ExpectedLoss_RCP45_nonstat')
-  investment$rcp45$uniform$ns<- ncvar_get(ncdata, 'ExpectedInvestment_RCP45_nonstat')
   preturn$rcp45$uniform$ns<- ncvar_get(ncdata, 'ExpectedPreturn_RCP45_nonstat')
-
-  cost$rcp60$uniform$ns<- ncvar_get(ncdata, 'ExpectedCost_RCP60_nonstat')
-  loss$rcp60$uniform$ns<- ncvar_get(ncdata, 'ExpectedLoss_RCP60_nonstat')
-  investment$rcp60$uniform$ns<- ncvar_get(ncdata, 'ExpectedInvestment_RCP60_nonstat')
   preturn$rcp60$uniform$ns<- ncvar_get(ncdata, 'ExpectedPreturn_RCP60_nonstat')
-
-  cost$rcp85$uniform$ns<- ncvar_get(ncdata, 'ExpectedCost_RCP85_nonstat')
-  loss$rcp85$uniform$ns<- ncvar_get(ncdata, 'ExpectedLoss_RCP85_nonstat')
-  investment$rcp85$uniform$ns<- ncvar_get(ncdata, 'ExpectedInvestment_RCP85_nonstat')
   preturn$rcp85$uniform$ns<- ncvar_get(ncdata, 'ExpectedPreturn_RCP85_nonstat')
 nc_close(ncdata)
 
-n.ensemble <- c(ncol(cost$rcp85$none$ns) , ncol(cost$rcp85$gamma$ns) , ncol(cost$rcp85$uniform$ns) )
+n.ensemble <- c(ncol(preturn$rcp85$none$ns) , ncol(preturn$rcp85$gamma$ns) , ncol(preturn$rcp85$uniform$ns) )
 names(n.ensemble) <- scen.ais
 n.height <- length(heightening)
 
@@ -355,6 +256,9 @@ for (rcp in scen.rcp) {
     sf.sealev[[rcp]][[ais]] <- tmp[order(tmp)]
   }
 }
+
+# Save RData image file to resume later?
+#save.image(file = "BRICK_scenarios_analysis.RData")
 
 lsl.lower <- 0
 lsl.upper <- 5

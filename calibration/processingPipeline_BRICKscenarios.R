@@ -73,7 +73,7 @@ t.beg = proc.time()
 ##==============================================================================
 ## Define the files you want to process/read/create
 
-dais <- 'u'     ## Which DAIS model set-up? (n = no fast dynamics, u = uniform priors, g = gamma priors)
+dais <- 'g'     ## Which DAIS model set-up? (n = no fast dynamics, u = uniform priors, g = gamma priors)
 appen <- ''     ## Append file name? In case you process multiple files in one day
 today <- Sys.Date(); today=format(today,format="%d%b%Y")
 
@@ -81,22 +81,22 @@ n.ensemble = 135000               # total number of parameter samples to send in
 n.ensemble.report = n.ensemble   # save for timing information
 l.dopaleo = FALSE                # skip the paleo AIS simulations?
 
-filename.rho_simple_fixed <- "../output_calibration/rho_simple_fixed_01Nov2016.csv"
-filename.BRICKcalibration <- "../output_calibration/BRICK-model_calibratedParameters_control_01Nov2016.nc"
+filename.rho_simple_fixed <- "../output_calibration/rho_simple_fixed_07May2017.csv"
+filename.BRICKcalibration <- "../output_calibration/BRICK_calibratedParameters_07May2017.nc"
 filename.gevstat <- '../output_calibration/BRICK_estimateGEV-AnnMean_07Mar2017.nc'
 
 if(dais=='n'){
 	name='fd-none'
 #	filename.DAIScalibration = "../output_calibration/DAIS_calibratedParameters_11Aug2016.nc"
-	filename.DAIScalibration = "../output_calibration/DAISfastdyn_calibratedParameters_gamma_21Aug2016.nc"
+	filename.DAIScalibration = "../output_calibration/DAISfastdyn_calibratedParameters_gamma_29Jan2017.nc"
 }
 if(dais=='u') {
 	name='fd-uniform'
-	filename.DAIScalibration = "../output_calibration/DAISfastdyn_calibratedParameters_uniform_19Aug2016.nc"
+	filename.DAIScalibration = "../output_calibration/DAISfastdyn_calibratedParameters_uniform_29Jan2017.nc"
 }
 if(dais=='g') {
 	name='fd-gamma'
-	filename.DAIScalibration = "../output_calibration/DAISfastdyn_calibratedParameters_gamma_21Aug2016.nc"
+	filename.DAIScalibration = "../output_calibration/DAISfastdyn_calibratedParameters_gamma_29Jan2017.nc"
 }
 
 filename.parameters = paste('../output_calibration/BRICK_postcalibratedParameters_',name,'_',today,appen,'.nc', sep="")

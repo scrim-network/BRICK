@@ -41,8 +41,8 @@ rm(list=ls())
 
 ## Sea-level rise projections
 #filename.allslr <- "../output_model/BRICK_physical_allslr_16Apr2017.nc"
-filename.gamma <- "../output_model/BRICK_physical_fd-gamma_20Apr2017.nc"
-filename.uniform <- "../output_model/BRICK_physical_fd-uniform_20Apr2017.nc"
+filename.gamma <- "../output_model/BRICK_physical_fd-gamma_08May2017.nc"
+filename.uniform <- "../output_model/BRICK_physical_fd-uniform_08May2017.nc"
 
 ## GEV parameters, fit from tide gauge data
 #filename.gevstat <- '../output_calibration/BRICK_GEVsample-AnnMean_16Apr2017.nc'
