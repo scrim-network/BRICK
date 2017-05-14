@@ -73,7 +73,7 @@ log.lik = function(	parameters.in,
 	T0           =parameters.in[match("T0"           ,parnames.in)]
 	H0           =parameters.in[match("H0"           ,parnames.in)]
 	sigma.T      =parameters.in[match("sigma.T"      ,parnames.in)]
-	rho.T        =parameters.in[match("rho.H"        ,parnames.in)]
+	rho.T        =parameters.in[match("rho.T"        ,parnames.in)]
 	sigma.H      =parameters.in[match("sigma.H"      ,parnames.in)]
 	rho.H        =parameters.in[match("rho.H"        ,parnames.in)]
 
