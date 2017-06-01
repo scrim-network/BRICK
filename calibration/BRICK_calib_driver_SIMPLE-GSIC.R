@@ -192,7 +192,7 @@ rho.simple.fixed   = NULL
 
 ## Read an old rho.simple.fixed?
 if(TRUE){
-	rho.simple.fixed = as.numeric(read.csv('../output_calibration/rho_simple_fixed_01Nov2016.csv'))
+	rho.simple.fixed = as.numeric(read.csv('../output_calibration/rho_simple_fixed_07May2017.csv'))
 } else {
 	## If rho/sigma.simple.fixed = NULL, then will be calibrated
 	resid = brick.out$simple.out$sle.gis[midx.gis] - obs.gis[oidx.gis]
@@ -280,13 +280,13 @@ source('../calibration/BRICK_assimLikelihood_SIMPLE-GSIC.R')
 
 ## MCMC calibration
 require('adaptMCMC')
-library(adaptMCMC)										# use robust adaptive Metropolis
-accept.mcmc = 0.234										# Optimal as # parameters->infinity
-																			#	(Gelman et al, 1996; Roberts et al, 1997)
-niter.mcmc = 1e6											# number of iterations for MCMC
-gamma.mcmc = 0.5											# rate of adaptation (between 0.5 and 1, lower is faster adaptation)
-burnin = round(niter.mcmc*0.5)				# remove first ?? of chains for burn-in
-stopadapt.mcmc = round(niter.mcmc*1.0)# stop adapting after ?? iterations? (niter*1 => don't stop)
+library(adaptMCMC)                     # use robust adaptive Metropolis
+accept.mcmc = 0.234                    # Optimal as # parameters->infinity
+                                       # (Gelman et al, 1996; Roberts et al, 1997)
+niter.mcmc = 1e6                       # number of iterations for MCMC
+gamma.mcmc = 0.5                       # rate of adaptation (between 0.5 and 1, lower is faster adaptation)
+burnin = round(niter.mcmc*0.5)         # remove first ?? of chains for burn-in
+stopadapt.mcmc = round(niter.mcmc*1.0) # stop adapting after ?? iterations? (niter*1 => don't stop)
 
 ##==============================================================================
 ## Actually run the calibration
@@ -377,8 +377,8 @@ gr.stat = rep(NA,length(niter.test))
 for (i in 1:length(niter.test)){
   mcmc1 = as.mcmc(chain1[1:niter.test[i],])
   mcmc2 = as.mcmc(chain2[1:niter.test[i],])
-	mcmc3 = as.mcmc(chain3[1:niter.test[i],])
-	mcmc4 = as.mcmc(chain4[1:niter.test[i],])
+  mcmc3 = as.mcmc(chain3[1:niter.test[i],])
+  mcmc4 = as.mcmc(chain4[1:niter.test[i],])
   mcmc_chain_list = mcmc.list(list(mcmc1, mcmc2, mcmc3, mcmc4))
   gr.stat[i] = gelman.diag(mcmc_chain_list)[2]
 }

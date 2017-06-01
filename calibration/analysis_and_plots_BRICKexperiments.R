@@ -28,20 +28,20 @@ rm(list=ls())
 library(ncdf4)
 
 ## File name for the BRICK physical model output (netCDF4)
-filename.brick.magicc = '../output_model/BRICK-model_physical_control_02Apr2017.nc'
-filename.brick.simple = '../output_model/BRICK-model_physical_SIMPLE-GSIC_02Apr2017.nc'
-filename.brick.gmsl   = '../output_model/BRICK-model_physical_R07_03Apr2017.nc'
+filename.brick.magicc = '../output_model/BRICK-model_physical_control_31May2017.nc'
+filename.brick.simple = '../output_model/BRICK-model_physical_SIMPLE-GSIC_01Jun2017.nc'
+filename.brick.gmsl   = '../output_model/BRICK-model_physical_R07_01Jun2017.nc'
 
 ## File name for the Van Dantzig model output (netCDF4)
-filename.vandantzig = '../output_model/VanDantzig_RCP85_control_02Apr2017.nc'
+filename.vandantzig = '../output_model/VanDantzig_RCP85_control_31May2017.nc'
 
 ## File name for the BRICK post-calibrated parameters (csv) (the BRICK output came from these guys)
-filename.parameters.magicc  = '../output_calibration/BRICK-model_postcalibratedParameters_control_02Apr2017.nc'
-filename.parameters.simple  = '../output_calibration/BRICK-model_postcalibratedParameters_SIMPLE-GSIC_02Apr2017.nc'
-filename.parameters.gmsl    = '../output_calibration/BRICK-model_drawcalibratedParameters_R07_03Apr2017.nc'
+filename.parameters.magicc  = '../output_calibration/BRICK-model_postcalibratedParameters_control_31May2017.nc'
+filename.parameters.simple  = '../output_calibration/BRICK-model_postcalibratedParameters_SIMPLE-GSIC_01Jun2017.nc'
+filename.parameters.gmsl    = '../output_calibration/BRICK-model_drawcalibratedParameters_R07_01Jun2017.nc'
 
 ## Other files
-filename.rho_simple_fixed = "../output_calibration/rho_simple_fixed_01Nov2016.csv"
+filename.rho_simple_fixed = "../output_calibration/rho_simple_fixed_07May2017.csv"
 filename.fingerprints = "../fingerprints/FINGERPRINTS_SLANGEN_Bakker.nc"
 
 ## Other useful scripts
@@ -60,7 +60,7 @@ colmod <- 2
 colobs <- 11
 
 ## Where would you like to save the plots?
-plotdir='~/Box\ Sync/Wong-Projects/BRICK_model/figures/test/'
+plotdir='~/Box\ Sync/Wong-Projects/BRICK_model/figures/'
 
 ##==============================================================================
 logl.ar1 = function(r,sigma1,rho1,eps1=0) # default obs error is 0

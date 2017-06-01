@@ -249,7 +249,7 @@ if(luse.simple) {
 
   ## Read an old rho.simple.fixed?
   if(TRUE){
-	rho.simple.fixed = as.numeric(read.csv('../output_calibration/rho_simple_fixed_01Nov2016.csv'))
+	rho.simple.fixed = as.numeric(read.csv('../output_calibration/rho_simple_fixed_07May2017.csv'))
   } else {
 	## If rho/sigma.simple.fixed = NULL, then will be calibrated
 	resid = brick.out$simple.out$sle.gis[midx.gis] - obs.gis[oidx.gis]

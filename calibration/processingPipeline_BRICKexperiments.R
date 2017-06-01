@@ -81,26 +81,26 @@ t.beg = proc.time()
 ##==============================================================================
 ## Define the files you want to process/read/create
 
-experiment='c'  ## Which model set-up? (c = control, with MAGICC-GSIC; e = experiment,
+experiment='e'  ## Which model set-up? (c = control, with MAGICC-GSIC; e = experiment,
 				## with SIMPLE-GSIC; g = experiment, with BRICK-GMSL)
 appen=''		## Append file name? In case you process multiple files in one day
 today=Sys.Date(); today=format(today,format="%d%b%Y")
 
 n.ensemble = 135000
-n.ensemble.gmsl = 10671		# pick n.ensemble for BRICK-GMSL to match control
+n.ensemble.gmsl = 10589		# pick n.ensemble for BRICK-GMSL to match control
 n.ensemble.report = n.ensemble
 
 if(experiment=='c'){
-	filename.rho_simple_fixed = "../output_calibration/rho_simple_fixed_01Nov2016.csv"
-	filename.BRICKcalibration = "../output_calibration/BRICK-model_calibratedParameters_control_01Nov2016.nc"
+	filename.rho_simple_fixed = "../output_calibration/rho_simple_fixed_07May2017.csv"
+	filename.BRICKcalibration = "../output_calibration/BRICK-model_calibratedParameters_control_31May2017.nc"
 	filename.DAIScalibration  = "../output_calibration/DAIS_calibratedParameters_11Aug2016.nc"
 	filename.parameters       = paste('../output_calibration/BRICK-model_postcalibratedParameters_control_',today,appen,'.nc', sep="")
 	filename.brickout         = paste('../output_model/BRICK-model_physical_control_',today,appen,'.nc',sep="")
 	filename.vdout            = paste('../output_model/VanDantzig_RCP85_control_',today,appen,'.nc',sep="")
 }
 if(experiment=='e'){
-	filename.rho_simple_fixed = "../output_calibration/rho_simple_fixed_01Nov2016.csv"
-	filename.BRICKcalibration = "../output_calibration/BRICK-model_calibratedParameters_gsic-simple_01Nov2016.nc"
+	filename.rho_simple_fixed = "../output_calibration/rho_simple_fixed_07May2017.csv"
+	filename.BRICKcalibration = "../output_calibration/BRICK-model_calibratedParameters_gsic-simple_01Jun2017.nc"
 	filename.DAIScalibration  = "../output_calibration/DAIS_calibratedParameters_11Aug2016.nc"
 	filename.parameters       = paste('../output_calibration/BRICK-model_postcalibratedParameters_SIMPLE-GSIC_',today,appen,'.nc', sep="")
 	filename.brickout         = paste('../output_model/BRICK-model_physical_SIMPLE-GSIC_',today,appen,'.nc',sep="")
@@ -426,8 +426,8 @@ for (i in 1:n.ensemble) {
 	rho.T       =parameters[i,match("rho.T"       ,parnames)]
 	sigma.H     =parameters[i,match("sigma.H"     ,parnames)]
 	rho.H       =parameters[i,match("rho.H"       ,parnames)]
-	err.temp	 = rep(sigma.T,n.time); if(l.ar1.hetero) {err.temp[midx.temp]=sqrt(sigma.T^2 + obs.temp.err[oidx.temp]^2)}
-	err.ocheat = rep(sigma.H,n.time); if(l.ar1.hetero) {err.ocheat[midx.ocheat]=sqrt(sigma.H^2+obs.ocheat.err[oidx.ocheat]^2)}
+	err.temp   = rep(sigma.T,n.time); if(l.ar1.hetero) {err.temp[midx.temp]=sqrt(sigma.T^2 + obs.temp.err[oidx.temp]^2)}
+	err.ocheat = rep(sigma.H,n.time); if(l.ar1.hetero) {err.ocheat[midx.ocheat]=sqrt(sigma.H^2)}#+obs.ocheat.err[oidx.ocheat]^2)}
 	temp.norm.stat[i,]   = temp.out.norm[i,]   + ar1.sim(n.time, rho.T, err.temp)
 	ocheat.norm.stat[i,] = ocheat.out.norm[i,] + ar1.sim(n.time, rho.H, err.ocheat)
 
