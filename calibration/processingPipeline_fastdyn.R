@@ -1,4 +1,5 @@
 ##==============================================================================
+## processingPipeline_fastdyn.R
 ##
 ## Pipeline for processing DAIS-fast dynamics calibration results and BRICK
 ## rest-of-model (ROM) calibration results.
@@ -334,7 +335,7 @@ for (i in 1:n.ensemble) {
   # data, which have very different uncertainties than modern instrumental
   # period data.
   err.temp = rep(sigma.T,n.time); err.temp[midx.temp]=sqrt(sigma.T^2 + obs.temp.err[oidx.temp]^2)
-  err.ocheat = rep(sigma.H,n.time); err.ocheat[midx.ocheat]=sqrt(sigma.H^2+obs.ocheat.err[oidx.ocheat]^2)
+  err.ocheat = rep(sigma.H,n.time); err.ocheat[midx.ocheat]=sqrt(sigma.H^2)#+obs.ocheat.err[oidx.ocheat]^2)
   err.gsic = rep(sigma.gsic,n.time); err.gsic[midx.gsic]=sqrt(sigma.gsic^2+obs.gsic.err[oidx.gsic]^2)
   err.gis = rep(sigma.simple,n.time); err.gis[midx.gis]=sqrt(sigma.simple^2+obs.gis.err^2)
 

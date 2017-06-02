@@ -10,19 +10,25 @@
 library(ncdf4)
 
 ## File name for the BRICK physical model output (netCDF4)
-filename.brick.uniform  = '../output_model/BRICK-fastdyn_physical_uniform_07May2017.nc'
-filename.brick.gamma    = '../output_model/BRICK-fastdyn_physical_gamma_07May2017.nc'
+#filename.brick.uniform  = '../output_model/BRICK-fastdyn_physical_uniform_07May2017.nc'
+#filename.brick.gamma    = '../output_model/BRICK-fastdyn_physical_gamma_07May2017.nc'
+filename.brick.uniform  = '../output_model/BRICK-fastdyn_physical_uniform_01Jun2017.nc'
+filename.brick.gamma    = '../output_model/BRICK-fastdyn_physical_gamma_01Jun2017.nc'
 
 ## File name for the Van Dantzig model output (netCDF4)
-filename.vandantzig.uniform = '../output_model/vanDantzig_RCP85_uniform_08May2017.nc'
-filename.vandantzig.gamma   = '../output_model/vanDantzig_RCP85_gamma_08May2017.nc'
+#filename.vandantzig.uniform = '../output_model/vanDantzig_RCP85_uniform_08May2017.nc'
+#filename.vandantzig.gamma   = '../output_model/vanDantzig_RCP85_gamma_08May2017.nc'
+filename.vandantzig.uniform = '../output_model/vanDantzig_RCP85_uniform_01Jun2017.nc'
+filename.vandantzig.gamma   = '../output_model/vanDantzig_RCP85_gamma_01Jun2017.nc'
 
 ## File name for the BRICK post-calibrated parameters (csv) (the BRICK and van Dantzig output came from these guys)
-filename.parameters.uniform = '../output_calibration/BRICK-fastdyn_postcalibratedParameters_uniform_07May2017.csv'
-filename.parameters.gamma   = '../output_calibration/BRICK-fastdyn_postcalibratedParameters_gamma_07May2017.csv'
+#filename.parameters.uniform = '../output_calibration/BRICK-fastdyn_postcalibratedParameters_uniform_07May2017.csv'
+#filename.parameters.gamma   = '../output_calibration/BRICK-fastdyn_postcalibratedParameters_gamma_07May2017.csv'
+filename.parameters.uniform = '../output_calibration/BRICK-fastdyn_postcalibratedParameters_uniform_01Jun2017.csv'
+filename.parameters.gamma   = '../output_calibration/BRICK-fastdyn_postcalibratedParameters_gamma_01Jun2017.csv'
 
 ## Other files
-filename.rho_simple_fixed = "../output_calibration/rho_simple_fixed_07May2017.csv"
+filename.rho_simple_fixed = "../output_calibration/rho_simple_fixed_06Sep2016.csv"
 filename.daisnofd = '../output_model/DAISfastdyn_noFD-paleo-ensemble_08Sep2016.nc'
 filename.DAIScalibration = "../output_calibration/DAISfastdyn_calibratedParameters_gamma_29Jan2017.nc"
 
@@ -36,7 +42,7 @@ col60 <- c(255, 130, 45)/255
 col85 <- c(255, 0, 0)/255
 
 ## Where would you like to save the plots?
-plotdir='~/Box\ Sync/Wong-Projects/AIS_fast_dynamics/ToSubmit_CC/figures/'
+plotdir='~/Box\ Sync/Wong-Projects/AIS_fast_dynamics/AsSubmitted_CC/figures/test/'
 #plotdir='../'
 
 ##==============================================================================
@@ -307,7 +313,9 @@ plot(t.paleo[ipaleo], ais.paleo.50[ipaleo], type='l', col=rgb(col45[1],col45[2],
 	i=4; points(date[obs.years[i]],mean(windows[i,]),pch=15,col=rgb(mycol[6,1],mycol[6,2],mycol[6,3]))
 	lines(c(-1e6,1e6),c(0,0),type='l',lty=2,col='black');
   legend(-90000,29,c("5-95% range, model, with fast dynamics","2-sigma range, observations","Max. likelihood ensemble range, no fast dynamics"),
-         col=c(rgb(col45[1],col45[2],col45[3]),rgb(mycol[6,1],mycol[6,2],mycol[6,3]),rgb(col26[1],col26[2],col26[3])), lwd=2, bty='n', cex=1.2)
+         col=c(rgb(col45[1],col45[2],col45[3]),rgb(mycol[6,1],mycol[6,2],mycol[6,3]),'orange'),
+         pch=c(15,15,15), pt.cex=2, bty='n', cex=1.2)
+         #lwd=2, bty='n', cex=1.2)
 
 dev.off()
 
@@ -669,7 +677,7 @@ sur.slr2100.nofd.rcp85.gam = 1-cdf.slr2100.nofd.rcp85.gam
 pdf(paste(plotdir,'distributions_SLR2100_pdf+sf.pdf',sep=''),width=5,height=7,colormodel='cmyk')
 par(mfrow=c(2,1), mai=c(.85,.74,.1,.15))
 
-plot(x,pdf.slr2100.rcp85.gam$y, type='l', xlim=c(0,3), ylim=c(0,4.7), lty=1,
+plot(x,pdf.slr2100.rcp85.gam$y, type='l', xlim=c(0,3.15), ylim=c(0,4.7), lty=1,
      col=rgb(col85[1],col85[2],col85[3]), lwd=1.5, xlab='', ylab='', xaxt='n', yaxt='n', xaxs='i', yaxs='i',axes=FALSE);
   axis(1,seq(0,3,0.5),lab=c("0","0.5","1","1.5","2","2.5","3"))
   u <- par("usr")
@@ -689,7 +697,7 @@ plot(x,pdf.slr2100.rcp85.gam$y, type='l', xlim=c(0,3), ylim=c(0,4.7), lty=1,
         lty=c(1,1,1,1,2), lwd=2, col=c(rgb(col26[1],col26[2],col26[3]),rgb(col45[1],col45[2],col45[3]),rgb(col85[1],col85[2],col85[3]),'black','black'),
         bty='n')
 
-plot(x,log10(sur.slr2100.rcp85.gam),type='l', xlim=c(0,3), ylim=c(-3.3,0), lty=1,
+plot(x,log10(sur.slr2100.rcp85.gam),type='l', xlim=c(0,3.15), ylim=c(-3.3,0), lty=1,
      col=rgb(col85[1],col85[2],col85[3]), lwd=1.5, xlab='', ylab='', xaxt='n', yaxt='n', xaxs='i', yaxs='i');
   axis(1,seq(0,3,0.5),lab=c("0","0.5","1","1.5","2","2.5","3"))
   mtext('Survival function [1-CDF]', side = 2, line=2.6);
@@ -1472,6 +1480,11 @@ print('================================================================')
 print(paste('At 2-degree warming, have CDF=',cdf.Tgcrit.gam[which(tmp==min(tmp))]))
 print(paste('median (5-95% CI) =',quantile(Tgcrit.gam,c(.5,.05,.95))))
 print('================================================================')
+tmp=abs(x-1.5);
+print('================================================================')
+print(paste('At 1.5-degree warming, have CDF=',cdf.Tgcrit.gam[which(tmp==min(tmp))]))
+print(paste('median (5-95% CI) =',quantile(Tgcrit.gam,c(.5,.05,.95))))
+print('================================================================')
 
 ## Make sure obs.temp is normalized relative to 1850-1870
 obs.temp = obs.temp - mean(obs.temp[1:20])
@@ -1570,11 +1583,90 @@ par(fig=c(0,1,0,.5))
 
 dev.off()
 
-
 ##==============================================================================
 ##==============================================================================
 
 
+
+##==============================================================================
+##==============================================================================
+## Supplementary analysis (bonus!)
+## Table of quantiles for local sea level
+
+scen.rcp <- c('RCP26','RCP45','RCP85')
+scen.ais <- c('gamma','uniform')
+
+sea.level.nola <- vector('list',length(scen.rcp)); names(sea.level.nola) <- scen.rcp
+for (rcp in scen.rcp) {
+  sea.level.nola[[rcp]] <- vector('list',length(scen.ais)); names(sea.level.nola[[rcp]]) <- scen.ais
+}
+
+year.norm <- c(1986, 2005)
+
+for (ais in scen.ais) {
+  if(ais=='gamma')   {ncdata <- nc_open(filename.brick.gamma)}
+  if(ais=='uniform') {ncdata <- nc_open(filename.brick.uniform)}
+  t.proj = ncvar_get(ncdata, 'time_proj')
+  ind.norm <- which(t.proj==year.norm[1]):which(t.proj==year.norm[2])
+  for (rcp in scen.rcp) {
+    sea.level.nola[[rcp]][[ais]] <- ncvar_get(ncdata, paste('LocalSeaLevel_',rcp,sep=''))
+    # normalize sea level relative to 1986-2005
+    for (sow in 1:ncol(sea.level.nola[[rcp]][[ais]])) {
+      sea.level.nola[[rcp]][[ais]][,sow] <- sea.level.nola[[rcp]][[ais]][,sow] - mean(sea.level.nola[[rcp]][[ais]][ind.norm,sow])
+    }
+  }
+}
+
+# what are the years you want?
+year.quantile <- c(2050, 2100)
+i2050 <- which(t.proj==2050)
+i2100 <- which(t.proj==2100)
+
+# define the quantiles you want on the output table
+quantiles.we.want <- c(.5, .9, .95, .99, .999, 1)
+
+# calculate them and write them to a csv file
+gamma.table <- rbind( c(2050, quantile(sea.level.nola$RCP26$gamma[i2050,], quantiles.we.want)),
+                      c(2100, quantile(sea.level.nola$RCP26$gamma[i2100,], quantiles.we.want)),
+                      c(2050, quantile(sea.level.nola$RCP45$gamma[i2050,], quantiles.we.want)),
+                      c(2100, quantile(sea.level.nola$RCP45$gamma[i2100,], quantiles.we.want)),
+                      c(2050, quantile(sea.level.nola$RCP85$gamma[i2050,], quantiles.we.want)),
+                      c(2100, quantile(sea.level.nola$RCP85$gamma[i2100,], quantiles.we.want)))
+rownames(gamma.table) <- c('RCP26','RCP26','RCP45','RCP45','RCP85','RCP85')
+colnames(gamma.table)[1] <- "Year"
+
+uniform.table <- rbind( c(2050, quantile(sea.level.nola$RCP26$uniform[i2050,], quantiles.we.want)),
+                      c(2100, quantile(sea.level.nola$RCP26$uniform[i2100,], quantiles.we.want)),
+                      c(2050, quantile(sea.level.nola$RCP45$uniform[i2050,], quantiles.we.want)),
+                      c(2100, quantile(sea.level.nola$RCP45$uniform[i2100,], quantiles.we.want)),
+                      c(2050, quantile(sea.level.nola$RCP85$uniform[i2050,], quantiles.we.want)),
+                      c(2100, quantile(sea.level.nola$RCP85$uniform[i2100,], quantiles.we.want)))
+rownames(uniform.table) <- c('RCP26','RCP26','RCP45','RCP45','RCP85','RCP85')
+colnames(uniform.table)[1] <- "Year"
+
+write.csv(gamma.table, file = "gamma_table.csv")
+write.csv(uniform.table, file = "uniform_table.csv")
+
+if(FALSE){
+ncdata <- nc_open(filename.brick.uniform)
+  lsl.rcp26.uni = ncvar_get(ncdata, 'LocalSeaLevel_RCP26')
+  lsl.rcp45.uni = ncvar_get(ncdata, 'LocalSeaLevel_RCP45')
+  lsl.rcp85.uni = ncvar_get(ncdata, 'LocalSeaLevel_RCP85')
+  lsl.nofd.rcp26.uni = ncvar_get(ncdata, 'LocalSeaLevel_nofd_RCP26')
+  lsl.nofd.rcp45.uni = ncvar_get(ncdata, 'LocalSeaLevel_nofd_RCP45')
+  lsl.nofd.rcp85.uni = ncvar_get(ncdata, 'LocalSeaLevel_nofd_RCP85')
+nc_close(ncdata)
+ncdata <- nc_open(filename.brick.gamma)
+  lsl.rcp26.gam = ncvar_get(ncdata, 'LocalSeaLevel_RCP26')
+  lsl.rcp45.gam = ncvar_get(ncdata, 'LocalSeaLevel_RCP45')
+  lsl.rcp85.gam = ncvar_get(ncdata, 'LocalSeaLevel_RCP85')
+  lsl.nofd.rcp26.gam = ncvar_get(ncdata, 'LocalSeaLevel_nofd_RCP26')
+  lsl.nofd.rcp45.gam = ncvar_get(ncdata, 'LocalSeaLevel_nofd_RCP45')
+  lsl.nofd.rcp85.gam = ncvar_get(ncdata, 'LocalSeaLevel_nofd_RCP85')
+nc_close(ncdata)
+}
+##==============================================================================
+##==============================================================================
 
 
 
