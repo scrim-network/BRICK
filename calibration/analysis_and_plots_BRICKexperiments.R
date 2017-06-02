@@ -403,7 +403,7 @@ itmp=midx.gsic[1]:midx.gsic[length(midx.gsic)]
 
 # >>> GSIC-MAGICC <<<
 par(mfrow=c(2,1), mai=c(.45,.7,.25,.08))
-plot(mod.time[itmp], gsic.magicc.mle[itmp], type='l', col=rgb(mycol[colmod,1],mycol[colmod,2],mycol[colmod,3]), lwd=2, xlab='',
+plot(mod.time[itmp], gsic.magicc.mle[itmp]-gsic.magicc.mle[itmp[1]], type='l', col=rgb(mycol[colmod,1],mycol[colmod,2],mycol[colmod,3]), lwd=2, xlab='',
      ylab='', xlim=c(1960,2003), ylim=c(-.02,.05), cex.lab=1.2, cex.axis=1.0, xaxs='i', yaxs='i');
   mtext(side=2, text='GIC, MAGICC [m SLE]', line=2.3, cex=1.0);
   mtext(side=3, text=expression(bold('  a')), line=-1.5, cex=1.0, adj=0);
@@ -422,7 +422,7 @@ plot(mod.time[itmp], gsic.magicc.mle[itmp], type='l', col=rgb(mycol[colmod,1],my
 
 # >>> GSIC-SIMPLE <<<
 par(mai=c(.65,.7,.05,.08))
-plot(mod.time[itmp], gsic.simple.mle[itmp], type='l', col=rgb(mycol[colmod,1],mycol[colmod,2],mycol[colmod,3]), lwd=2, xlab='',
+plot(mod.time[itmp], gsic.simple.mle[itmp]-gsic.simple.mle[itmp[1]], type='l', col=rgb(mycol[colmod,1],mycol[colmod,2],mycol[colmod,3]), lwd=2, xlab='',
      ylab='', xlim=c(1960,2003), ylim=c(-.02,.05), cex.lab=1.2, cex.axis=1.0, xaxs='i', yaxs='i');
   mtext(side=1, text='Year', line=2.2, cex=1.0);
   mtext(side=2, text='GIC, SIMPLE [m SLE]', line=2.3, cex=1.0);
