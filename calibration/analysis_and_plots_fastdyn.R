@@ -197,6 +197,57 @@ obs.err=0.5*obs.err                           # assume all windows are 2*stdErr
 obs.years = c(120000, 220000, 234000, 240002)
 
 
+##==============================================================================
+## Typical decorrelation time-scales
+
+resid.temp   <- mat.or.vec(length(midx.temp), ncol(temp.hind))
+resid.ocheat <- mat.or.vec(length(midx.ocheat), ncol(ocheat.hind))
+resid.gsic   <- mat.or.vec(length(midx.gsic), ncol(gsic.hind))
+resid.gis    <- mat.or.vec(length(midx.gis), ncol(gis.hind))
+
+acf.temp   <- mat.or.vec(length(midx.temp), ncol(temp.hind))
+acf.ocheat <- mat.or.vec(length(midx.ocheat), ncol(ocheat.hind))
+acf.gsic   <- mat.or.vec(length(midx.gsic), ncol(gsic.hind))
+acf.gis    <- mat.or.vec(length(midx.gis), ncol(gis.hind))
+
+lag.temp   <- acf(x=resid.temp[,1], plot=FALSE, lag.max=length(midx.temp))$lag
+lag.ocheat <- acf(x=resid.ocheat[,1], plot=FALSE, lag.max=length(midx.ocheat))$lag
+lag.gsic   <- acf(x=resid.gsic[,1], plot=FALSE, lag.max=length(midx.gsic))$lag
+lag.gis    <- acf(x=resid.gis[,1], plot=FALSE, lag.max=length(midx.gis))$lag
+
+# which lag (years) is the first acf < 0.05?
+# Note: higher-order modes exist (acf back > 0.05) but are not of interest here
+decor.lag.temp   <- rep(NA, ncol(temp.hind))
+decor.lag.ocheat <- rep(NA, ncol(ocheat.hind))
+decor.lag.gsic   <- rep(NA, ncol(gsic.hind))
+decor.lag.gis    <- rep(NA, ncol(gis.hind))
+
+for (i in 1:ncol(temp.hind)) {
+  resid.temp[,i]   <- temp.hind[midx.temp,i] - obs.temp[oidx.temp]
+  resid.ocheat[,i] <- ocheat.hind[midx.ocheat,i] - obs.ocheat[oidx.ocheat]
+  resid.gsic[,i]   <- gsic.hind[midx.gsic,i] - obs.gsic[oidx.gsic]
+  resid.gis[,i]    <- gis.hind[midx.gis,i] - obs.gis[oidx.gis]
+  acf.temp[,i]   <- acf(x=resid.temp[,i], plot=FALSE, lag.max=length(midx.temp))$acf
+  acf.ocheat[,i] <- acf(x=resid.ocheat[,i], plot=FALSE, lag.max=length(midx.ocheat))$acf
+  acf.gsic[,i]   <- acf(x=resid.gsic[,i], plot=FALSE, lag.max=length(midx.gsic))$acf
+  acf.gis[,i]    <- acf(x=resid.gis[,i], plot=FALSE, lag.max=length(midx.gis))$acf
+  decor.lag.temp[i]   <- lag.temp[which(acf.temp[,i]<0.05)[1]]
+  decor.lag.ocheat[i] <- lag.ocheat[which(acf.ocheat[,i]<0.05)[1]]
+  decor.lag.gsic[i]   <- lag.gsic[which(acf.gsic[,i]<0.05)[1]]
+  decor.lag.gis[i]    <- lag.gis[which(acf.gis[,i]<0.05)[1]]
+}
+
+# median decorrelation timescales
+print('====================================================')
+print('median decorrelation timescales are...')
+print(paste('temp: ',median(decor.lag.temp),' years',sep=''))
+print(paste('ocheat: ',median(decor.lag.ocheat),' years',sep=''))
+print(paste('gsic: ',median(decor.lag.gsic),' years',sep=''))
+print(paste('gis: ',median(decor.lag.gis),' years',sep=''))
+print('====================================================')
+
+##==============================================================================
+
 
 ##
 ## 5-95% CI of hindcasts, with obs in there
@@ -725,14 +776,10 @@ dev.off()
 
 ##==============================================================================
 ##==============================================================================
-## FIGURE 4 -- VAN DANTZIG
+## FIGURE 5 -- VAN DANTZIG
 ##=========
 
 ## Grab the van Dantzig output
-## (switch to RCP26 or 45 if you want to evaluate those, but not the focus
-## of the main paper)
-#filename.vandantzig.gamma   = '../output_model/vanDantzig_RCP26_gamma_31Jan2017.nc'
-#filename.vandantzig.gamma   = '../output_model/vanDantzig_RCP45_gamma_31Jan2017.nc'
 
 ncdata <- nc_open(filename.vandantzig.gamma)
   heightening     = ncvar_get(ncdata, 'H')
@@ -996,6 +1043,78 @@ dev.off()
 
 
 
+
+
+
+##==============================================================================
+##==============================================================================
+## FIGURE 4 -- FLOOD HEIGHT VS RETURN PERIOD
+##=========
+
+height0 <- 4.25  # initial height the van dantzig parameters p0 and alpha assume
+flood.heights <- height0 + heightening # meters
+return.periods.05 <- rep(NA, length(flood.heights))
+return.periods.50 <- rep(NA, length(flood.heights))
+return.periods.95 <- rep(NA, length(flood.heights))
+for (i in 1:length(flood.heights)) {
+  return.periods.05[i] <- quantile(preturn[i,], .05)
+  return.periods.50[i] <- quantile(preturn[i,], .50)
+  return.periods.95[i] <- quantile(preturn[i,], .95)
+}
+
+
+pdf(paste(plotdir,'floodheight_returnperiod.pdf',sep=''),width=3.5,height=3.5,colormodel='cmyk')
+par(mfrow=c(1,1), mai=c(.8,.74,.15,.35))
+
+plot(log10(return.periods.50), flood.heights, type='l', xlim=c(1,4), ylim=c(4.25,8),
+  lwd=1.5, xlab='', ylab='', xaxt='n', yaxt='n', yaxs='i')
+lines(log10(return.periods.05), flood.heights, type='l', lty=2, lwd=1.5)
+lines(log10(return.periods.95), flood.heights, type='l', lty=2, lwd=1.5)
+
+#polygon(c(xtmp,rev(xtmp)), c(ytmp,rep(0,length(ytmp))),
+#          col=rgb(col85[1],col85[2],col85[3],0.5), border=NA);
+
+axis(1, 1:4,lab=c("10","100","1,000","10,000"))
+axis(2, seq(4.5, 8, .5), lab=c('','5','','6','','7','','8'))
+mtext('Return period [years]', side=1, line=2.2)
+mtext('Flood height [m]', side=2, line=2.2)
+
+dev.off()
+
+
+plot(x,pdf.Tgcrit.gam$y, type='l', xlim=c(-.2,4.1), ylim=c(0,1.5),lty=1,
+     col=rgb(col45[1],col45[2],col45[3]), lwd=1.5, xlab='', ylab='', yaxt='n', axes=FALSE,yaxs='i');
+  axis(1,seq(-0.5,4.5,0.5),lab=c("","0","","1","","2","","3","","4",""))
+  u <- par("usr")
+  arrows(u[1], u[3], u[1], u[4], code = 2, xpd = TRUE)
+  mtext('Probability density', side=2, line=1.3);
+  mtext('Global surface temperature anomaly (relative to 1850-1870\naverage) triggering fast dynamics disintegration [deg C]', side=1, line=3);
+
+  lines(c(0,0),c(-10,1.38), type='l', col='black', lwd=1.5);
+  text(0.5,1.35,'Pre-industrial', pos=3, cex=1.1, srt=0);
+
+  lines(c(temp.2015,temp.2015),c(-10,1.25), type='l', col='black', lwd=1.5);
+  text(.8,1.3,'Current (2015)', pos=4, cex=1.1, srt=0);
+
+  lines(c(2,2),c(-10,1.1), type='l', col='black', lwd=1.5);
+  text(2.18,1.07,'COP21', pos=3, cex=1.1, srt=0);
+
+  itmp=which(pdf.Tgcrit.gam$x<2); xtmp=pdf.Tgcrit.gam$x[itmp]; ytmp=pdf.Tgcrit.gam$y[itmp]
+  polygon(c(xtmp,rev(xtmp)), c(ytmp,rep(0,length(ytmp))),
+          col=rgb(col85[1],col85[2],col85[3],0.5), border=NA);
+
+dev.off()
+
+##==============================================================================
+##==============================================================================
+
+
+
+
+
+
+##==============================================================================
+##==============================================================================
 
 # this version has the uncertainty regions on it
 
