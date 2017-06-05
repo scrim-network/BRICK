@@ -10,20 +10,14 @@
 library(ncdf4)
 
 ## File name for the BRICK physical model output (netCDF4)
-#filename.brick.uniform  = '../output_model/BRICK-fastdyn_physical_uniform_07May2017.nc'
-#filename.brick.gamma    = '../output_model/BRICK-fastdyn_physical_gamma_07May2017.nc'
 filename.brick.uniform  = '../output_model/BRICK-fastdyn_physical_uniform_01Jun2017.nc'
 filename.brick.gamma    = '../output_model/BRICK-fastdyn_physical_gamma_01Jun2017.nc'
 
 ## File name for the Van Dantzig model output (netCDF4)
-#filename.vandantzig.uniform = '../output_model/vanDantzig_RCP85_uniform_08May2017.nc'
-#filename.vandantzig.gamma   = '../output_model/vanDantzig_RCP85_gamma_08May2017.nc'
 filename.vandantzig.uniform = '../output_model/vanDantzig_RCP85_uniform_01Jun2017.nc'
 filename.vandantzig.gamma   = '../output_model/vanDantzig_RCP85_gamma_01Jun2017.nc'
 
 ## File name for the BRICK post-calibrated parameters (csv) (the BRICK and van Dantzig output came from these guys)
-#filename.parameters.uniform = '../output_calibration/BRICK-fastdyn_postcalibratedParameters_uniform_07May2017.csv'
-#filename.parameters.gamma   = '../output_calibration/BRICK-fastdyn_postcalibratedParameters_gamma_07May2017.csv'
 filename.parameters.uniform = '../output_calibration/BRICK-fastdyn_postcalibratedParameters_uniform_01Jun2017.csv'
 filename.parameters.gamma   = '../output_calibration/BRICK-fastdyn_postcalibratedParameters_gamma_01Jun2017.csv'
 

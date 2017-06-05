@@ -30,7 +30,6 @@ t.beg = proc.time()
 ## Define the files you want to process
 
 filename.BRICKcalibration = "../output_calibration/BRICK_calibratedParameters_07May2017.nc"
-#filename.BRICKcalibration = "../output_calibration/BRICK_calibratedParameters_12Aug2016.csv"
 filename.rho_simple_fixed = "../output_calibration/rho_simple_fixed_06Sep2016.csv"
 
 priors='g'	## Which priors? u=uniform, g=gamma
