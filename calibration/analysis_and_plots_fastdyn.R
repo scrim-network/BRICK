@@ -1476,7 +1476,7 @@ table=data.frame(rbind(cat(row.S),cat(row.kappa.doeclim),cat(row.alpha.doeclim),
 ## SI 3 -- FIGURE 6 -- Like Figure 2, but with both uniform and gamma priors
 ##=================
 
-pdf(paste(plotdir,'projections_SLR_total_bothPriors.pdf',sep=''),width=6.2,height=5.5)#,colormodel='cmyk')
+pdf(paste(plotdir,'projections_SLR_total_bothPriors.pdf',sep=''),width=6.2,height=5.5),colormodel='cmyk')
 par(mfrow=c(2,2))
 # UNIFORM RCP85
 par(mai=c(.3,.75,.25,0))
