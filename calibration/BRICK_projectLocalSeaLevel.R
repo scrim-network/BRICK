@@ -70,6 +70,10 @@ BRICK_projectLocalSeaLevel <- function(
 		te.rcp45 = ncvar_get(ncdata, 'TE_RCP45')
 		te.rcp85 = ncvar_get(ncdata, 'TE_RCP85')
 
+	    lws.rcp26 = ncvar_get(ncdata, 'LWS_RCP26')
+	    lws.rcp45 = ncvar_get(ncdata, 'LWS_RCP45')
+	    lws.rcp85 = ncvar_get(ncdata, 'LWS_RCP85')
+
 		temp.rcp26 = ncvar_get(ncdata, 'temp_RCP26')
 		temp.rcp45 = ncvar_get(ncdata, 'temp_RCP45')
 		temp.rcp85 = ncvar_get(ncdata, 'temp_RCP85')
@@ -115,7 +119,8 @@ BRICK_projectLocalSeaLevel <- function(
 																	slr_gis = gis.rcp26,
 																	slr_gsic = gsic.rcp26,
 																	slr_ais = ais.rcp26,
-																	slr_te = te.rcp26
+																	slr_te = te.rcp26,
+																	slr_lws = lws.rcp26
 																	)
 	lsl.rcp45 = brick_lsl(lat.in=lat.in,
 																	lon.in=lon.in,
@@ -123,7 +128,8 @@ BRICK_projectLocalSeaLevel <- function(
 																	slr_gis = gis.rcp45,
 																	slr_gsic = gsic.rcp45,
 																	slr_ais = ais.rcp45,
-																	slr_te = te.rcp45
+																	slr_te = te.rcp45,
+																	slr_lws = lws.rcp45
 																	)
 	lsl.rcp85 = brick_lsl(lat.in=lat.in,
 																	lon.in=lon.in,
@@ -131,7 +137,8 @@ BRICK_projectLocalSeaLevel <- function(
 																	slr_gis = gis.rcp85,
 																	slr_gsic = gsic.rcp85,
 																	slr_ais = ais.rcp85,
-																	slr_te = te.rcp85
+																	slr_te = te.rcp85,
+																	slr_lws = lws.rcp85
 																	)
 
 	# And normalize sea-level rise
@@ -185,6 +192,8 @@ BRICK_projectLocalSeaLevel <- function(
 	                  longname = 'GIS contribution to sea level (RCP26)')
 	ais26 <- ncvar_def('AIS_RCP26', 'meters', list(dim.tproj, dim.ensemble), -999,
 	                  longname = 'AIS contribution to sea level (RCP26)')
+	lws26 <- ncvar_def('LWS_RCP26', 'meters', list(dim.tproj, dim.ensemble), -999,
+	                  longname = 'LWS contribution to sea level (RCP26)')
 	gsl26 <- ncvar_def('GlobalSeaLevel_RCP26', 'meters', list(dim.tproj, dim.ensemble), -999,
 	                  longname = 'Global sea level (RCP26)')
 	temp26 <- ncvar_def('temp_RCP26', 'deg C', list(dim.tproj, dim.ensemble), -999,
@@ -202,6 +211,8 @@ BRICK_projectLocalSeaLevel <- function(
 	                  longname = 'GIS contribution to sea level (RCP45)')
 	ais45 <- ncvar_def('AIS_RCP45', 'meters', list(dim.tproj, dim.ensemble), -999,
 	                  longname = 'AIS contribution to sea level (RCP45)')
+	lws45 <- ncvar_def('LWS_RCP45', 'meters', list(dim.tproj, dim.ensemble), -999,
+	                  longname = 'LWS contribution to sea level (RCP45)')
 	gsl45 <- ncvar_def('GlobalSeaLevel_RCP45', 'meters', list(dim.tproj, dim.ensemble), -999,
 	                  longname = 'Global sea level (RCP45)')
 	temp45 <- ncvar_def('temp_RCP45', 'deg C', list(dim.tproj, dim.ensemble), -999,
@@ -219,6 +230,8 @@ BRICK_projectLocalSeaLevel <- function(
 	                  longname = 'GIS contribution to sea level (RCP85)')
 	ais85 <- ncvar_def('AIS_RCP85', 'meters', list(dim.tproj, dim.ensemble), -999,
 	                  longname = 'AIS contribution to sea level (RCP85)')
+	lws85 <- ncvar_def('LWS_RCP85', 'meters', list(dim.tproj, dim.ensemble), -999,
+	                  longname = 'LWS contribution to sea level (RCP85)')
 	gsl85 <- ncvar_def('GlobalSeaLevel_RCP85', 'meters', list(dim.tproj, dim.ensemble), -999,
 	                  longname = 'Global sea level (RCP85)')
 	temp85 <- ncvar_def('temp_RCP85', 'deg C', list(dim.tproj, dim.ensemble), -999,
@@ -231,7 +244,7 @@ BRICK_projectLocalSeaLevel <- function(
 														gsic26, te26, gis26, ais26, temp26, ocheat26,
 														gsic45, te45, gis45, ais45, temp45, ocheat45,
 														gsic85, te85, gis85, ais85, temp85, ocheat85,
-														lat.out, lon.out),
+														lws26, lws45, lws85, lat.out, lon.out),
 											force_v4 = TRUE)
 
 	ncvar_put(outnc, lat.out, lat.in)
@@ -245,6 +258,7 @@ BRICK_projectLocalSeaLevel <- function(
 	ncvar_put(outnc, te26, te.rcp26)
 	ncvar_put(outnc, gis26, gis.rcp26)
 	ncvar_put(outnc, ais26, ais.rcp26)
+	ncvar_put(outnc, lws26, lws.rcp26)
 
 	ncvar_put(outnc, lsl45, lsl.rcp45)
 	ncvar_put(outnc, gsl45, gmsl.rcp45)
@@ -254,6 +268,7 @@ BRICK_projectLocalSeaLevel <- function(
 	ncvar_put(outnc, te45, te.rcp45)
 	ncvar_put(outnc, gis45, gis.rcp45)
 	ncvar_put(outnc, ais45, ais.rcp45)
+	ncvar_put(outnc, lws45, lws.rcp45)
 
 	ncvar_put(outnc, lsl85, lsl.rcp85)
 	ncvar_put(outnc, gsl85, gmsl.rcp85)
@@ -263,6 +278,7 @@ BRICK_projectLocalSeaLevel <- function(
 	ncvar_put(outnc, te85, te.rcp85)
 	ncvar_put(outnc, gis85, gis.rcp85)
 	ncvar_put(outnc, ais85, ais.rcp85)
+	ncvar_put(outnc, lws85, lws.rcp85)
 
 	nc_close(outnc)
 
