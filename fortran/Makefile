@@ -1,8 +1,38 @@
-# Define "all"
-all: dais.so simple.so brick_te.so gsic_magicc.so doeclim.so sneasy.so
+#### Define "all"
+###all: dais.so simple.so brick_te.so gsic_magicc.so doeclim.so sneasy.so
+
+
+
+# Platform detection
+ifeq ($(OS),Windows_NT)
+    OS_detected := Windows
+else
+    OS_detected := $(shell uname -s)
+endif
 
 # Fortran compiler:
-F90 = /usr/local/bin/gfortran # g95
+ifeq ($(OS_detected),Windows)
+    F90 = gfortran # g95
+else ifeq ($(OS_detected),Darwin) # Mac
+    F90 = /usr/local/bin/gfortran # g95
+else
+    F90 = ifort # g95
+endif
+
+# Shared library extension
+ifeq ($(OS_detected),Windows)
+    SHAREDEXT := .dll
+else
+    SHAREDEXT := .so
+endif
+
+# Define "all"
+all: dais$(SHAREDEXT) simple$(SHAREDEXT) brick_te$(SHAREDEXT) gsic_magicc$(SHAREDEXT) doeclim$(SHAREDEXT) sneasy$(SHAREDEXT)
+
+
+
+#### Fortran compiler:
+###F90 = /usr/local/bin/gfortran # g95
 
 # Directories: objpath, srcpath
 OP = ./obj
@@ -23,22 +53,22 @@ CPPFLAGS = -DMOC_NOISE
 ## The main programs/subroutines ##
 # ==============================================================
 
-dais.so: $(OP)/global.o $(OP)/dais.o $(OP)/run_dais.o
+dais$(SHAREDEXT): $(OP)/global.o $(OP)/dais.o $(OP)/run_dais.o
 	$(F90) -o $@ $(Flags) -shared $(Incl) $^
 
-simple.so: $(OP)/global.o $(OP)/simple.o $(OP)/run_simple.o
+simple$(SHAREDEXT): $(OP)/global.o $(OP)/simple.o $(OP)/run_simple.o
 	$(F90) -o $@ $(Flags) -shared $(Incl) $^
 
-brick_te.so: $(OP)/global.o $(OP)/brick_te.o $(OP)/run_brick_te.o
+brick_te$(SHAREDEXT): $(OP)/global.o $(OP)/brick_te.o $(OP)/run_brick_te.o
 	$(F90) -o $@ $(Flags) -shared $(Incl) $^
 
-gsic_magicc.so: $(OP)/global.o $(OP)/gsic_magicc.o $(OP)/run_gsic_magicc.o
+gsic_magicc$(SHAREDEXT): $(OP)/global.o $(OP)/gsic_magicc.o $(OP)/run_gsic_magicc.o
 	$(F90) -o $@ $(Flags) -shared $(Incl) $^
 
-doeclim.so: $(OP)/global.o $(OP)/doeclim.o $(OP)/run_doeclim.o
+doeclim$(SHAREDEXT): $(OP)/global.o $(OP)/doeclim.o $(OP)/run_doeclim.o
 	$(F90) -o $@ $(Flags) -shared $(Incl) $^
 
-sneasy.so: $(OP)/global.o $(OP)/sneasy.o $(OP)/CCM.o $(OP)/doeclim.o $(OP)/moc_boxmodel.o $(OP)/rndseed.o $(OP)/mt19937ar.o $(OP)/run_sneasy.o
+sneasy$(SHAREDEXT): $(OP)/global.o $(OP)/sneasy.o $(OP)/CCM.o $(OP)/doeclim.o $(OP)/moc_boxmodel.o $(OP)/rndseed.o $(OP)/mt19937ar.o $(OP)/run_sneasy.o
 	$(F90) -o $@ $(Flags) -shared $(Incl) $^
 
 # ==============================================================
