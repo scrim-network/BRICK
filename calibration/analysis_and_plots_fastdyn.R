@@ -1797,6 +1797,131 @@ nc_close(ncdata)
 
 
 
+##==============================================================================
+##==============================================================================
+## SOM Figure -- Grand Isle tide gauge data against p0*exp(-alpha*h) (Van Dantzig
+##               exponential surge distribution)
+##===========
+
+# read grand isle tide gauge data
+dat.dir <- '../data/tideGauge_GrandIsle/'
+files.tg <- list.files(path=dat.dir,pattern='csv')
+
+# all dates/times are relative to first observation (1980-11-11 16:00 GMT)
+data <- read.csv(paste(dat.dir,'CO-OPS__8761724__hr.csv',sep=''))
+origin <- as.POSIXlt(data$Date.Time, tz='GMT')[1]
+
+# first file to start the data array
+data.new <- read.csv(paste(dat.dir,files.tg[1],sep=''))
+time.new <- as.POSIXlt(data.new$Date.Time, tz='GMT')
+time.new.rel <- difftime(time.new, origin, unit='days')
+data.new[,1] <- time.new.rel
+data.all <- data.new
+
+for (ff in 2:length(files.tg)) {
+  data.new <- read.csv(paste(dat.dir,files.tg[ff],sep=''))
+  time.new <- as.POSIXlt(data.new$Date.Time, tz='GMT')
+  time.new.rel <- difftime(time.new, origin, unit='days')
+  data.new[,1] <- time.new.rel
+  data.all <- rbind(data.all,data.new)
+}
+
+# sort the tide gauge data array by the time.relative column
+# (not necessarily in order, and possibly some overlap between adjacent year files)
+data.all.sort <- data.all[order(data.all$Date.Time),]
+
+# Get water levels in mm
+data.all.sort$Water.Level <- data.all.sort$Water.Level*1000
+
+# bin by year, or otherwise make the timestamp actually useful
+# Note: to get actual datestamp back, just do data.all.sort$Date.TIme + origin
+days.year <- 365.25 # number of days in a year, on average
+nyear <- floor(as.numeric(max(data.all.sort$Date.Time)/days.year))
+
+# initialize these list arrays
+data.all.sort$Water.Level.avg <- data.all.sort$Water.Level
+data.all.sort$lsl <- data.all.sort$Water.Level
+data.all.sort$lsl.avg <- data.all.sort$Water.Level
+data.all.sort$lsl.avg.rel <- data.all.sort$Water.Level
+lsl.max <- rep(NA,nyear)  # annual block maxima
+
+# One method:
+# - Calculate annual means
+# - Subtract these off
+# - Calculate annual block maxima
+# - Fit GEV
+# Alternative method:
+# - Use NOAA/USACE SLR trend of 9.24 mm/year (https://tidesandcurrents.noaa.gov/est/curves.shtml?stnid=8761724)
+# - Subtract this SLR trend from the tidge gauge data.
+# - Normalize the result to have mean of zero.
+# - Calculate annual block maxima, fit GEV to these, as usual.
+# - Yields result which is lower than the annual means method (both are nice ways
+# to account for sea-level rise.)
+slr.rate <- 9.24/365  # sea level rise per day
+slr <- as.numeric(slr.rate*data.all.sort$Date.Time)
+
+data.all.sort$lsl <- data.all.sort$Water.Level - slr
+data.all.sort$lsl <- data.all.sort$lsl - mean(data.all.sort$lsl)
+for (tt in 1:nyear) {
+  iyear <- which(data.all.sort$Date.Time <  days.year*tt &
+                 data.all.sort$Date.Time >= days.year*(tt-1))
+  data.all.sort$lsl.avg[iyear] <- rep(mean(data.all.sort$Water.Level[iyear]),length(iyear))
+  data.all.sort$lsl.avg.rel[iyear] <- data.all.sort$Water.Level[iyear]-data.all.sort$lsl.avg[iyear]
+  # Method 1:
+  lsl.max[tt] <- max(data.all.sort$lsl.avg.rel[iyear])
+  method.name <- '-AnnMean'
+  # Method 2:
+  #lsl.max[tt] <- max(data.all.sort$lsl[iyear])
+  #method.name <- '-NOAAtrend'
+}
+
+# calculate empirical survival function (see Coles 2001, GEV section)
+esf.levels <- lsl.max[order(lsl.max)]
+esf.values <- seq(from=1, to=length(lsl.max), by=1)/(length(lsl.max)+1)
+
+
+# calculate survival functino acording to the central parameter estimates of
+# p0=0.0038 and alpha=2.6
+ntest <- 10000
+alpha.test <- rnorm(n=ntest, mean=2.6, sd=0.1)
+p0.test <- rlnorm(n=ntest, meanlog=log(0.0038), sdlog=0.25)
+height <- 8 # representative levee height (existing elevation - depth at toe,
+            # from USACE 2014, Elevations for Design of Hurricane Protection Levees
+            # and Structures Table 3-8; varies throughout this levee ring, so
+            # take about 8 feet as representative)
+height <- height*0.3048 # convert to meters
+lev.grid <- seq(from=-2000, to=2000, by=10)
+esf.grid <- mat.or.vec(length(lev.grid), ntest)
+for (i in 1:length(lev.grid)) {
+  esf.grid[i,] <- p0.test*exp(-alpha.test*((0.001*lev.grid[i])-height))
+}
+esf.grid.quantiles <- t(sapply(1:length(lev.grid), function(i) {quantile(esf.grid[i,], c(0.05, 0.5, .95))}))
+
+#plot(lev.grid, esf.grid.quantiles[,2], type='l', xlim=c(0,2000), ylim=c(0,1))
+#  lines(lev.grid, esf.grid.quantiles[,1], lty=2)
+#  lines(lev.grid, esf.grid.quantiles[,3], lty=2)
+#  points(esf.levels, (esf.values))
+
+# make a sweet plot
+pdf(paste(plotdir,'nola_dutch_approximation.pdf',sep=''),width=3.5,height=3.5,colormodel='cmyk')
+par(mfrow=c(1,1), mai=c(.8,.74,.15,.35))
+plot(lev.grid/1000, log10(esf.grid.quantiles[,2]), type='l', xlim=c(0,2), ylim=c(-2,0),
+     xlab='', ylab='', yaxt='n')
+  axis(2, at=seq(-2,0), label=parse(text=paste("10^", seq(-2,0), sep="")), las=1)
+  mtext('Survival function [1-cdf]', side=2, line=2.2)
+  mtext('Surge height [m]', side=1, line=2.2)
+  lines(lev.grid/1000, log10(esf.grid.quantiles[,1]), lty=2)
+  lines(lev.grid/1000, log10(esf.grid.quantiles[,3]), lty=2)
+  points(esf.levels/1000, log10(esf.values))
+dev.off()
+
+
+##==============================================================================
+##==============================================================================
+
+
+
+
 
 
 ##==============================================================================
