@@ -1908,7 +1908,7 @@ par(mfrow=c(1,1), mai=c(.8,.74,.15,.35))
 plot(lev.grid/1000, log10(esf.grid.quantiles[,2]), type='l', xlim=c(0,2), ylim=c(-2,0),
      xlab='', ylab='', yaxt='n')
   axis(2, at=seq(-2,0), label=parse(text=paste("10^", seq(-2,0), sep="")), las=1)
-  mtext('Survival function [1-cdf]', side=2, line=2.2)
+  mtext('Survival function [1-cdf]', side=2, line=2.4)
   mtext('Surge height [m]', side=1, line=2.2)
   lines(lev.grid/1000, log10(esf.grid.quantiles[,1]), lty=2)
   lines(lev.grid/1000, log10(esf.grid.quantiles[,3]), lty=2)
