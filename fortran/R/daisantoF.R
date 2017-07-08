@@ -115,8 +115,6 @@ daisantoF <- function(
 
   Ta.recon = (Tg-intercept.Ta2Tg)/slope.Ta2Tg   # undo linear regression Tg ~ Ta
 
-  Toc <- anto(a=anto.a, b=anto.b, Tf=Tf, Tg=Ta.recon)
-
   Contribution_AIS <- daisF(
     tstep  = tstep,
     b0     = b0,
