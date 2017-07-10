@@ -268,19 +268,16 @@ brick_model = function(parameters.in,
 			dSL.gsic= diff(gsic.out)
 			dSL.te	= diff(te.out)
 			for (i in 2:length(mod.time)) {
-				SL.couple[i] = SL.couple[i-1] + tstep*(	1.1*dSL.gis[i] +
-                                                        1.1*dSL.gsic[i]+
-														1.0*dSL.te[i]  )
+				SL.couple[i] = SL.couple[i-1] + tstep*(	1.1*dSL.gis[i-1] +
+                                                        1.1*dSL.gsic[i-1]+
+														1.0*dSL.te[i-1]  )
 			}
 		}
 
 		## Normalize
-		SL.couple = SL.couple - mean(SL.couple[ind.norm.sl])
-
 		itmp = ind.norm.data[match("sl",ind.norm.data[,1]),2]:ind.norm.data[match("sl",ind.norm.data[,1]),3]
-		SL.couple = slr.out
 		SL.couple = SL.couple - mean(SL.couple[itmp])
-		dSL.couple = c(-999,diff(slr.out))
+		dSL.couple = c(-999,diff(SL.couple))
 		include_dSLais = 0		# in coupled model, feeding AIS dSL without AIS contribution
 
 		## Check to make sure output from other models was reasonable
