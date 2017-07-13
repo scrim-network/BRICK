@@ -218,13 +218,13 @@ subroutine brick_step_forward(nstep, temp_forcing_previous, &
 
 ! AIS-DAIS
     ! sea-level changes, fingerprinted to Antarctic local
-    change_sea_level_noAIS = 1.1d0*(sl_gsic_current - sl_gsic_previous) + &
+    change_sea_level_noAIS = 1.0d0*(sl_gsic_current - sl_gsic_previous) + &
                              1.0d0*(sl_te_current   - sl_te_previous)   + &
-                             1.1d0*(sl_gis_current  - sl_gis_previous)
+                             1.0d0*(sl_gis_current  - sl_gis_previous)
                              
-    sea_level_noAIS_previous = 1.1d0*sl_gsic_previous + &
+    sea_level_noAIS_previous = 1.0d0*sl_gsic_previous + &
                                1.0d0*sl_te_previous   + &
-                               1.1d0*sl_gis_previous
+                               1.0d0*sl_gis_previous
 
     ! scale temperatures, accounting for relative to 1850
     ctmp = (Tfrz-b_anto)/a_anto
