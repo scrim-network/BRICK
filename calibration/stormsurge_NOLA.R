@@ -158,7 +158,8 @@ fprior <- function( theta, mu, sigma, lb, ub){
 
 pri.mu <- c(init$location, init$scale, init$shape)
 pri.sd <- c(54, 30, 1)
-pri.lb <- c(-Inf, -Inf, 0 )
+#pri.lb <- c(-Inf, -Inf, 0 )
+pri.lb <- c(-Inf, -Inf, -5)
 pri.ub <- c( Inf,  Inf, 5 )
 params.pri <- vector('list',4)
 params.pri[[1]] <- pri.mu
