@@ -240,7 +240,7 @@ for (dd in 1:length(data.tg)) {
 # If no thinning, then this initialization will remain
 chains_burned_thinned <- chains_burned
 
-n.sample <- 10000
+n.sample <- 12586
 
 for (dd in 1:length(data.tg)) {
   for (bb in 1:nblocks[[dd]]) {
@@ -302,6 +302,24 @@ for (dd in 1:length(data.tg)) {
   }
 }
 
+##==============================================================================
+## Get the NOLA GEV results to superimpose
+##==============================================================================
+
+filename.vandantzig.nofd <- '../output_model/VanDantzig_fd-none_2065_08May2017.nc'
+ncdata <- nc_open(filename.vandantzig.nofd)
+  heightening <- ncvar_get(ncdata, 'H')
+  parameters.nola <- ncvar_get(ncdata, 'gev_stat')
+  colnames(parameters.nola) <- c('mu','sigma','xi')
+nc_close(ncdata)
+
+returnlevel.nola <- rep(NA, nrow(parameters.nola))
+returnlevel.nola <- sapply(1:nrow(parameters.nola), function(i) {
+                                  qevd(p=0.01, loc=parameters.nola[i,1],
+                                       scale=parameters.nola[i,2],
+                                       shape=parameters.nola[i,3],
+                                       type='GEV', lower.tail=FALSE)})
+
 ## Save progress to revisit later
 print(paste('... Saving MCMC workspace results as .RData file (',filename.saveprogress,') to read and use later...',sep=''))
 save.image(file=filename.saveprogress)
@@ -321,32 +339,41 @@ for (dd in 1:length(data.tg)) {
     returnlevel.kde[[dd]][[bb]]$x <- returnlevel.kde[[dd]][[bb]]$x/1000 # convert to m from mm
   }
 }
+returnlevel.kde.nola <- density(returnlevel.nola, from=0, to=15000, n=512)
+returnlevel.kde.nola$x <- returnlevel.kde.nola$x/1000 # convert from mm to m
 
 # note - can quantify the uncertainty in the PP-year return level by checking out
 # the variance in the maximum likelihood posterior estimates?
 
-TODO
+# block years
+block.years <- cbind(data.tg[[1]]$year.max[ind.block.left.endpt[[1]]], data.tg[[1]]$year.max[ind.block.right.endpt[[1]]])
+names.block.years <- rep(NA, max(nblocks))
+for (bb in 1:length(names.block.years)) {names.block.years[bb] <- paste(block.years[bb,1],block.years[bb,2],sep='-')}
 
-par(mfrow=c(1,2))
+
+## Make the actual figure
+
+plotdir='~/Box\ Sync/Wong-Projects/BRICK_scenarios/figures/'
+pdf(paste(plotdir,'stormsurge_sensitivity_experiments.pdf',sep=''),width=7,height=3.5,colormodel='cmyk')
+par(mfrow=c(1,2), mai=c(1,.5,.15,.3))
 dd=1 # galveston
 plot(returnlevel.kde[[dd]]$block1$x, returnlevel.kde[[dd]]$block1$y,
-     type='l', lwd=2, col='darkblue', xlim=c(0,10), ylim=c(0,6e-4),
+     type='l', lwd=2, col='darkblue', xlim=c(0,10), ylim=c(0,6.1e-4),
      xlab='', ylab='', xaxt='n', yaxt='n', xaxs='i', yaxs='i', axes=FALSE)
 lines(returnlevel.kde[[dd]]$block2$x, returnlevel.kde[[dd]]$block2$y, lwd=2, col='darkcyan')
 lines(returnlevel.kde[[dd]]$block3$x, returnlevel.kde[[dd]]$block3$y, lwd=2, col='cornflowerblue')
 lines(returnlevel.kde[[dd]]$block4$x, returnlevel.kde[[dd]]$block4$y, lwd=2, col='aquamarine')
 lines(returnlevel.kde[[dd]]$block5$x, returnlevel.kde[[dd]]$block5$y, lwd=2, col='cadetblue1')
+lines(returnlevel.kde.nola$x, returnlevel.kde.nola$y, lwd=2, lty=2, col='black')
 axis(1,seq(0,15,2),cex.axis=1.2)
 u <- par("usr")
 arrows(0, u[3],0, .95*u[4], code = 2, length=.15, xpd = TRUE)
-mtext('Probability density', side=2, line=1.2, cex=1);
-mtext('100-year return level [m]\nGalveston, Texas', side=1, line=4.5, cex=1);
+mtext('Probability density', side=2, line=1, cex=1);
+mtext('100-year return level [m]\nGalveston, Texas', side=1, line=3.5, cex=1);
 mtext(side=3, text=expression(bold('   a')), line=-1, cex=.9, adj=0);
-
-# TODO -- legend() <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< TODO HERE NOW
-# TODO -- legend() <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< TODO HERE NOW
-# TODO -- legend() <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< TODO HERE NOW
-
+text(4.2,5.8e-4, 'Years of data:', pos=4)
+legend(4, 5.8e-4, c(names.block.years, 'New Orleans', '(1980-2016)'), lty=c(1,1,1,1,1,2, NA), lwd=2, cex=1.0, bty='n',
+       col=c('darkblue','darkcyan','cornflowerblue','aquamarine','cadetblue1','black'))
 dd=2 # pensacola
 plot(returnlevel.kde[[dd]]$block1$x, returnlevel.kde[[dd]]$block1$y,
      type='l', lwd=2, col='darkblue', xlim=c(0,10), ylim=c(0,1.1e-3),
@@ -354,14 +381,14 @@ plot(returnlevel.kde[[dd]]$block1$x, returnlevel.kde[[dd]]$block1$y,
 lines(returnlevel.kde[[dd]]$block2$x, returnlevel.kde[[dd]]$block2$y, lwd=2, col='darkcyan')
 lines(returnlevel.kde[[dd]]$block3$x, returnlevel.kde[[dd]]$block3$y, lwd=2, col='cornflowerblue')
 lines(returnlevel.kde[[dd]]$block4$x, returnlevel.kde[[dd]]$block4$y, lwd=2, col='aquamarine')
+lines(returnlevel.kde.nola$x, returnlevel.kde.nola$y, lwd=2, lty=2, col='black')
 axis(1,seq(0,15,2),cex.axis=1.2)
 u <- par("usr")
 arrows(0, u[3],0, .95*u[4], code = 2, length=.15, xpd = TRUE)
-mtext('Probability density', side=2, line=1.2, cex=1);
-mtext('100-year return level [m]\nPensacola, Florida', side=1, line=4.5, cex=1);
+mtext('Probability density', side=2, line=1, cex=1);
+mtext('100-year return level [m]\nPensacola, Florida', side=1, line=3.5, cex=1);
 mtext(side=3, text=expression(bold('   b')), line=-1, cex=.9, adj=0);
-
-
+dev.off()
 
 ##
 ## End
