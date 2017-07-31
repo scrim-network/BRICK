@@ -57,9 +57,6 @@ col85 <- c(255, 0, 0)/255
 ## Where would you like to save the plots?
 plotdir='~/Box\ Sync/Wong-Projects/BRICK_scenarios/figures/'
 
-## Get nice plotting colors: mycol array
-source('../Useful/colorblindPalette.R')
-
 ##==============================================================================
 
 

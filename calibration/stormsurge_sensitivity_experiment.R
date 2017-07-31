@@ -327,8 +327,6 @@ print('...done.')
 
 ##==============================================================================
 ## Get kernel density estimates for each of the distributions and plot
-## Figure -- two panels (Galveston and Pensacola); each panel has the distributions
-##           of 100-year return level as estimated using each block of 35 years
 ##==============================================================================
 
 returnlevel.kde <- vector('list', length(data.tg)); names(returnlevel.kde) <- names(data.tg)
@@ -350,8 +348,26 @@ block.years <- cbind(data.tg[[1]]$year.max[ind.block.left.endpt[[1]]], data.tg[[
 names.block.years <- rep(NA, max(nblocks))
 for (bb in 1:length(names.block.years)) {names.block.years[bb] <- paste(block.years[bb,1],block.years[bb,2],sep='-')}
 
+##==============================================================================
+## Box-whisker plot for diagnosing the need for non-stationary approach
+##==============================================================================
 
-## Make the actual figure
+for (dd in 1:length(data.tg)) {
+  for (bb in 1:nblocks[[dd]]) {
+    ind.thisblock <- which(data.tg[[dd]]$year <= data.tg[[dd]]$year.max[ind.block.right.endpt[[dd]][bb]] &
+                           data.tg[[dd]]$year >= data.tg[[dd]]$year.max[ind.block.left.endpt[[dd]][bb]])
+    data.tg[[dd]]$blocks[[bb]]$lsl.norm <- data.tg[[dd]]$lsl.norm[ind.thisblock]
+  }
+}
+
+##==============================================================================
+## Make the actual figures
+##==============================================================================
+
+##
+## Figure -- two panels (Galveston and Pensacola); each panel has the distributions
+##           of 100-year return level as estimated using each block of 35 years
+##
 
 plotdir='~/Box\ Sync/Wong-Projects/BRICK_scenarios/figures/'
 pdf(paste(plotdir,'stormsurge_sensitivity_experiments.pdf',sep=''),width=7,height=3.5,colormodel='cmyk')
@@ -391,5 +407,19 @@ mtext(side=3, text=expression(bold('   b')), line=-1, cex=.9, adj=0);
 dev.off()
 
 ##
+## Figure -- two panels (Galveston and Pensacola); each panel has the box-whisker
+##           plot within each block of the detrended/processed hourly tide gauge
+##           data from that block; to show potential trends
+##
+
+# TODO -- use data.tg[[dd]]$blocks[[bb]]$lsl.norm quantiles to define boxes
+
+# TODO -- to get better resolution here for trends, may want to stagger the blocks by 10 years?
+# Maybe shoot for twice as many blocks, but only present a subset (for aesthetics)
+# (so stagger 8 years, and we can still present these)
+
+##
+##==============================================================================
 ## End
+##==============================================================================
 ##
