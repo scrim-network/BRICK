@@ -8,6 +8,8 @@
 ## Questions? Tony Wong (twong@psu.edu)
 ##==============================================================================
 
+setwd('~/codes/BRICK/calibration')
+
 rm(list=ls())
 
 nnode_mcmc000 <- 4
@@ -16,6 +18,9 @@ gamma_mcmc000 <- 0.5
 
 library(adaptMCMC)
 library(extRemes)
+library(date)
+library(Hmisc)
+library(zoo)
 
 # Name the saved progress RData workspace image file
 today <- Sys.Date(); today=format(today,format="%d%b%Y")
@@ -74,7 +79,7 @@ for (dd in 1:length(data.tg)) {
 ##==============================================================================
 
 block.size   <- 35 # how many years in each block?
-block.offset <- 16 # how many years are the blocks shifted relative to neighboring blocks?
+block.offset <- 8 # how many years are the blocks shifted relative to neighboring blocks?
 
 ind.block.right.endpt <- vector('list', length(data.tg)); names(ind.block.right.endpt) <- names(data.tg)
 ind.block.left.endpt <- vector('list', length(data.tg)); names(ind.block.left.endpt) <- names(data.tg)
@@ -349,18 +354,6 @@ names.block.years <- rep(NA, max(nblocks))
 for (bb in 1:length(names.block.years)) {names.block.years[bb] <- paste(block.years[bb,1],block.years[bb,2],sep='-')}
 
 ##==============================================================================
-## Box-whisker plot for diagnosing the need for non-stationary approach
-##==============================================================================
-
-for (dd in 1:length(data.tg)) {
-  for (bb in 1:nblocks[[dd]]) {
-    ind.thisblock <- which(data.tg[[dd]]$year <= data.tg[[dd]]$year.max[ind.block.right.endpt[[dd]][bb]] &
-                           data.tg[[dd]]$year >= data.tg[[dd]]$year.max[ind.block.left.endpt[[dd]][bb]])
-    data.tg[[dd]]$blocks[[bb]]$lsl.norm <- data.tg[[dd]]$lsl.norm[ind.thisblock]
-  }
-}
-
-##==============================================================================
 ## Make the actual figures
 ##==============================================================================
 
@@ -406,10 +399,23 @@ mtext('100-year return level [m]\nPensacola, Florida', side=1, line=3.5, cex=1);
 mtext(side=3, text=expression(bold('   b')), line=-1, cex=.9, adj=0);
 dev.off()
 
+##==============================================================================
+## Box-whisker plot for diagnosing the need for non-stationary approach
+##==============================================================================
+
+for (dd in 1:length(data.tg)) {
+  for (bb in 1:nblocks[[dd]]) {
+    ind.thisblock <- which(data.tg[[dd]]$year <= data.tg[[dd]]$year.max[ind.block.right.endpt[[dd]][bb]] &
+                           data.tg[[dd]]$year >= data.tg[[dd]]$year.max[ind.block.left.endpt[[dd]][bb]])
+    data.tg[[dd]]$blocks[[bb]]$lsl.norm <- data.tg[[dd]]$lsl.norm[ind.thisblock]
+  }
+}
+
+
 ##
-## Figure -- two panels (Galveston and Pensacola); each panel has the box-whisker
-##           plot within each block of the detrended/processed hourly tide gauge
-##           data from that block; to show potential trends
+## Figure -- two panels (top/bottom, Galveston and Pensacola); each panel has
+##           the box-whisker plot within each block of the detrended/processed
+##           hourly tide gauge data from that block; to show potential trends
 ##
 
 # TODO -- use data.tg[[dd]]$blocks[[bb]]$lsl.norm quantiles to define boxes
