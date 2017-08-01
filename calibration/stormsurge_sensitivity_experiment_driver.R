@@ -1,9 +1,17 @@
 ##==============================================================================
-##  stormsurge_sensitivity_experiment.R
+##  stormsurge_sensitivity_experiment_driver.R
 ##
 ##  Estimate storm surge GEV parameters for Galveston, Texas and Pensacola,
 ##  Florida using 35 year blocks and assess how sensitive the parameters are to
 ##  data availability/length.
+##
+##  This version for submitting on HPC using:
+##    qsub data_sensitivity_run.pbs
+##
+##  You will need to fix the 'setwd(...)' call below to match your local directory
+##  structure, and perhaps need to 'install.packages(...)' for some of the libraries
+##  that you may not have (all of the ones you should need are in the initial
+##  section of code just below this note).
 ##
 ## Questions? Tony Wong (twong@psu.edu)
 ##==============================================================================
@@ -369,70 +377,6 @@ for (dd in 1:length(data.tg)) {
 }
 
 save.image(file=filename.saveprogress)
-
-
-if (FALSE) { # BEGIN BLOCK OF PLOTTING-SPECIFIC CODES #########################################################################
-
-
-##==============================================================================
-## Make the actual figures
-##==============================================================================
-
-##
-## Figure -- two panels (Galveston and Pensacola); each panel has the distributions
-##           of 100-year return level as estimated using each block of 35 years
-##
-
-plotdir='~/Box\ Sync/Wong-Projects/BRICK_scenarios/figures/'
-pdf(paste(plotdir,'stormsurge_sensitivity_experiments.pdf',sep=''),width=7,height=3.5,colormodel='cmyk')
-par(mfrow=c(1,2), mai=c(1,.5,.15,.3))
-dd=1 # galveston
-plot(returnlevel.kde[[dd]]$block1$x, returnlevel.kde[[dd]]$block1$y,
-     type='l', lwd=2, col='darkblue', xlim=c(0,10), ylim=c(0,6.1e-4),
-     xlab='', ylab='', xaxt='n', yaxt='n', xaxs='i', yaxs='i', axes=FALSE)
-lines(returnlevel.kde[[dd]]$block2$x, returnlevel.kde[[dd]]$block2$y, lwd=2, col='darkcyan')
-lines(returnlevel.kde[[dd]]$block3$x, returnlevel.kde[[dd]]$block3$y, lwd=2, col='cornflowerblue')
-lines(returnlevel.kde[[dd]]$block4$x, returnlevel.kde[[dd]]$block4$y, lwd=2, col='aquamarine')
-lines(returnlevel.kde[[dd]]$block5$x, returnlevel.kde[[dd]]$block5$y, lwd=2, col='cadetblue1')
-lines(returnlevel.kde.nola$x, returnlevel.kde.nola$y, lwd=2, lty=2, col='black')
-axis(1,seq(0,15,2),cex.axis=1.2)
-u <- par("usr")
-arrows(0, u[3],0, .95*u[4], code = 2, length=.15, xpd = TRUE)
-mtext('Probability density', side=2, line=1, cex=1);
-mtext('100-year return level [m]\nGalveston, Texas', side=1, line=3.5, cex=1);
-mtext(side=3, text=expression(bold('   a')), line=-1, cex=.9, adj=0);
-text(4.2,5.8e-4, 'Years of data:', pos=4)
-legend(4, 5.8e-4, c(names.block.years, 'New Orleans', '(1980-2016)'), lty=c(1,1,1,1,1,2, NA), lwd=2, cex=1.0, bty='n',
-       col=c('darkblue','darkcyan','cornflowerblue','aquamarine','cadetblue1','black'))
-dd=2 # pensacola
-plot(returnlevel.kde[[dd]]$block1$x, returnlevel.kde[[dd]]$block1$y,
-     type='l', lwd=2, col='darkblue', xlim=c(0,10), ylim=c(0,1.1e-3),
-     xlab='', ylab='', xaxt='n', yaxt='n', xaxs='i', yaxs='i', axes=FALSE)
-lines(returnlevel.kde[[dd]]$block2$x, returnlevel.kde[[dd]]$block2$y, lwd=2, col='darkcyan')
-lines(returnlevel.kde[[dd]]$block3$x, returnlevel.kde[[dd]]$block3$y, lwd=2, col='cornflowerblue')
-lines(returnlevel.kde[[dd]]$block4$x, returnlevel.kde[[dd]]$block4$y, lwd=2, col='aquamarine')
-lines(returnlevel.kde.nola$x, returnlevel.kde.nola$y, lwd=2, lty=2, col='black')
-axis(1,seq(0,15,2),cex.axis=1.2)
-u <- par("usr")
-arrows(0, u[3],0, .95*u[4], code = 2, length=.15, xpd = TRUE)
-mtext('Probability density', side=2, line=1, cex=1);
-mtext('100-year return level [m]\nPensacola, Florida', side=1, line=3.5, cex=1);
-mtext(side=3, text=expression(bold('   b')), line=-1, cex=.9, adj=0);
-dev.off()
-
-} # END BLOCK OF PLOTTING-SPECIFIC CODES #########################################################################
-
-##
-## Figure -- two panels (top/bottom, Galveston and Pensacola); each panel has
-##           the box-whisker plot within each block of the detrended/processed
-##           hourly tide gauge data from that block; to show potential trends
-##
-
-# TODO -- use data.tg[[dd]]$blocks[[bb]]$lsl.norm quantiles to define boxes
-
-# TODO -- to get better resolution here for trends, may want to stagger the blocks by 10 years?
-# Maybe shoot for twice as many blocks, but only present a subset (for aesthetics)
-# (so stagger 8 years, and we can still present these)
 
 ##
 ##==============================================================================
