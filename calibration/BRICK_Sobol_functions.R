@@ -695,7 +695,7 @@ text(-2.7, -2.7,'First-order', cex=0.9)
          ,adj = c(1,0.5))
     }
 
-text(0, -2.7,'Total-order', cex=0.9)
+text(0, -2.7,'Total sensitivity', cex=0.9)
 
   # Lines (Second Order)
   for(i in 1:length(xloc)){

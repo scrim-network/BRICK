@@ -85,7 +85,7 @@ lws.sd000   <- 0.18           # mm/y
 ## Read the calibrated parameter sets (after rejection sampling to GMSL data)
 library(ncdf4)
 
-filename.parameters <- '~/codes/BRICK/output_calibration/BRICK_postcalibratedParameters_fd-gamma_20Apr2017.nc'
+filename.parameters <- '~/codes/BRICK/output_calibration/BRICK_postcalibratedParameters_fd-gamma_08May2017.nc'
 ncdata <- nc_open(filename.parameters)
 parnames.brick   <-   ncvar_get(ncdata, 'parnames')
 parameters.brick <- t(ncvar_get(ncdata, 'BRICK_parameters'))

@@ -58,10 +58,10 @@ dd=1 # galveston
 plot(returnlevel.kde[[dd]]$block1$x, returnlevel.kde[[dd]]$block1$y,
      type='l', lwd=2, col='darkblue', xlim=c(0,10), ylim=c(0,6.1e-4),
      xlab='', ylab='', xaxt='n', yaxt='n', xaxs='i', yaxs='i', axes=FALSE)
-lines(returnlevel.kde[[dd]]$block2$x, returnlevel.kde[[dd]]$block2$y, lwd=2, col='darkcyan')
-lines(returnlevel.kde[[dd]]$block3$x, returnlevel.kde[[dd]]$block3$y, lwd=2, col='cornflowerblue')
-lines(returnlevel.kde[[dd]]$block4$x, returnlevel.kde[[dd]]$block4$y, lwd=2, col='aquamarine')
-lines(returnlevel.kde[[dd]]$block5$x, returnlevel.kde[[dd]]$block5$y, lwd=2, col='cadetblue1')
+lines(returnlevel.kde[[dd]]$block3$x, returnlevel.kde[[dd]]$block3$y, lwd=2, col='darkcyan')
+lines(returnlevel.kde[[dd]]$block5$x, returnlevel.kde[[dd]]$block5$y, lwd=2, col='cornflowerblue')
+lines(returnlevel.kde[[dd]]$block7$x, returnlevel.kde[[dd]]$block7$y, lwd=2, col='aquamarine')
+lines(returnlevel.kde[[dd]]$block9$x, returnlevel.kde[[dd]]$block9$y, lwd=2, col='cadetblue1')
 lines(returnlevel.kde.nola$x, returnlevel.kde.nola$y, lwd=2, lty=2, col='black')
 axis(1,seq(0,15,2),cex.axis=1.2)
 u <- par("usr")
@@ -70,15 +70,15 @@ mtext('Probability density', side=2, line=1, cex=1);
 mtext('100-year return level [m]\nGalveston, Texas', side=1, line=3.5, cex=1);
 mtext(side=3, text=expression(bold('   a')), line=-1, cex=.9, adj=0);
 text(4.2,5.8e-4, 'Years of data:', pos=4)
-legend(4, 5.8e-4, c(names.block.years, 'New Orleans', '(1980-2016)'), lty=c(1,1,1,1,1,2, NA), lwd=2, cex=1.0, bty='n',
+legend(4, 5.8e-4, c(names.block.years[c(1,3,5,7,9)], 'New Orleans', '(1980-2016)'), lty=c(1,1,1,1,1,2, NA), lwd=2, cex=1.0, bty='n',
        col=c('darkblue','darkcyan','cornflowerblue','aquamarine','cadetblue1','black'))
 dd=2 # pensacola
 plot(returnlevel.kde[[dd]]$block1$x, returnlevel.kde[[dd]]$block1$y,
      type='l', lwd=2, col='darkblue', xlim=c(0,10), ylim=c(0,1.1e-3),
      xlab='', ylab='', xaxt='n', yaxt='n', xaxs='i', yaxs='i', axes=FALSE)
-lines(returnlevel.kde[[dd]]$block2$x, returnlevel.kde[[dd]]$block2$y, lwd=2, col='darkcyan')
-lines(returnlevel.kde[[dd]]$block3$x, returnlevel.kde[[dd]]$block3$y, lwd=2, col='cornflowerblue')
-lines(returnlevel.kde[[dd]]$block4$x, returnlevel.kde[[dd]]$block4$y, lwd=2, col='aquamarine')
+lines(returnlevel.kde[[dd]]$block3$x, returnlevel.kde[[dd]]$block3$y, lwd=2, col='darkcyan')
+lines(returnlevel.kde[[dd]]$block5$x, returnlevel.kde[[dd]]$block5$y, lwd=2, col='cornflowerblue')
+lines(returnlevel.kde[[dd]]$block7$x, returnlevel.kde[[dd]]$block7$y, lwd=2, col='aquamarine')
 lines(returnlevel.kde.nola$x, returnlevel.kde.nola$y, lwd=2, lty=2, col='black')
 axis(1,seq(0,15,2),cex.axis=1.2)
 u <- par("usr")
@@ -87,10 +87,6 @@ mtext('Probability density', side=2, line=1, cex=1);
 mtext('100-year return level [m]\nPensacola, Florida', side=1, line=3.5, cex=1);
 mtext(side=3, text=expression(bold('   b')), line=-1, cex=.9, adj=0);
 dev.off()
-
-
-## <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< TODO need to fix this one for the
-## <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< TODO increased number of blocks
 
 
 ##==============================================================================
@@ -134,12 +130,12 @@ block.years.center.nola <- max(block.years.center) + median(abs(diff(block.years
 ## The actual figure
 
 pdf(paste(plotdir,'stormsurge_sensitivity_boxwhisker.pdf',sep=''),width=4,height=6,colormodel='cmyk')
-par(mfrow=c(2,1), mai=c(.8,.9,.15,.2))
+par(mfrow=c(2,1), mai=c(.8,.7,.15,.2))
 halfwidth <- 2 # half the width of the boxes, in years
 dd=1 # galveston
 # put the first median bar down, to get hte plot started
 plot(c(block.years.center[1]-halfwidth, block.years.center[1]+halfwidth), rep(returnlevel.quantiles[[dd]][1,'q50'],2),
-     type='l', lwd=3, col='black', xlim=c(1920,2007), ylim=c(0,21), xlab='', ylab='', las=1)
+     type='l', lwd=3, col='black', xlim=c(1920,2000), ylim=c(0,21), xlab='', ylab='', las=1)
 # now add the darker 25-75% range polygon before the median bars, ...
 for (bb in 1:nblocks[[dd]]) {
     times.beg.end <- c(block.years.center[bb]-halfwidth, block.years.center[bb]+halfwidth)
@@ -156,23 +152,24 @@ for (bb in 1:nblocks[[dd]]) {
 for (bb in 1:nblocks[[dd]]) {lines(c(block.years.center[bb]-halfwidth, block.years.center[bb]+halfwidth),
                                    rep(returnlevel.quantiles[[dd]][bb,'q50'],2), lwd=3, col='black')}
 # finally, add the NOLA data on the far right
-lines(c(2000,2000), c(-1000,1000), lty=3, lwd=2, col='black')
-text(2002, 7, 'New Orleans', srt=90, pos=4)
-times.beg.end <- c(block.years.center.nola-halfwidth, block.years.center.nola+halfwidth)
-polygon(c(times.beg.end,rev(times.beg.end)), c(returnlevel.quantiles.nola[c('q05','q05')],rev(returnlevel.quantiles.nola[c('q95','q95')])),
-        col='gray65', border=NA);
-polygon(c(times.beg.end,rev(times.beg.end)), c(returnlevel.quantiles.nola[c('q25','q25')],rev(returnlevel.quantiles.nola[c('q75','q75')])),
-        col='gray25', border=NA);
-lines(c(block.years.center.nola-halfwidth, block.years.center.nola+halfwidth),
-      rep(returnlevel.quantiles.nola['q50'],2), lwd=3, col='black')
+#lines(c(2000,2000), c(-1000,1000), lty=3, lwd=2, col='black')
+#text(2002, 7, 'New Orleans', srt=90, pos=4)
+#times.beg.end <- c(block.years.center.nola-halfwidth, block.years.center.nola+halfwidth)
+#polygon(c(times.beg.end,rev(times.beg.end)), c(returnlevel.quantiles.nola[c('q05','q05')],rev(returnlevel.quantiles.nola[c('q95','q95')])),
+#        col='gray65', border=NA);
+#polygon(c(times.beg.end,rev(times.beg.end)), c(returnlevel.quantiles.nola[c('q25','q25')],rev(returnlevel.quantiles.nola[c('q75','q75')])),
+#        col='gray25', border=NA);
+#lines(c(block.years.center.nola-halfwidth, block.years.center.nola+halfwidth),
+#      rep(returnlevel.quantiles.nola['q50'],2), lwd=3, col='black')
+text(1960, 20, 'Galveston, Texas', pos=4)
 mtext('Year', side=1, line=2.4, cex=1);
-mtext('100-year return level [m]\nGalveston, Texas', side=2, line=2.2, cex=1);
+mtext('100-year return level [m]', side=2, line=2.2, cex=1);
 mtext(side=3, text=expression(bold('   a')), line=-1, cex=1, adj=0);
 
 dd=2 # pensacola
 # first median to get it started
 plot(c(block.years.center[1]-halfwidth, block.years.center[1]+halfwidth), rep(returnlevel.quantiles[[dd]][1,'q50'],2),
-     type='l', lwd=3, col='black', xlim=c(1920,2007), ylim=c(0,21), xlab='', ylab='', las=1)
+     type='l', lwd=3, col='black', xlim=c(1920,2000), ylim=c(0,21), xlab='', ylab='', las=1)
 # now add the darker 25-75% range polygon before the median bars, ...
 for (bb in 1:nblocks[[dd]]) {
     times.beg.end <- c(block.years.center[bb]-halfwidth, block.years.center[bb]+halfwidth)
@@ -189,17 +186,18 @@ for (bb in 1:nblocks[[dd]]) {
 for (bb in 1:nblocks[[dd]]) {lines(c(block.years.center[bb]-halfwidth, block.years.center[bb]+halfwidth),
                                    rep(returnlevel.quantiles[[dd]][bb,'q50'],2), lwd=3, col='black')}
 # finally, add the NOLA data on the far right
-lines(c(2000,2000), c(-1000,1000), lty=3, lwd=2, col='black')
-text(2002, 7, 'New Orleans', srt=90, pos=4)
-times.beg.end <- c(block.years.center.nola-halfwidth, block.years.center.nola+halfwidth)
-polygon(c(times.beg.end,rev(times.beg.end)), c(returnlevel.quantiles.nola[c('q05','q05')],rev(returnlevel.quantiles.nola[c('q95','q95')])),
-       col='gray65', border=NA);
-polygon(c(times.beg.end,rev(times.beg.end)), c(returnlevel.quantiles.nola[c('q25','q25')],rev(returnlevel.quantiles.nola[c('q75','q75')])),
-       col='gray25', border=NA);
-lines(c(block.years.center.nola-halfwidth, block.years.center.nola+halfwidth),
-     rep(returnlevel.quantiles.nola['q50'],2), lwd=3, col='black')
+#lines(c(2000,2000), c(-1000,1000), lty=3, lwd=2, col='black')
+#text(2002, 7, 'New Orleans', srt=90, pos=4)
+#times.beg.end <- c(block.years.center.nola-halfwidth, block.years.center.nola+halfwidth)
+#polygon(c(times.beg.end,rev(times.beg.end)), c(returnlevel.quantiles.nola[c('q05','q05')],rev(returnlevel.quantiles.nola[c('q95','q95')])),
+#       col='gray65', border=NA);
+#polygon(c(times.beg.end,rev(times.beg.end)), c(returnlevel.quantiles.nola[c('q25','q25')],rev(returnlevel.quantiles.nola[c('q75','q75')])),
+#       col='gray25', border=NA);
+#lines(c(block.years.center.nola-halfwidth, block.years.center.nola+halfwidth),
+#     rep(returnlevel.quantiles.nola['q50'],2), lwd=3, col='black')
+text(1960, 20, 'Pensacola, Florida', pos=4)
 mtext('Year', side=1, line=2.4, cex=1);
-mtext('100-year return level [m]\nPensacola, Florida', side=2, line=2.2, cex=1);
+mtext('100-year return level [m]', side=2, line=2.2, cex=1);
 mtext(side=3, text=expression(bold('   b')), line=-1, cex=1, adj=0);
 dev.off()
 

@@ -22,6 +22,8 @@
 ## along with BRICK.  If not, see <http://www.gnu.org/licenses/>.
 ##==============================================================================
 
+setwd('~/codes/BRICK/R')
+
 rm(list=ls())
 
 ## Initial set-up
@@ -237,25 +239,29 @@ for (rcp in scen.rcp) {
     for (ss in scen.ss) {
       sf.level.all[[rcp]][[ais]][[ss]] <- mat.or.vec(n.ensemble[[ais]], n.lev)
       sf.surge.all[[rcp]][[ais]][[ss]] <- mat.or.vec(n.ensemble[[ais]], n.lev)
-      for (sow in 1:n.ensemble[[ais]]) {
-        # note that the GEV returns levels in mm, so /1000
-        sf.level.all[[rcp]][[ais]][[ss]][sow,] <- (1+surge.factor[[ss]][sow])*(lsl[[rcp]][[ais]][iproj,sow]-lsl[[rcp]][[ais]][inorm,sow]) +
-                                                  slr.subs[sow] +
-                                                  0.001*qgev(ecdf.vals, xi=gev.stat[sow,'shape'], mu=gev.stat[sow,'location'], beta=gev.stat[sow,'scale'])
-        sf.surge.all[[rcp]][[ais]][[ss]][sow,] <- surge.factor[[ss]][sow]*(lsl[[rcp]][[ais]][iproj,sow]-lsl[[rcp]][[ais]][inorm,sow]) +
-                                                  0.001*qgev(ecdf.vals, xi=gev.stat[sow,'shape'], mu=gev.stat[sow,'location'], beta=gev.stat[sow,'scale'])
-      }
+      # note that the GEV returns levels in mm, so /1000
+      sf.level.all[[rcp]][[ais]][[ss]] <- t(sapply(1:n.ensemble[[ais]], function(sow) {(1+surge.factor[[ss]][sow])*(lsl[[rcp]][[ais]][iproj,sow]-lsl[[rcp]][[ais]][inorm,sow]) +
+                                            slr.subs[sow] +
+                                            0.001*qgev(ecdf.vals, xi=gev.stat[sow,'shape'], mu=gev.stat[sow,'location'], beta=gev.stat[sow,'scale'])}))
+      sf.surge.all[[rcp]][[ais]][[ss]] <- t(sapply(1:n.ensemble[[ais]], function(sow) {surge.factor[[ss]][sow]*(lsl[[rcp]][[ais]][iproj,sow]-lsl[[rcp]][[ais]][inorm,sow]) +
+                                            0.001*qgev(ecdf.vals, xi=gev.stat[sow,'shape'], mu=gev.stat[sow,'location'], beta=gev.stat[sow,'scale'])}))
       # SOW is the first dimension (row) of level, so apply median to each column
       sf.level[[rcp]][[ais]][[ss]] <- apply(sf.level.all[[rcp]][[ais]][[ss]], 2, median)
       sf.surge[[rcp]][[ais]][[ss]] <- apply(sf.surge.all[[rcp]][[ais]][[ss]], 2, median)
+
+      # on a 16-GB RAM machine, you will probably kill your memory if you do not
+      # clear out the old results for all of the end members (especially as the
+      # ensembles become larger than 1000-10000...). you do not need them anyway
+      sf.level.all[[rcp]][[ais]][[ss]] <- NULL
+      sf.surge.all[[rcp]][[ais]][[ss]] <- NULL
     }
-    tmp <- lsl[[rcp]][[ais]][iproj,]-lsl[[rcp]][[ais]][inorm,]
-    sf.sealev[[rcp]][[ais]] <- tmp[order(tmp)]
+    sl.tmp <- lsl[[rcp]][[ais]][iproj,]-lsl[[rcp]][[ais]][inorm,]
+    sf.sealev[[rcp]][[ais]] <- sl.tmp[order(sl.tmp)]
   }
 }
-
 # Save RData image file to resume later?
-#save.image(file = "BRICK_scenarios_analysis.RData")
+save.image(file = "BRICK_scenarios_analysis.RData")
+
 
 lsl.lower <- 0
 lsl.upper <- 5
@@ -625,6 +631,8 @@ lines(c(5000,5000),c(-100,19),lty=6, lwd=1.5, col=rgb(mycol[3,1],mycol[3,2],myco
 
 dev.off()
 
+
+
 ##==============================================================================
 ## Analysis of the high-risk upper tails of the probabilistic return period
 ## estimates:
@@ -655,7 +663,7 @@ thing1 <- preturn$rcp26$uniform$st[1,]
 thing2 <- thing1[order(thing1)]
 print(paste('Fraction of SOW in RCP2.6, no AIS FD, stationary storm surge that miss 100-year protection: ',ecdf.vals[which.min(abs(thing2-100))],sep=''))
 
-thing1 <- preturn$rcp85$gamma$ns[1,]
+thing1 <- preturn$rcp85$uniform$ns[1,]
 thing2 <- thing1[order(thing1)]
 print(paste('Fraction of SOW in RCP8.5, gamma FD priors, non-stationary storm surge that miss 100-year protection: ',ecdf.vals[which.min(abs(thing2-100))],sep=''))
 
@@ -664,7 +672,7 @@ thing1 <- preturn$rcp26$uniform$st[1,]
 thing2 <- thing1[order(thing1)]
 print(paste('Fraction of SOW in RCP2.6, no AIS FD, stationary storm surge that miss 500-year protection: ',ecdf.vals[which.min(abs(thing2-500))],sep=''))
 
-thing1 <- preturn$rcp85$gamma$ns[1,]
+thing1 <- preturn$rcp85$uniform$ns[1,]
 thing2 <- thing1[order(thing1)]
 print(paste('Fraction of SOW in RCP8.5, gamma FD priors, non-stationary storm surge that miss 500-year protection: ',ecdf.vals[which.min(abs(thing2-500))],sep=''))
 
@@ -804,7 +812,14 @@ dev.off()
 ## These are generated separately in BRICK_Sobol_plotting.R
 
 ##==============================================================================
+
+##==========
+## FIGURE S6  Generated using stormsurge_sensitivity_experiment_analysis.R
+## FIGURE S7  Generated using stormsurge_sensitivity_experiment_analysis.R
+##==========
+
 ##==============================================================================
+
 
 
 
