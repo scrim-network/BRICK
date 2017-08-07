@@ -43,8 +43,8 @@ rm(list=ls())
 
 control <- FALSE
 noGEV <- FALSE
-noHR <- FALSE
-noRCP <- TRUE
+noHR <- TRUE
+noRCP <- FALSE
 
 plotdir <- '~/Box\ Sync/Wong-Projects/BRICK_scenarios/figures/'
 
@@ -52,16 +52,16 @@ if(control) {
     # Set number of parameters being analyzed
     n_params <- 41
     # Set Sobol indices file names
-    Sobol_file_1 <- "../output_calibration/BRICK_Sobol-1-tot_22Apr2017-Build-AIS-GEV-2065.txt"
-    Sobol_file_2 <- "../output_calibration/BRICK_Sobol-2_22Apr2017-Build-AIS-GEV-2065.txt"
+    Sobol_file_1 <- "../output_calibration/BRICK_Sobol-1-tot_04Aug2017-Build-AIS-GEV-2065.txt"
+    Sobol_file_2 <- "../output_calibration/BRICK_Sobol-2_04Aug2017-Build-AIS-GEV-2065.txt"
 } else if(noGEV) {
     n_params <- 38
-    Sobol_file_1 <- "../output_calibration/BRICK_Sobol-1-tot_22Apr2017-Build-AIS-2065.txt"
-    Sobol_file_2 <- "../output_calibration/BRICK_Sobol-2_22Apr2017-Build-AIS-2065.txt"
+    Sobol_file_1 <- "../output_calibration/BRICK_Sobol-1-tot_04Aug2017-Build-AIS-2065.txt"
+    Sobol_file_2 <- "../output_calibration/BRICK_Sobol-2_04Aug2017-Build-AIS-2065.txt"
 } else if(noHR) {
     n_params <- 39
-    Sobol_file_1 <- "../output_calibration/BRICK_Sobol-1-tot_16Apr2017-Build-GEV-2065.txt"
-    Sobol_file_2 <- "../output_calibration/BRICK_Sobol-2_16Apr2017-Build-GEV-2065.txt"
+    Sobol_file_1 <- "../output_calibration/BRICK_Sobol-1-tot_06Aug2017-Build-GEV-2065.txt"
+    Sobol_file_2 <- "../output_calibration/BRICK_Sobol-2_06Aug2017-Build-GEV-2065.txt"
 } else if(noRCP) {
     n_params <- 40
     Sobol_file_1 <- "../output_calibration/BRICK_Sobol-1-tot_26Apr2017-Build-AIS-GEV-RCP85-2065.txt"
