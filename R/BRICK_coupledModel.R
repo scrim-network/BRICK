@@ -54,7 +54,8 @@ brick_model = function(parameters.in,
                        ind.norm.data = NULL,
                        ind.norm.sl = NULL,
                        luse.brick,
-                       i0
+                       i0,
+                       l.aisfastdy=TRUE
 ){
 
   # Initialize the list of output (do NOT grow lists/arrays in R)
@@ -255,6 +256,13 @@ brick_model = function(parameters.in,
     c =parameters.in[match("c" ,parnames.in)]
     b0 =parameters.in[match("b0" ,parnames.in)]
     slope =parameters.in[match("slope" ,parnames.in)]
+    if(l.aisfastdy) {
+      Tcrit = parameters.in[match("Tcrit",parnames.in)]
+      lambda = parameters.in[match("lambda",parnames.in)]
+    } else {
+      Tcrit = NULL
+      lambda = NULL
+    }
 
 		## Calculate the sea level updated from the other model components'
 		## contributions. From Shaffer (2014), SL should be relative to 1961-1990
@@ -285,16 +293,17 @@ brick_model = function(parameters.in,
       slr.out=rep(NA,length(mod.time))
       brick.out[[outcnt]] = slr.out; names(brick.out)[outcnt]="dais.out"; outcnt=outcnt+1;
     } else {
-      dais.out = daisantoF(anto.a=anto.a , anto.b=anto.b,
-                           gamma=gamma   , alpha=alpha.dais,
-                           mu=mu         , nu=nu        ,
-                           P0=P0         , kappa=kappa.dais,
-                           f0=f0         , h0=h0        ,
-                           c=c           , b0=b0        ,
-                           slope=slope   ,
-                           slope.Ta2Tg=slope.Ta2Tg.in, intercept.Ta2Tg=intercept.Ta2Tg.in,
-                           Tg=temp.couple, SL=SL.couple, dSL=dSL.couple ,
-                           includes_dSLais = include_dSLais)
+      dais.out = daisanto_fastdynF(anto.a=anto.a , anto.b=anto.b,
+                                   gamma=gamma   , alpha=alpha.dais,
+                                   mu=mu         , nu=nu        ,
+                                   P0=P0         , kappa=kappa.dais,
+                                   f0=f0         , h0=h0        ,
+                                   c=c           , b0=b0        ,
+                                   slope=slope   , l.aisfastdy=l.aisfastdy,
+                                   Tcrit=Tcrit   , lambda=lambda,
+                                   slope.Ta2Tg=slope.Ta2Tg.in, intercept.Ta2Tg=intercept.Ta2Tg.in,
+                                   Tg=temp.couple, SL=SL.couple, dSL=dSL.couple ,
+                                   includes_dSLais = include_dSLais)
       ## Subtract off normalization period
       itmp = ind.norm.data[match("ais",ind.norm.data[,1]),2]:ind.norm.data[match("ais",ind.norm.data[,1]),3]
       dais.out.norm = dais.out - mean(dais.out[itmp])
