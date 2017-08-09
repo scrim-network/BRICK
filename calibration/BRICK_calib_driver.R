@@ -7,7 +7,7 @@
 ## To modify which model components you use, edit the settings below under
 ## 'Which model(s) will you use?'
 ##
-##	Questions? -- Tony Wong <twong@psu.edu
+##  Questions? -- Tony Wong <twong@psu.edu
 ##==============================================================================
 ## Copyright 2016 Tony Wong, Alexander Bakker
 ## This file is part of BRICK (Building blocks for Relevant Ice and Climate
@@ -27,7 +27,7 @@
 
 setwd('~/codes/BRICK/calibration')
 
-rm(list=ls())												# Clear all previous variables
+rm(list=ls())                        # Clear all previous variables
 
 ## Set the seed (for reproducibility)
 #set.seed(1234)
@@ -63,9 +63,9 @@ source('../R/compute_indices.R')        # function to determine the model and
 
 ## Read the model calibration data sets
 
-	## TODO
-	## TODO -- revise SNEASY_readData.R to match other components
-	## TODO
+  ## TODO
+  ## TODO -- revise SNEASY_readData.R to match other components
+  ## TODO
 
 #source('../calibration/SNEASY_readData.R')    # read SNEASY calibration data
 source('../calibration/DOECLIM_readData.R')   # read DOECLIM calibration data
@@ -75,10 +75,10 @@ source('../calibration/SIMPLE_readData.R')    # GIS data, and trends in mass bal
 #source('../calibration/DAIS_readData.R')     # DAIS forcing data (if at all uncoupled)
 
 
-	## TODO
-	## TODO -- add SNEASY calibration data to midx, oidx, obs, obs.err,
-	## TODO -- ind.norm.data, and i0
-	## TODO
+  ## TODO
+  ## TODO -- add SNEASY calibration data to midx, oidx, obs, obs.err,
+  ## TODO -- ind.norm.data, and i0
+  ## TODO
 
 ## Gather up all the data/model indices for comparisons. use lists to avoid
 ## enormous amounts of input to the MCMC functions
@@ -95,9 +95,9 @@ names(obs.err.all) = c(    "temp"      , "ocheat"      , "gis"      , "gsic"    
 
 ## Set the indices for normalization that are consistent with each data set
 ind.norm.data = data.frame(
-		c( "temp"              , "ocheat"            , "gsic"             , "gis"               , "te"                 , "ais"               , "sl"                ) ,
-		c(which(mod.time==1850),which(mod.time==1960),which(mod.time==1960),which(mod.time==1960),which(mod.time==1961),which(mod.time==1961),which(mod.time==1961)) ,
-		c(which(mod.time==1870),which(mod.time==1990),which(mod.time==1960),which(mod.time==1990),which(mod.time==1990),which(mod.time==1990),which(mod.time==1990)) )
+    c( "temp"              , "ocheat"            , "gsic"             , "gis"               , "te"                 , "ais"               , "sl"                ) ,
+    c(which(mod.time==1850),which(mod.time==1960),which(mod.time==1960),which(mod.time==1960),which(mod.time==1961),which(mod.time==1961),which(mod.time==1961)) ,
+    c(which(mod.time==1870),which(mod.time==1990),which(mod.time==1960),which(mod.time==1990),which(mod.time==1990),which(mod.time==1990),which(mod.time==1990)) )
 
 ## Set the indices of the initial condition for each sub-model
 i0 = vector("list",nrow(ind.norm.data)); names(i0)=as.character(ind.norm.data[,1])
@@ -123,6 +123,10 @@ luse.dais     = FALSE    # Antarctic ice sheet model
 luse.lws      = FALSE    # land water storage
 luse.brick = cbind(luse.sneasy, luse.doeclim, luse.gsic, luse.te, luse.simple,
                    luse.dais, luse.lws)
+
+## If you are using DAIS, include the fast dynamics emulator?
+l.aisfastdy = FALSE
+if(!luse.dais) {l.aisfastdy = FALSE} # force FALSE if not using DAIS
 
 ##==============================================================================
 ## Define parameters and their prior ranges
@@ -191,50 +195,51 @@ source('../R/BRICK_coupledModel.R')
 
 library(DEoptim)
 source('../calibration/BRICK_DEoptim.R')
-p0.deoptim=p0													# initialize optimized initial parameters
-niter.deoptim=200								  		# number of iterations for DE optimization
-NP.deoptim=11*length(index.model)			# population size for DEoptim (do at least 10*[N parameters])
-F.deoptim=0.8													# as suggested by Storn et al (2006)
-CR.deoptim=0.9												# as suggested by Storn et al (2006)
+p0.deoptim=p0                          # initialize optimized initial parameters
+niter.deoptim=200                      # number of iterations for DE optimization
+NP.deoptim=11*length(index.model)      # population size for DEoptim (do at least 10*[N parameters])
+F.deoptim=0.8                          # as suggested by Storn et al (2006)
+CR.deoptim=0.9                        # as suggested by Storn et al (2006)
 outDEoptim <- DEoptim(minimize_residuals_brick, bound.lower[index.model], bound.upper[index.model],
-				DEoptim.control(NP=NP.deoptim,itermax=niter.deoptim,F=F.deoptim,CR=CR.deoptim,trace=FALSE),
-				parnames.in=parnames[index.model], forcing.in=forcing        , l.project=l.project      ,
-				#slope.Ta2Tg.in=slope.Ta2Tg       , intercept.Ta2Tg.in=intercept.Ta2Tg,
-				ind.norm.data=ind.norm.data      , ind.norm.sl=ind.norm      , mod.time=mod.time        ,
-				tstep=tstep                      , oidx = oidx.all           , midx = midx.all          ,
-				obs=obs.all                      , obs.err = obs.err.all     , trends.te = trends.te    ,
-				luse.brick = luse.brick	         , i0 = i0)
+        DEoptim.control(NP=NP.deoptim,itermax=niter.deoptim,F=F.deoptim,CR=CR.deoptim,trace=FALSE),
+        parnames.in=parnames[index.model], forcing.in=forcing        , l.project=l.project      ,
+        #slope.Ta2Tg.in=slope.Ta2Tg       , intercept.Ta2Tg.in=intercept.Ta2Tg,
+        ind.norm.data=ind.norm.data      , ind.norm.sl=ind.norm      , mod.time=mod.time        ,
+        tstep=tstep                      , oidx = oidx.all           , midx = midx.all          ,
+        obs=obs.all                      , obs.err = obs.err.all     , trends.te = trends.te    ,
+        luse.brick = luse.brick           , i0 = i0                   , l.aisfastdy = l.aisfastdy )
 p0.deoptim[index.model] = outDEoptim$optim$bestmem
 
 ## Run the model and examine output at these parameter values
 brick.out = brick_model(parameters.in=p0.deoptim,
                         parnames.in=parnames,
-						forcing.in=forcing,
-						l.project=l.project,
-						#slope.Ta2Tg.in=slope.Ta2Tg,
-						#intercept.Ta2Tg.in=intercept.Ta2Tg,
-						mod.time=mod.time,
-						tstep=tstep,
-						ind.norm.data = ind.norm.data,
-						ind.norm.sl = ind.norm,
-						luse.brick = luse.brick,
-						i0 = i0)
+                        forcing.in=forcing,
+                        l.project=l.project,
+                        #slope.Ta2Tg.in=slope.Ta2Tg,
+                        #intercept.Ta2Tg.in=intercept.Ta2Tg,
+                        mod.time=mod.time,
+                        tstep=tstep,
+                        ind.norm.data = ind.norm.data,
+                        ind.norm.sl = ind.norm,
+                        luse.brick = luse.brick,
+                        i0 = i0,
+                        l.aisfastdy = l.aisfastdy)
 
 ##TODO -- TW -- modify plotting for only the components that are used (incl SNEASY)
 par(mfrow=c(3,2))
-	# plot 1 -- DOECLIM, temperature match
+  # plot 1 -- DOECLIM, temperature match
 plot(obs.temp.time[oidx.temp], obs.temp[oidx.temp], pch=20, ylab='surface temperature anomaly [deg C]', xlab='year')
 lines(brick.out$doeclim.out$time[midx.temp], brick.out$doeclim.out$temp[midx.temp]+p0.deoptim[4], col='red', lwd=2)
-	# plot 2 -- DOECLIM, ocean heat match
+  # plot 2 -- DOECLIM, ocean heat match
 plot(obs.ocheat.time[oidx.ocheat], obs.ocheat[oidx.ocheat], pch=20, ylab='ocean heat uptake [10^22 J]', xlab='year')
 lines(brick.out$doeclim.out$time[midx.ocheat], brick.out$doeclim.out$ocheat[midx.ocheat]+p0.deoptim[5], col='red', lwd=2)
-	# plot 3 -- GSIC match
+  # plot 3 -- GSIC match
 plot(obs.gsic.time, obs.gsic, pch=20, ylab = 'sea-level equivalence [m]', xlab='year')
 lines(obs.gsic.time, brick.out$gsic.out[midx.gsic], col="blue", lwd=2)
-	# plot 4 -- GIS match
+  # plot 4 -- GIS match
 plot(obs.gis.time[oidx.gis], obs.gis[oidx.gis], pch=20, ylab = 'GIS mass balance change (SLE [m])', xlab='year')
 lines(obs.gis.time[oidx.gis], brick.out$simple.out$sle.gis[midx.gis], col="blue", lwd=2)
-	# plot 5 -- SLR match
+  # plot 5 -- SLR match
 plot(obs.sl.time[oidx.sl], obs.sl[oidx.sl], pch=20, ylab = 'sea level [m]', xlab='year')
 lines(brick.out$doeclim.out$time[midx.sl], brick.out$slr.out[midx.sl], col="purple", lwd=2)
 ##==============================================================================
@@ -252,24 +257,24 @@ if(luse.simple) {
 
   ## Read an old rho.simple.fixed?
   if(TRUE){
-	rho.simple.fixed = as.numeric(read.csv('../output_calibration/rho_simple_fixed_01Nov2016.csv'))
+  rho.simple.fixed = as.numeric(read.csv('../output_calibration/rho_simple_fixed_01Nov2016.csv'))
   } else {
-	## If rho/sigma.simple.fixed = NULL, then will be calibrated
-	resid = brick.out$simple.out$sle.gis[midx.gis] - obs.gis[oidx.gis]
-	ac = acf(resid, lag.max=5, plot=FALSE, main="")
+  ## If rho/sigma.simple.fixed = NULL, then will be calibrated
+  resid = brick.out$simple.out$sle.gis[midx.gis] - obs.gis[oidx.gis]
+  ac = acf(resid, lag.max=5, plot=FALSE, main="")
 
-	## If not in the declared parameter names, then fix the estimate of the
-	## AR(1) process sqrt(variance) and autocorrelation
-	if(is.na(match("sigma.simple",parnames))) sigma.simple.fixed = sd(resid)
-	if(is.na(match("rho.simple",parnames)))   rho.simple.fixed = ac$acf[2]
+  ## If not in the declared parameter names, then fix the estimate of the
+  ## AR(1) process sqrt(variance) and autocorrelation
+  if(is.na(match("sigma.simple",parnames))) sigma.simple.fixed = sd(resid)
+  if(is.na(match("rho.simple",parnames)))   rho.simple.fixed = ac$acf[2]
 
-	## rho.simple.fixed should be somewhere around 0.85-0.90
-	## Fix it at a value you decide. Model results are insensitive to this choice,
-	## provided it is realistic (between 0.85 and 1). Write to a file.
+  ## rho.simple.fixed should be somewhere around 0.85-0.90
+  ## Fix it at a value you decide. Model results are insensitive to this choice,
+  ## provided it is realistic (between 0.85 and 1). Write to a file.
 
-	today=Sys.Date(); today=format(today,format="%d%b%Y")
-	filename=paste('../output_calibration/rho_simple_fixed_',today,'.csv', sep="")
-	write.table(rho.simple.fixed, file=filename, sep=",", qmethod="double", row.names=FALSE)
+  today=Sys.Date(); today=format(today,format="%d%b%Y")
+  filename=paste('../output_calibration/rho_simple_fixed_',today,'.csv', sep="")
+  write.table(rho.simple.fixed, file=filename, sep=",", qmethod="double", row.names=FALSE)
   }
   print(paste('rho.simple.fixed=',rho.simple.fixed))
 
@@ -313,7 +318,7 @@ if(luse.te) {
   CR.deoptim=0.9            # as suggested by Storn et al (2006)
   outDEoptim <- DEoptim(rmse.quantiles, c(0,0), c(100,100),
                         DEoptim.control(NP=NP.deoptim,itermax=niter.deoptim,F=F.deoptim,
-						CR=CR.deoptim,trace=FALSE),	q05.in=q05, q95.in=q95)
+            CR=CR.deoptim,trace=FALSE),  q05.in=q05, q95.in=q95)
   shape.invtau = outDEoptim$optim$bestmem[1]
   scale.invtau = outDEoptim$optim$bestmem[2]
   print(paste('shape.invtau=',shape.invtau,' (1.81?)'))
@@ -333,10 +338,10 @@ if(luse.te) {
 
 ##==============================================================================
 ## Now set up the coupled model calibration
-##	-- will need to whip up a coupled model likelihood function file
-## 	-- will calibrate with log.post(...) (in the above LL file) calling 'brick_model'
+##  -- will need to whip up a coupled model likelihood function file
+##   -- will calibrate with log.post(...) (in the above LL file) calling 'brick_model'
 ## Notes:
-##	-- With DOECLIM+GSIC+TE+SIMPLE, all R models, requires ~1900s for 1e6 iterations.
+##  -- With DOECLIM+GSIC+TE+SIMPLE, all R models, requires ~1900s for 1e6 iterations.
 ##==============================================================================
 ## Set up and run the MCMC calibration
 
@@ -360,19 +365,19 @@ stopadapt.mcmc = round(niter.mcmc*1.0)# stop adapting after ?? iterations? (nite
 ##==============================================================================
 ## Actually run the calibration
 if(FALSE){
-t.beg=proc.time()											# save timing (running millions of iterations so best to have SOME idea...)
+t.beg=proc.time()                      # save timing (running millions of iterations so best to have SOME idea...)
 amcmc.out1 = MCMC(log.post, niter.mcmc, p0.deoptim, scale=step.mcmc, adapt=TRUE, acc.rate=accept.mcmc,
                   gamma=gamma.mcmc               , list=TRUE                  , n.start=round(0.01*niter.mcmc),
-				  parnames.in=parnames           , forcing.in=forcing         , l.project=l.project           ,
-				  #slope.Ta2Tg.in=slope.Ta2Tg    , intercept.Ta2Tg.in=intercept.Ta2Tg,
-				  ind.norm.data=ind.norm.data    , ind.norm.sl=ind.norm       , mod.time=mod.time             ,
-				  oidx = oidx.all                , midx = midx.all            , obs=obs.all                   ,
-				  obs.err = obs.err.all          , trends.te = trends.te      , bound.lower.in=bound.lower    ,
-				  bound.upper.in=bound.upper     , shape.in=shape.invtau      , scale.in=scale.invtau         ,
-				  rho.simple.in=rho.simple.fixed , sigma.simple.in=sigma.simple.fixed, luse.brick=luse.brick  ,
-				  i0=i0
-				  )
-t.end=proc.time()											# save timing
+                  parnames.in=parnames           , forcing.in=forcing         , l.project=l.project           ,
+                  #slope.Ta2Tg.in=slope.Ta2Tg    , intercept.Ta2Tg.in=intercept.Ta2Tg,
+                  ind.norm.data=ind.norm.data    , ind.norm.sl=ind.norm       , mod.time=mod.time             ,
+                  oidx = oidx.all                , midx = midx.all            , obs=obs.all                   ,
+                  obs.err = obs.err.all          , trends.te = trends.te      , bound.lower.in=bound.lower    ,
+                  bound.upper.in=bound.upper     , shape.in=shape.invtau      , scale.in=scale.invtau         ,
+                  rho.simple.in=rho.simple.fixed , sigma.simple.in=sigma.simple.fixed, luse.brick=luse.brick  ,
+                  i0=i0                          , l.aisfastdy=l.aisfastdy
+                  )
+t.end=proc.time()                      # save timing
 chain1 = amcmc.out1$samples
 }
 
@@ -380,36 +385,36 @@ chain1 = amcmc.out1$samples
 if(FALSE){
 t.beg=proc.time()
 amcmc.extend1 = MCMC.add.samples(amcmc.out1, niter.mcmc,
-				  parnames.in=parnames           , forcing.in=forcing         , l.project=l.project            ,
-				  #slope.Ta2Tg.in=slope.Ta2Tg    , intercept.Ta2Tg.in=intercept.Ta2Tg,
-				  ind.norm.data=ind.norm.data    , ind.norm.sl=ind.norm       , mod.time=mod.time              ,
-				  oidx = oidx.all                , midx = midx.all            , obs=obs.all                    ,
-				  obs.err = obs.err.all          , trends.te = trends.te      , bound.lower.in=bound.lower     ,
-				  bound.upper.in=bound.upper     , shape.in=shape.invtau      , scale.in=scale.invtau          ,
-				  rho.simple.in=rho.simple.fixed , sigma.simple.in=sigma.simple.fixed, luse.brick=luse.brick   ,
-				  i0=i0
-				  )
+                    parnames.in=parnames           , forcing.in=forcing         , l.project=l.project            ,
+                    #slope.Ta2Tg.in=slope.Ta2Tg    , intercept.Ta2Tg.in=intercept.Ta2Tg,
+                    ind.norm.data=ind.norm.data    , ind.norm.sl=ind.norm       , mod.time=mod.time              ,
+                    oidx = oidx.all                , midx = midx.all            , obs=obs.all                    ,
+                    obs.err = obs.err.all          , trends.te = trends.te      , bound.lower.in=bound.lower     ,
+                    bound.upper.in=bound.upper     , shape.in=shape.invtau      , scale.in=scale.invtau          ,
+                    rho.simple.in=rho.simple.fixed , sigma.simple.in=sigma.simple.fixed, luse.brick=luse.brick   ,
+                    i0=i0                          , l.aisfastdy=l.aisfastdy
+                    )
 t.end=proc.time()
 chain1 = amcmc.extend1$samples
 }
 
 ## If you want to run 2 (or more) chains in parallel (save time, more sampling)
 if(TRUE){
-t.beg=proc.time()										# save timing (running millions of iterations so best to have SOME idea...)
+t.beg=proc.time()                    # save timing (running millions of iterations so best to have SOME idea...)
 amcmc.par1 = MCMC.parallel(log.post, niter.mcmc, p0.deoptim, n.chain=4, n.cpu=4,
                   dyn.libs=c('../fortran/doeclim.so','../fortran/brick_te.so','../fortran/gsic_magicc.so','../fortran/simple.so'),
-				  scale=step.mcmc, adapt=TRUE, acc.rate=accept.mcmc,
-				  gamma=gamma.mcmc, list=TRUE, n.start=round(0.01*niter.mcmc),
-				  parnames.in=parnames           , forcing.in=forcing         , l.project=l.project           ,
-				  #slope.Ta2Tg.in=slope.Ta2Tg    , intercept.Ta2Tg.in=intercept.Ta2Tg,
-				  ind.norm.data=ind.norm.data    , ind.norm.sl=ind.norm       , mod.time=mod.time             ,
-				  oidx = oidx.all                , midx = midx.all            , obs=obs.all                   ,
-				  obs.err = obs.err.all          , trends.te = trends.te      , bound.lower.in=bound.lower    ,
-				  bound.upper.in=bound.upper     , shape.in=shape.invtau      , scale.in=scale.invtau         ,
-				  rho.simple.in=rho.simple.fixed , sigma.simple.in=sigma.simple.fixed, luse.brick=luse.brick  ,
-				  i0=i0
-				  )
-t.end=proc.time()											# save timing
+                  scale=step.mcmc, adapt=TRUE, acc.rate=accept.mcmc,
+                  gamma=gamma.mcmc, list=TRUE, n.start=round(0.01*niter.mcmc),
+                  parnames.in=parnames           , forcing.in=forcing         , l.project=l.project           ,
+                  #slope.Ta2Tg.in=slope.Ta2Tg    , intercept.Ta2Tg.in=intercept.Ta2Tg,
+                  ind.norm.data=ind.norm.data    , ind.norm.sl=ind.norm       , mod.time=mod.time             ,
+                  oidx = oidx.all                , midx = midx.all            , obs=obs.all                   ,
+                  obs.err = obs.err.all          , trends.te = trends.te      , bound.lower.in=bound.lower    ,
+                  bound.upper.in=bound.upper     , shape.in=shape.invtau      , scale.in=scale.invtau         ,
+                  rho.simple.in=rho.simple.fixed , sigma.simple.in=sigma.simple.fixed, luse.brick=luse.brick  ,
+                  i0=i0                          , l.aisfastdy=l.aisfastdy
+                  )
+t.end=proc.time()                      # save timing
 chain1=amcmc.par1[[1]]$samples
 chain2=amcmc.par1[[2]]$samples
 chain3=amcmc.par1[[3]]$samples
@@ -425,7 +430,7 @@ if(FALSE) {
 ## Check #1: History plots
 par(mfrow=c(5,5))
 for (pp in 1:length(parnames)) {
-	plot(chain1[,pp], type="l", ylab=parnames[pp], xlab="Number of Runs", main="")
+  plot(chain1[,pp], type="l", ylab=parnames[pp], xlab="Number of Runs", main="")
 }
 }
 
@@ -459,7 +464,7 @@ for (i in 1:length(niter.test)){
 plot(niter.test,gr.stat)
 
 ## GR statistic gets and stays below 1.1 by iteration ...? (set this to n.burnin)
-##	Wong et al 2016 -- n.min = 2e5, but discard entire first half of chain
+##  Wong et al 2016 -- n.min = 2e5, but discard entire first half of chain
 n.burnin = 5e5
 n.sample = nrow(chain1)-n.burnin
 parameters1=chain1[(n.burnin+1):nrow(chain1),]
@@ -472,7 +477,7 @@ n.parameters = ncol(parameters.posterior)
 ## Histograms
 par(mfrow=c(5,5))
 for (pp in 1:length(parnames)) {
-	hist(parameters.posterior[,pp], xlab=parnames[pp], main='')
+  hist(parameters.posterior[,pp], xlab=parnames[pp], main='')
 }
 
 ## Write the calibrated parameters file (netCDF version)

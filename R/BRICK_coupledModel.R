@@ -5,7 +5,7 @@
 ##
 ## Input:
 ##  parameters.in          input vector of model parameters
-##  parnames.in             vector of parameter names
+##  parnames.in            vector of parameter names
 ##  forcing.in             matrix of radiative forcing input
 ##  l.project              making projections or hindcasts?
 ##  slope.Ta2Tg.in         slope of Antarctic vs global mean temperature regression
@@ -17,6 +17,7 @@
 ##  ind.norm.sl            indices within model output for setting zero sea level
 ##  tstep                  model tstep [years]
 ##  i0                     index of reference year, within mod.time. For initial conditions to sub-models.
+##  l.aisfastdy            logical, whether or not to use AIS fast dynamics emulator
 ##
 ## Requires:
 ##  luse.brick, includes: luse.doeclim, luse.gsic, luse.te, luse.simple,
@@ -55,7 +56,7 @@ brick_model = function(parameters.in,
                        ind.norm.sl = NULL,
                        luse.brick,
                        i0,
-                       l.aisfastdy=TRUE
+                       l.aisfastdy
 ){
 
   # Initialize the list of output (do NOT grow lists/arrays in R)

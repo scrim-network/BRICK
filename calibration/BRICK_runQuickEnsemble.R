@@ -58,8 +58,8 @@ for (i in 1:n.ensemble) {
 																ind.norm.data 		= ind.norm.data,
 																ind.norm.sl 			= ind.norm,
 																luse.brick 				= luse.brick,
-																i0=i0
-																)
+																i0                = i0,
+                                l.aisfastdy       = l.aisfastdy)
 
   setTxtProgressBar(pb, i)
 }
