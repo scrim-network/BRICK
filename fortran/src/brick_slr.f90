@@ -201,7 +201,7 @@ subroutine brick_step_forward(nstep, temp_forcing_previous, &
     real(DP), intent(OUT) :: vol_ais_current
     real(DP), intent(OUT) :: sl_current
 
-    real(DP) :: change_sea_level_noAIS, sea_level_noAIS
+    real(DP) :: change_sea_level_noAIS, sea_level_noAIS_previous
     real(DP) :: ctmp, Toc_previous, Ta_previous
 
 ! Start the show.
@@ -218,17 +218,20 @@ subroutine brick_step_forward(nstep, temp_forcing_previous, &
 
 ! AIS-DAIS
     ! sea-level changes, fingerprinted to Antarctic local
-    change_sea_level_noAIS = 1.1d0*(sl_gsic_current - sl_gsic_previous) + &
+    change_sea_level_noAIS = 1.0d0*(sl_gsic_current - sl_gsic_previous) + &
                              1.0d0*(sl_te_current   - sl_te_previous)   + &
-                             1.1d0*(sl_gis_current  - sl_gis_previous)
-    sea_level_noAIS = sl_previous + change_sea_level_noAIS
+                             1.0d0*(sl_gis_current  - sl_gis_previous)
+                             
+    sea_level_noAIS_previous = 1.0d0*sl_gsic_previous + &
+                               1.0d0*sl_te_previous   + &
+                               1.0d0*sl_gis_previous
 
     ! scale temperatures, accounting for relative to 1850
     ctmp = (Tfrz-b_anto)/a_anto
     Toc_previous = Tfrz + ((a_anto*temp_forcing_previous + b_anto - Tfrz)/(1.0d0 + DEXP(-temp_forcing_previous + ctmp)))
     Ta_previous = (temp_forcing_previous - intercept_Ta2Tg)/slope_Ta2Tg
 
-    call dais_step( Ta_previous, sea_level_noAIS, Toc_previous, &
+    call dais_step( Ta_previous, sea_level_noAIS_previous, Toc_previous, &
                     change_sea_level_noAIS, rad_ais_current, vol_ais_current)
 
     sl_ais_current = sl_ais_previous + &
