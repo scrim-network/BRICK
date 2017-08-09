@@ -1,3 +1,5 @@
+*.Rapp.history
+*.DS_Store
 lobj/
 *.Rout
 *.so
