@@ -256,9 +256,9 @@ brick_model = function(parameters.in,
     b0 =parameters.in[match("b0" ,parnames.in)]
     slope =parameters.in[match("slope" ,parnames.in)]
 
-    ## Calculate the sea level updated from the other model components'
-    ## contributions. From Shaffer (2014), SL should be relative to 1961-1990
-    ## mean. Implement fingerprinting of local sea-level sources on AIS?
+		## Calculate the sea level updated from the other model components'
+		## contributions. From Shaffer (2014), SL should be relative to 1961-1990
+		## mean. Implement fingerprinting of local sea-level sources on AIS?
 
     l.fprint=TRUE
 
@@ -268,8 +268,8 @@ brick_model = function(parameters.in,
       dSL.gsic= diff(gsic.out)
       dSL.te  = diff(te.out)
       for (i in 2:length(mod.time)) {
-        SL.couple[i] = SL.couple[i-1] + tstep*(1.1*dSL.gis[i-1] +
-                                               1.1*dSL.gsic[i-1]+
+        SL.couple[i] = SL.couple[i-1] + tstep*(1.0*dSL.gis[i-1] +
+                                               1.0*dSL.gsic[i-1]+
                                                1.0*dSL.te[i-1]   )
       }
     }
