@@ -395,7 +395,7 @@ chain1 = amcmc.extend1$samples
 if(TRUE){
 t.beg=proc.time()										# save timing (running millions of iterations so best to have SOME idea...)
 amcmc.par1 = MCMC.parallel(log.post, niter.mcmc, parameters0.lhs, n.chain=nnode.mcmc, n.cpu=nnode.mcmc,
-                  dyn.libs='../fortran/dais.so', scale=step.mcmc, adapt=TRUE, acc.rate=accept.mcmc,
+                  dyn.libs='../fortran/dais_fastdyn.so', scale=step.mcmc, adapt=TRUE, acc.rate=accept.mcmc,
 									gamma=gamma.mcmc, list=TRUE, n.start=round(0.01*niter.mcmc),
 									parnames.in=parnames    , bound.lower.in=bound.lower, bound.upper.in=bound.upper,
                   obs.in=obs.targets      , obs.err.in=obs.err        , obs.step.in=obs.years     ,
