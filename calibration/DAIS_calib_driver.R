@@ -59,7 +59,7 @@ source('../calibration/DAIS_readData.R')
 
 ## Use the AIS fast dynamics emulator (Wong et al., 2017)
 l.aisfastdy <- TRUE
-fd.priors <- 'gamma'			# which prior distirbutions to use? 
+fd.priors <- 'gamma'			# which prior distirbutions to use?
 
 ## Set Best Case (Case #4) from Shaffer (2014), and parameter ranges
     # >>> with anto? <<<
@@ -105,7 +105,7 @@ shape.Tcrit = 15*rate.Tcrit     # gives mean at -15 deg C (negative requires mul
 #bound.lower[match('c',parnames)]=(1-fac)*parameters0[match('c',parnames)]
 
 ## Source the DAIS model
-## (note that the _fastdyn version is used either way; if you selected 
+## (note that the _fastdyn version is used either way; if you selected
 ##  l.aisfastdy=FALSE, it is neglected in the Fortran codes called)
 source('../fortran/R/daisanto_fastdynF.R')
 ##==============================================================================
@@ -325,13 +325,6 @@ AIS_melt0.lhs = daisanto_fastdynF(anto.a=parameters0.lhs[match("anto.a",parnames
 ##==============================================================================
 
 
-
-##                                              ##
-## WORKS TO HERE WITH FAST DYNAMICS ON and OFF  ##
-##                                              ##
-
-
-
 ##==============================================================================
 ## MCMC simulation
 ##==============================================================================
@@ -343,7 +336,7 @@ source('../calibration/DAIS_assimLikelihood.R')
 library(adaptMCMC)
 accept.mcmc = 0.234										# Optimal as # parameters->infinity
 																			#	(Gelman et al, 1996; Roberts et al, 1997)
-niter.mcmc = 1e3											# number of iterations for MCMC
+niter.mcmc = 1e4											# number of iterations for MCMC
 nnode.mcmc = 2                        # number of logical CPUs for parallel MCMC, if you will use it
 gamma.mcmc = 0.5											# rate of adaptation (between 0.5 and 1, lower is faster adaptation)
 burnin = round(niter.mcmc*0.5)				# remove first ?? of chains for burn-in
@@ -497,16 +490,6 @@ for (pp in 1:n.parameters){
 ##    Tony tested n.node = 20, 50, 100, 200 and 1000. The bandwidths for
 ##    n.node >= 50 are all the same to within 7 significant figures.
 
-## Write a CSV file with the successful parameter combinations and bandwidths
-## Structure of the CSV file is as follows. 5 columns, 2*n.sample rows (2 chains
-## with n.samples each).
-##    First row: Parameter names.
-##    Rows 2-??: The calibrated parameter values.
-##    Last row:  The bandwidths. These are the standard
-##               deviations of the normal distributions one should sample from.
-##               The idea is that if you pick a row out of this CSV file, and
-##               draw random-normally with these bandwidths (stdevs) around each
-##               parameter value, you are sampling from the joint distribution.
 bandwidths=rep(NA,n.parameters)
 for (i in 1:n.parameters){
   bandwidths[i]=pdf.all[[i]]$bw
@@ -517,14 +500,6 @@ par(mfrow=c(4,4))
 for (p in 1:n.parameters) {
   plot(pdf.all[[p]]$x,pdf.all[[p]]$y,type='l',xlab=parnames[p],ylab='density',main="")
 }
-
-## Write the calibrated parameters file (csv version - antiquated)
-#to.file = rbind(parameters.posterior,bandwidths)  # bandwidths are in the last row
-#rownames(to.file)=NULL
-#colnames(to.file)=parnames
-#today=Sys.Date(); today=format(today,format="%d%b%Y")
-#filename=paste('../output_calibration/DAIS_calibratedParameters_',today,'.csv', sep="")
-#write.table(to.file, file=filename, sep=",", qmethod="double", row.names=FALSE)
 
 # Write the calibrated parameters file (netCDF version - better)
 

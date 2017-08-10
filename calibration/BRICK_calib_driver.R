@@ -52,7 +52,7 @@ source('../fortran/R/doeclimF.R')       # the DOECLIM model
 source('../fortran/R/GSIC_magiccF.R')   # the GSIC model
 source('../fortran/R/brick_te_F.R')     # TE (thermosteric expansion) model
 source('../fortran/R/simpleF.R')        # GIS (Greenland Ice Sheet) model
-source('../fortran/R/daisantoF.R')      # DAIS (Antarctic Ice Sheet) model
+source('../fortran/R/daisanto_fastdynF.R') # DAIS (Antarctic Ice Sheet) model
 source('../R/brick_lws.R')              # LWS (land water storage)
 
 ## Source some useful functions for manipulating data
@@ -358,6 +358,7 @@ library(adaptMCMC)                # use robust adaptive Metropolis
 accept.mcmc = 0.234               # Optimal as # parameters->infinity
                                   # (Gelman et al, 1996; Roberts et al, 1997)
 niter.mcmc = 1e4                  # number of iterations for MCMC
+nnode.mcmc = 2                    # number of nodes for parallel MCMC
 gamma.mcmc = 0.5                  # rate of adaptation (between 0.5 and 1, lower is faster adaptation)
 burnin = round(niter.mcmc*0.5)    # remove first ?? of chains for burn-in (not used)
 stopadapt.mcmc = round(niter.mcmc*1.0)# stop adapting after ?? iterations? (niter*1 => don't stop)
@@ -401,7 +402,7 @@ chain1 = amcmc.extend1$samples
 ## If you want to run 2 (or more) chains in parallel (save time, more sampling)
 if(TRUE){
 t.beg=proc.time()                    # save timing (running millions of iterations so best to have SOME idea...)
-amcmc.par1 = MCMC.parallel(log.post, niter.mcmc, p0.deoptim, n.chain=4, n.cpu=4,
+amcmc.par1 = MCMC.parallel(log.post, niter.mcmc, p0.deoptim, n.chain=nnode.mcmc, n.cpu=nnode.mcmc,
                   dyn.libs=c('../fortran/doeclim.so','../fortran/brick_te.so','../fortran/gsic_magicc.so','../fortran/simple.so'),
                   scale=step.mcmc, adapt=TRUE, acc.rate=accept.mcmc,
                   gamma=gamma.mcmc, list=TRUE, n.start=round(0.01*niter.mcmc),

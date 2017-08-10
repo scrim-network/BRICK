@@ -81,20 +81,24 @@ t.beg = proc.time()
 ##==============================================================================
 ## Define the files you want to process/read/create
 
+setwd('~/codes/BRICK/calibration')
+
 experiment='c'  ## Which model set-up? (c = control, with MAGICC-GSIC; e = experiment,
         ## with SIMPLE-GSIC; g = experiment, with BRICK-GMSL)
 appen=''    ## Append file name? In case you process multiple files in one day
 today=Sys.Date(); today=format(today,format="%d%b%Y")
 
 l.aisfastdy = TRUE        # including AIS fast dynamics in the DAIS version used? (must be consistent with how DAIS_calib_driver.R was run)
-n.ensemble = 135000       # total proposed ensemble before rejection sampling
+n.ensemble = 500       # total proposed ensemble before rejection sampling
 n.ensemble.gmsl = 10671    # pick n.ensemble for BRICK-GMSL to match control
 n.ensemble.report = n.ensemble
 
 if(experiment=='c'){
   filename.rho_simple_fixed = "../output_calibration/rho_simple_fixed_01Nov2016.csv"
-  filename.BRICKcalibration = "../output_calibration/BRICK-model_calibratedParameters_control_01Nov2016.nc"
-  filename.DAIScalibration  = "../output_calibration/DAIS_calibratedParameters_11Aug2016.nc"
+  #filename.BRICKcalibration = "../output_calibration/BRICK-model_calibratedParameters_control_01Nov2016.nc"
+  #filename.DAIScalibration  = "../output_calibration/DAIS_calibratedParameters_11Aug2016.nc"
+  filename.BRICKcalibration = "../output_calibration/BRICK-model_calibratedParameters_control_09Aug2017.nc"
+  filename.DAIScalibration  = "../output_calibration/DAIS_calibratedParameters_09Aug2017.nc"
   filename.parameters       = paste('../output_calibration/BRICK-model_postcalibratedParameters_control_',today,appen,'.nc', sep="")
   filename.brickout         = paste('../output_model/BRICK-model_physical_control_',today,appen,'.nc',sep="")
   filename.vdout            = paste('../output_model/VanDantzig_RCP85_control_',today,appen,'.nc',sep="")
@@ -267,7 +271,7 @@ source('../R/compute_indices.R')    # function to determine the model and
 
 ## Source the model(s) and data
 source('../fortran/R/doeclimF.R')      # the DOECLIM model - resets the mod.time
-source('../fortran/R/daisantoF.R')     # DAIS (Antarctic Ice Sheet) model, with 'anto'
+source('../fortran/R/daisanto_fastdynF.R')  # DAIS (Antarctic Ice Sheet) model, with 'anto'
                     # for translating Tg (surface temperature anomaly)
                     # to Ta (Antarctic temperature reduced to sea level)
                     # and Toc (Antarctic/high-latitude ocean temperature)
@@ -326,7 +330,7 @@ luse.brick = cbind(luse.sneasy,luse.doeclim, luse.gsic, luse.te, luse.simple, lu
 if(experiment=='c') {source('../R/BRICK_coupledModel.R')}
 if(experiment=='e') {source('../R/BRICK_coupledModel_SIMPLE-GSIC.R')}
 if(experiment=='g') {
-    luse.sneasy   = FALSE    # Simple Nonlinear EArth SYstem model (DOECLIM+CCM)
+  luse.sneasy   = FALSE    # Simple Nonlinear EArth SYstem model (DOECLIM+CCM)
   luse.doeclim  = TRUE    # diffusion-ocean-energy balance climate model
   luse.gsic     = FALSE   # glaciers and small ice caps contribution to SLR
   luse.te       = FALSE   # thermal expansion contribution to SLR
@@ -369,7 +373,7 @@ print(paste(' ... done running model hindcasts'))
 
 ## Before post-calibration, need to add the modeled statistical noise back in.
 ## Only using sea-level rise data, so only need to modify GSIC, GIS.
-## using the statistical parameters for AR1, AR1 and Gaussian noise, respecively
+## using the statistical parameters for AR1, AR1 and Gaussian noise, respectively
 ## Do not do for AIS, because var.dais was fit to paleo data-model mismatch, not
 ## representative of the current era.
 
@@ -587,7 +591,6 @@ n.parameters = ncol(parameters)
 n.sample = n.ensemble
 parameters.sample = parameters
 
-source('../fortran/R/daisantoF.R')
 n.paleo = length(SL)
 dais.paleo = mat.or.vec(n.sample, n.paleo)
 date = seq(-239999,16,1) #240 Kyr BP to 2100AD at one year intervals of the forcings
@@ -618,21 +621,30 @@ for (i in 1:n.sample) {
   b0 =parameters.sample[i,match("b0" ,parnames)]
   slope =parameters.sample[i,match("slope" ,parnames)]
   var.dais =parameters.sample[i,match("var.dais" ,parnames)]
+  if(l.aisfastdy) {
+    Tcrit =parameters.sample[i,match("Tcrit" ,parnames)]
+    lambda =parameters.sample[i,match("lambda" ,parnames)]
+  } else {
+    Tcrit = NULL
+    lambda = NULL
+  }
 
-  dais.tmp = daisantoF(
+  dais.tmp = daisanto_fastdynF(
                        anto.a=anto.a, anto.b=anto.b,
-                       slope.Ta2Tg=slope.Ta2Tg, intercept.Ta2Tg=intercept.Ta2Tg,
                        gamma=gamma  , alpha=alpha  ,
                        mu=mu        , nu=nu        ,
                        P0=P0        , kappa=kappa  ,
                        f0=f0        , h0=h0        ,
                        c=c          , b0=b0        ,
-                       slope=slope  ,
-                       Tg=Tg.recon  , SL=SL , dSL=dSL, includes_dSLais=1
+                       slope=slope  , l.aisfastdy=l.aisfastdy,
+                       Tcrit=Tcrit  , lambda=lambda,
+                       slope.Ta2Tg=slope.Ta2Tg, intercept.Ta2Tg=intercept.Ta2Tg,
+                       Tg=Tg.recon  , SL=SL ,
+                       dSL=dSL      , includes_dSLais=1
                        )
 
   # Subtract off the 1961-1990 normalization period
-  dais.norm = dais.tmp - mean(dais.tmp[ind.norm.paleo])
+  dais.norm = dais.tmp$Vais - mean(dais.tmp$Vais[ind.norm.paleo])
 
   # Add the modeled error back in
   dais.paleo[i,] = dais.norm + rnorm(n.paleo, mean=0,sd=sqrt(var.dais))
