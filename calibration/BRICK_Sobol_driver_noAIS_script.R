@@ -39,7 +39,7 @@ lfullAIS    <- FALSE   # full prior range from Wong et al 2017 (fast dynamics) f
 lfullGEV    <- TRUE   # full uncertainty in GEV parameters? (fixed if FALSE)
 begyear     <- 1850   # this is just beginning of the projections; assessment begins in 2015
 endyear     <- 2065   # must be equal to end year of flood risk assessment
-appen       <- '-Build-GEV-2065'
+appen       <- '-Build-GEV-2065-2'
 name.output.rdata <- 'BRICK_Sobol_noAIS.RData'
 setwd('/home/scrim/axw322/codes/BRICK/calibration')
 ##########################################
@@ -111,7 +111,7 @@ source('../fortran/R/brick_te_F.R')     # TE (thermosteric expansion) model
 source('../fortran/R/simpleF.R')        # GIS (Greenland Ice Sheet) model
 source('../fortran/R/daisantoF.R')		# DAIS (Antarctic Ice Sheet) model
 source('../fortran/R/daisanto_fastdynF.R')
-source('../R/BRICK_coupledModel_fastdyn.R')
+source('../R/BRICK_coupledModel_fastdyn_no_c_h0.R')
 
 luse.doeclim  = TRUE    # diffusion-ocean-energy balance climate model
 luse.gsic     = TRUE    # glaciers and small ice caps contribution to SLR

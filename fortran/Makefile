@@ -2,7 +2,8 @@
 all: dais.so simple.so brick_te.so gsic_magicc.so doeclim.so dais_fastdyn.so
 
 # Fortran compiler:
-F90 = /usr/local/bin/gfortran # g95
+#F90 = /usr/local/bin/gfortran # g95
+F90 = /usr/bin/gfortran # g95
 
 # Directories: objpath, srcpath
 OP = ./obj

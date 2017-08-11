@@ -1,0 +1,9 @@
+#!/bin/bash
+#PBS -l walltime=120:00:00
+#PBS -l nodes=1:ppn=16
+#PBS -j oe
+#PBS -m abe
+#PBS -M twong@psu.edu
+###R --vanilla < /home/scrim/axw322/codes/BRICK/calibration/BRICK_Sobol_driver_script.R > /home/scrim/axw322/codes/BRICK/calibration/brick_sobol.log
+R --vanilla < /home/scrim/axw322/codes/BRICK/calibration/BRICK_Sobol_driver_noAIS_script.R > /home/scrim/axw322/codes/BRICK/calibration/brick_sobol_noAIS2.log
+###R --vanilla < /home/scrim/axw322/codes/BRICK/calibration/BRICK_Sobol_driver_noGEV_script.R > /home/scrim/axw322/codes/BRICK/calibration/brick_sobol.log

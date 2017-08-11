@@ -1,3 +1,4 @@
+*.pbs.o*
 *.DS_Store
 .Rapp.history
 lobj/
