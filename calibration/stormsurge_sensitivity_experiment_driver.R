@@ -82,10 +82,9 @@ for (dd in 1:length(data.tg)) {
 
 ##==============================================================================
 ## Decompose into sets of 35-year blocks.
-## Moving window, by 16 years each time. Gives roughly half-overlap between
-## adjacent blocks, and good coverage of the 101 years (goes to the 99th year)
-## from Galveston and complete coverage of the 83 years from Pensacola (once we
-## remove the years with too much missing data).
+## Moving window, by 'block.offset' years each time. Gives good coverage of the
+## 101 years (goes to the 99th year) from Galveston and complete coverage of the
+## 83 years from Pensacola (once we remove the years with too much missing data)
 ##==============================================================================
 
 block.size   <- 35 # how many years in each block?
