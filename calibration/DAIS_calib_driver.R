@@ -37,6 +37,24 @@
 
 rm(list =ls()) #Clear global environment
 
+## Switch to your BRICK calibration directory
+setwd('/home/scrim/axw322/codes/BRICK/calibration')
+
+## Set up MCMC stuff here so that it can be automated for HPC
+nnode_mcmc000 <- 8
+niter_mcmc000 <- 500000
+
+## Set up a filename for saving RData images along the way
+today=Sys.Date(); today=format(today,format="%d%b%Y")
+filename.saveprogress <- paste('DAIS_calib_MCMC_',today,'.RData',sep='')
+
+## Use the AIS fast dynamics emulator (Wong et al., 2017)
+l.aisfastdy <- TRUE
+fd.priors <- 'gamma'			# which prior distirbutions to use?
+
+## Set the seed (for reproducibility)
+set.seed(1234)
+
 ## Setup packages and libraries
 #install.packages('compiler')
 #install.packages('pscl')
@@ -44,9 +62,6 @@ library(pscl) # install inverse gamma distribution
 library(compiler)
 enableJIT(3)
 enableJIT(3)
-
-## Set the seed (for reproducibility)
-set.seed(1234)
 
 ## Read the data forcing for hindcasts and projections. Yields:
 ##  Ta (Antarctic temperature reduced to sea-level)
@@ -56,10 +71,6 @@ set.seed(1234)
 ##  date (240 Kyr before present to 2100 AD at 1-year intervals of forcings)
 l.project=FALSE
 source('../calibration/DAIS_readData.R')
-
-## Use the AIS fast dynamics emulator (Wong et al., 2017)
-l.aisfastdy <- TRUE
-fd.priors <- 'gamma'			# which prior distirbutions to use?
 
 ## Set Best Case (Case #4) from Shaffer (2014), and parameter ranges
     # >>> with anto? <<<
@@ -336,8 +347,8 @@ source('../calibration/DAIS_assimLikelihood.R')
 library(adaptMCMC)
 accept.mcmc = 0.234										# Optimal as # parameters->infinity
 																			#	(Gelman et al, 1996; Roberts et al, 1997)
-niter.mcmc = 1e4											# number of iterations for MCMC
-nnode.mcmc = 2                        # number of logical CPUs for parallel MCMC, if you will use it
+niter.mcmc = niter_mcmc000											# number of iterations for MCMC
+nnode.mcmc = nnode_mcmc000                        # number of logical CPUs for parallel MCMC, if you will use it
 gamma.mcmc = 0.5											# rate of adaptation (between 0.5 and 1, lower is faster adaptation)
 burnin = round(niter.mcmc*0.5)				# remove first ?? of chains for burn-in
 stopadapt.mcmc = round(niter.mcmc*1.0)# stop adapting after ?? iterations? (niter*1 => don't stop)
@@ -400,15 +411,14 @@ amcmc.par1 = MCMC.parallel(log.post, niter.mcmc, parameters0.lhs, n.chain=nnode.
                   #Ta.in=Ta  , Toc.in=Toc ,
                   SL.in=SL  , dSL.in=dSL)
 t.end=proc.time()											# save timing
-chain1=amcmc.par1[[1]]$samples
-chain2=amcmc.par1[[2]]$samples
-chain3=amcmc.par1[[3]]$samples
-chain4=amcmc.par1[[4]]$samples
+#chain1=amcmc.par1[[1]]$samples
+#chain2=amcmc.par1[[2]]$samples
+#chain3=amcmc.par1[[3]]$samples
+#chain4=amcmc.par1[[4]]$samples
 }
 
 ## Save workspace image - you do not want to re-simulate all those!
-today=Sys.Date(); today=format(today,format="%d%b%Y")
-save.image(file = paste('DAIS_calib_MCMC_',today,'.RData', sep=''))
+save.image(file=filename.saveprogress)
 
 ##==============================================================================
 if(FALSE){
@@ -433,73 +443,93 @@ for (pp in 1:length(parnames)) {
 
 ## Initialize the testing of the Gelman and Rubin diagnostics
 niter.test = seq(from=50000, to=niter.mcmc, by=10000)
-gr.stat = rep(NA,length(niter.test))
+gr.test = rep(NA,length(niter.test))
 
 ## Calculate the statistic at a few spots throughout the chain. Once it is
 ## close to 1 (people often use GR<1.1 or 1.05), the between-chain variability
 ## is indistinguishable from the within-chain variability, and they are
 ## converged. It is only after the chains are converged that you should use the
 ## parameter values as posterior draws, for analysis.
-for (i in 1:length(niter.test)){
-  mcmc1 = as.mcmc(chain1[1:niter.test[i],])
-  mcmc2 = as.mcmc(chain2[1:niter.test[i],])
-  mcmc3 = as.mcmc(chain3[1:niter.test[i],])
-  mcmc4 = as.mcmc(chain4[1:niter.test[i],])
-  mcmc_chain_list = mcmc.list(list(mcmc1, mcmc2, mcmc3, mcmc4))
-  gr.stat[i] = gelman.diag(mcmc_chain_list)[2]
-}
+if(nnode.mcmc == 1) {
+  # don't do GR stats, just cut off first half of chains
+  print('only one chain; will lop off first half for burn-in instead of doing GR diagnostics')
+} else if(nnode.mcmc > 1) {
+  # this case is FAR more fun
+  # accumulate the names of the soon-to-be mcmc objects
+  string.mcmc.list <- 'mcmc1'
+  for (m in 2:nnode.mcmc) {
+    string.mcmc.list <- paste(string.mcmc.list, ', mcmc', m, sep='')
+  }
+  for (i in 1:length(niter.test)) {
+    for (m in 1:nnode.mcmc) {
+      # convert each of the chains into mcmc object
+      eval(parse(text=paste('mcmc',m,' <- as.mcmc(amcmc.par1[[m]]$samples[1:niter.test[i],])', sep='')))
+    }
+    eval(parse(text=paste('mcmc_chain_list = mcmc.list(list(', string.mcmc.list , '))', sep='')))
+    gr.test[i] <- as.numeric(gelman.diag(mcmc_chain_list)[2])
+  }
+} else {print('error - nnode.mcmc < 1 makes no sense')}
+
+## Save workspace image
+save.image(file=filename.saveprogress)
+
+## <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< TODO 
+## <<<<<<< automate the rest of this as in the MESS codes
+## <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< TODO 
 
 ## Plot GR statistics as a function of iterations, decide where to cut off
 ## chains and use the tails of both for analysis
-plot(niter.test,gr.stat)
+#plot(niter.test,gr.test)
 
-##==============================================================================
+#===============================================================================
+# Chop off burn-in
+#===============================================================================
+#
 
-## GR statistic gets and stays below 1.1 by iteration ...? (set this to n.burnin)
-n.burnin = 120000
-n.sample = nrow(chain1)-n.burnin
-parameters1=chain1[(n.burnin+1):nrow(chain1),]
-parameters2=chain2[(n.burnin+1):nrow(chain1),]
-parameters3=chain3[(n.burnin+1):nrow(chain1),]
-parameters4=chain4[(n.burnin+1):nrow(chain1),]
-parameters.posterior = rbind(parameters1,parameters2, parameters3, parameters4)
+# Note: here, we are only using the Gelman and Rubin diagnostic. But this is
+# only after looking at the quantile stability as iterations increase, as well
+# as the Heidelberger and Welch diagnostics, which suggest the chains are okay.
+# 'ifirst' is the first spot where the GR stat gets to and stays below gr.max
+# for all of the models.
+# save a separate ifirst for each experiment
+ifirst <- NULL
+if(nnode.mcmc==1) {
+  ifirst <- round(0.5*niter.mcmc)
+} else {
+  gr.max <- 1.1
+  lgr <- rep(NA, length(niter.test))
+  for (i in 1:length(niter.test)) {lgr[i] <- gr.test[i] < gr.max}
+  for (i in seq(from=length(niter.test), to=1, by=-1)) {
+    if( all(lgr[i:length(lgr)]) ) {ifirst <- niter.test[i]}
+  }
+}
+
+if(nnode.mcmc > 1) {
+  chains_burned <- vector('list', nnode.mcmc)
+  for (m in 1:nnode.mcmc) {
+   chains_burned[[m]] <- amcmc.par1[[m]]$samples[(ifirst+1):niter.mcmc,]
+  }
+} else {
+  chains_burned <- amcmc.out1$samples[(ifirst+1):niter.mcmc,]
+}
+
+# Combine all of the chains from 'ifirst' to 'niter_mcmc' into a potpourri of
+# [alleged] samples from the posterior. Only saving the transition covariance
+# matrix for one of the chains (if in parallel).
+if(nnode.mcmc==1) {
+  parameters.posterior <- chains_burned
+  covjump.posterior <- amcmc.out1$cov.jump
+} else {
+  parameters.posterior <- chains_burned[[1]]
+  covjump.posterior <- amcmc.par1[[1]]$cov.jump
+  for (m in 2:nnode.mcmc) {
+    parameters.posterior <- rbind(parameters.posterior, chains_burned[[m]])
+  }
+}
 n.parameters = ncol(parameters.posterior)
 
-## Fit PDFs to the parameter distributions
-pdf.all=vector('list',n.parameters)
-n.node=100
-for (pp in 1:n.parameters){
-  tmp = density(parameters.posterior[,pp],kernel='gaussian',
-                n=n.node,from=bound.lower[pp],to=bound.upper[pp])
-  pdf.all[[pp]] = tmp; names(pdf.all)[pp]=parnames[pp]
-}
-
-##==============================================================================
-## Plot the PDFs?
-par(mfrow=c(4,4))
-for (pp in 1:n.parameters){
-  plot(pdf.all[[pp]]$x,pdf.all[[pp]]$y,type='l',xlab=parnames[pp],ylab='density');
-}
-
-##==============================================================================
-
-## Note on bandwidths and number of nodes for Kernel density estimate fitting:
-##    With hundreds of thousands of parameters in the distributions we seek to
-##    fit KDEs to, the fits and bandwidths are fairly insensitive to the number
-##    of KDE nodes you plop down (n.node, above). With 300,000 = n.parameters,
-##    Tony tested n.node = 20, 50, 100, 200 and 1000. The bandwidths for
-##    n.node >= 50 are all the same to within 7 significant figures.
-
-bandwidths=rep(NA,n.parameters)
-for (i in 1:n.parameters){
-  bandwidths[i]=pdf.all[[i]]$bw
-}
-
-## Plot the distributions
-par(mfrow=c(4,4))
-for (p in 1:n.parameters) {
-  plot(pdf.all[[p]]$x,pdf.all[[p]]$y,type='l',xlab=parnames[p],ylab='density',main="")
-}
+# save results in case you need to revisit later
+save.image(file=filename.saveprogress)
 
 # Write the calibrated parameters file (netCDF version - better)
 
