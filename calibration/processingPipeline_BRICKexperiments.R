@@ -79,9 +79,21 @@ t.beg = proc.time()
 
 ##==============================================================================
 ##==============================================================================
+
+## Define some directories and settings
+
+# BRICK working directory (the calibration one)
+#setwd('~/codes/BRICK/calibration')
+setwd('/home/scrim/axw322/codes/BRICK/calibration')
+
+# Do the Van Dantzig with RCP8.5?
+l.dovandantzig <- FALSE 
+
 ## Define the files you want to process/read/create
 
-setwd('~/codes/BRICK/calibration')
+# Set up a filename for saving RData images along the way
+today=Sys.Date(); today=format(today,format="%d%b%Y")
+filename.saveprogress <- paste('brick_processing_',today,'.RData',sep='')
 
 experiment='c'  ## Which model set-up? (c = control, with MAGICC-GSIC; e = experiment,
         ## with SIMPLE-GSIC; g = experiment, with BRICK-GMSL)
@@ -90,15 +102,13 @@ today=Sys.Date(); today=format(today,format="%d%b%Y")
 
 l.aisfastdy = TRUE        # including AIS fast dynamics in the DAIS version used? (must be consistent with how DAIS_calib_driver.R was run)
 n.ensemble = 500       # total proposed ensemble before rejection sampling
-n.ensemble.gmsl = 10671    # pick n.ensemble for BRICK-GMSL to match control
+n.ensemble.gmsl = 500    # pick n.ensemble for BRICK-GMSL to match control
 n.ensemble.report = n.ensemble
 
 if(experiment=='c'){
-  filename.rho_simple_fixed = "../output_calibration/rho_simple_fixed_01Nov2016.csv"
-  #filename.BRICKcalibration = "../output_calibration/BRICK-model_calibratedParameters_control_01Nov2016.nc"
-  #filename.DAIScalibration  = "../output_calibration/DAIS_calibratedParameters_11Aug2016.nc"
-  filename.BRICKcalibration = "../output_calibration/BRICK-model_calibratedParameters_control_09Aug2017.nc"
-  filename.DAIScalibration  = "../output_calibration/DAIS_calibratedParameters_09Aug2017.nc"
+  filename.rho_simple_fixed = "../output_calibration/rho_simple_fixed_12Aug2017.csv"
+  filename.BRICKcalibration = "../output_calibration/BRICK-model_calibratedParameters_13Aug2017.nc"
+  filename.DAIScalibration  = "../output_calibration/DAIS_calibratedParameters_12Aug2017.nc"
   filename.parameters       = paste('../output_calibration/BRICK-model_postcalibratedParameters_control_',today,appen,'.nc', sep="")
   filename.brickout         = paste('../output_model/BRICK-model_physical_control_',today,appen,'.nc',sep="")
   filename.vdout            = paste('../output_model/VanDantzig_RCP85_control_',today,appen,'.nc',sep="")
@@ -371,6 +381,9 @@ for (i in 1:n.ensemble) {
 close(pb)
 print(paste(' ... done running model hindcasts'))
 
+## Save progress so far via workspace image
+save.image(file=filename.saveprogress)
+
 ## Before post-calibration, need to add the modeled statistical noise back in.
 ## Only using sea-level rise data, so only need to modify GSIC, GIS.
 ## using the statistical parameters for AR1, AR1 and Gaussian noise, respectively
@@ -492,6 +505,9 @@ for (i in 1:n.ensemble) {
 close(pb)
 print(paste(' ... done adding up model hindcast sea level rise and contributions'))
 
+## Save progress so far via workspace image
+save.image(file=filename.saveprogress)
+
 if(experiment=='g') {
   ind.survive = 1:nrow(slr.norm.stat)
 } else {
@@ -567,6 +583,9 @@ if(experiment=='g') {
 slr.out.good = slr.norm.stat[ind.survive,]
 parameters.good = parameters[ind.survive,]
 colnames(parameters.good) = parnames
+
+## Save progress so far via workspace image
+save.image(file=filename.saveprogress)
 
 ##==============================================================================
 ##==============================================================================
@@ -658,6 +677,9 @@ close(pb)
 parameters.good = parameters
 colnames(parameters.good) = parnames
 
+## Save progress so far via workspace image
+save.image(file=filename.saveprogress)
+
 ## Get 5-95% CI for hindcasts
 ## Initialize arrays for the output
 dais.paleo.05 = rep(NA,length(date)); dais.paleo.50 = rep(NA,length(date)); dais.paleo.95 = rep(NA,length(date))
@@ -722,6 +744,9 @@ temp.hind = t(temp.norm.stat[ind.survive,])
 ocheat.hind = t(ocheat.norm.stat[ind.survive,])
 gsl.hind = t(slr.out.good)
 t.hind = mod.time
+
+## Save progress so far via workspace image
+save.image(file=filename.saveprogress)
 
 ##==============================================================================
 ##==============================================================================
@@ -843,6 +868,9 @@ for (ff in 1:n.scen) {
   badruns.scen[[ff]] = badruns
   proj.out[[ff]] = brick.out
 }
+
+## Save progress so far via workspace image
+save.image(file=filename.saveprogress)
 
 ## Filter out any bad runs
 ind.good = which(badruns.scen[[1]]==0 & badruns.scen[[2]]==0 & badruns.scen[[3]]==0)
@@ -1055,6 +1083,9 @@ for (i in 1:n.ensemble) {
 }
 close(pb)
 
+## Save progress so far via workspace image
+save.image(file=filename.saveprogress)
+
 print(paste('... finished projections!',sep=''))
 
 ##==============================================================================
@@ -1103,6 +1134,9 @@ for (i in 1:n.ensemble) {
   proj.rcp45$slr.nola[i,] = proj.rcp45$slr.nola[i,] - mean(proj.rcp45$slr.nola[i,ind.norm])
   proj.rcp85$slr.nola[i,] = proj.rcp85$slr.nola[i,] - mean(proj.rcp85$slr.nola[i,ind.norm])
 }
+
+## Save progress so far via workspace image
+save.image(file=filename.saveprogress)
 
 print(paste('... finished local sea level rise',sep=''))
 
@@ -1318,7 +1352,7 @@ nc_close(outnc)
 
 
 
-
+if(l.dovandantzig) {
 if(experiment=='c') {  # only do Van Dantzig analysis if control experiment
 ##==============================================================================
 ##==============================================================================
@@ -1337,6 +1371,9 @@ if(FALSE){
 source('../R/BRICK_VanDantzig.R')
 
 vandantzig.ensemble = brick_vandantzig(sea_level = sea_level, time = mod.time)
+
+## Save progress so far via workspace image
+save.image(file=filename.saveprogress)
 
 ##==============================================================================
 ##==============================================================================
@@ -1378,6 +1415,7 @@ nc_close(outnc)
 ##==============================================================================
 ##==============================================================================
 }  # end check if experiment=='c'
+}  # end check if l.dovandantzig
 
 t.end = proc.time()
 time.minutes = (t.end-t.beg)[3]/60
