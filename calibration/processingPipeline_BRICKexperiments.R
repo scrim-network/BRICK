@@ -89,6 +89,11 @@ setwd('/home/scrim/axw322/codes/BRICK/calibration')
 # Do the Van Dantzig with RCP8.5?
 l.dovandantzig <- FALSE 
 
+# How many DAIS paleo simulations in your sample? (If you do a huge BRICK ensemble,
+# it may be infeasible to do that number of 240,000 time step long simulations for
+# DAIS paleo runs.)
+n.samplepaleo <- 1e3
+
 ## Define the files you want to process/read/create
 
 # Set up a filename for saving RData images along the way
@@ -96,12 +101,12 @@ today=Sys.Date(); today=format(today,format="%d%b%Y")
 filename.saveprogress <- paste('brick_processing_',today,'.RData',sep='')
 
 experiment='c'  ## Which model set-up? (c = control, with MAGICC-GSIC; e = experiment,
-        ## with SIMPLE-GSIC; g = experiment, with BRICK-GMSL)
-appen=''    ## Append file name? In case you process multiple files in one day
+                ## with SIMPLE-GSIC; g = experiment, with BRICK-GMSL)
+appen=''        ## Append file name? In case you process multiple files in one day
 today=Sys.Date(); today=format(today,format="%d%b%Y")
 
 l.aisfastdy = TRUE        # including AIS fast dynamics in the DAIS version used? (must be consistent with how DAIS_calib_driver.R was run)
-n.ensemble = 500       # total proposed ensemble before rejection sampling
+n.ensemble = 1400000      # total proposed ensemble before rejection sampling
 n.ensemble.gmsl = 500    # pick n.ensemble for BRICK-GMSL to match control
 n.ensemble.report = n.ensemble
 
@@ -600,15 +605,9 @@ parameters=parameters.good
 ## How many members do you want in your ensemble?
 n.ensemble = nrow(parameters)
 n.parameters = ncol(parameters)
-
-## Run only a sample of the DAIS paleo, because they are huge
-#n.sample = 500
-#ind.sample = sample( seq(1,nrow(parameters)), size=n.sample, replace=FALSE)
-#parameters.sample = parameters[ind.sample,]
-
-## Run all of them?
-n.sample = n.ensemble
-parameters.sample = parameters
+n.sample <- min(n.samplepaleo, n.ensemble)
+ind.sample <- sample( 1:n.ensemble, size=n.sample, replace=FALSE)
+parameters.sample <- parameters[ind.sample,]
 
 n.paleo = length(SL)
 dais.paleo = mat.or.vec(n.sample, n.paleo)
@@ -622,7 +621,7 @@ t.paleo = date
 # only do the paleo hindcast for the control model
 if(experiment=='c') {
 
-print(paste('Starting ',n.ensemble,' DAIS paleo hindcast simulations, using the post-calibrated parameters ...',sep=''))
+print(paste('Starting ',n.sample,' DAIS paleo hindcast simulations, using the post-calibrated parameters ...',sep=''))
 pb <- txtProgressBar(min=0,max=n.sample,initial=0,style=3);
 for (i in 1:n.sample) {
 

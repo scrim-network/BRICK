@@ -1,3 +1,5 @@
+*.pbs.o*
+*.log
 *.Rapp.history
 *.DS_Store
 lobj/
