@@ -437,7 +437,7 @@ for (pp in 1:length(parnames)) {
 }
 ##==============================================================================
 
-## Determine when (in increments of 50,000 iterations, using Gelman and Rubin
+## Determine when (in increments of 10,000 iterations, using Gelman and Rubin
 ## diagnostic) the two parallel chains, which are assumed to be
 ## chain1=amcmc.par1[[1]]$samples and chain2=amcmc.par1[[2]]$samples
 ## as defined above in the MCMC.parallel(...) command.
