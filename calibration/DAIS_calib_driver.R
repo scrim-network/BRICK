@@ -38,11 +38,12 @@
 rm(list =ls()) #Clear global environment
 
 ## Switch to your BRICK calibration directory
-setwd('/home/scrim/axw322/codes/BRICK/calibration')
+#setwd('/home/scrim/axw322/codes/BRICK/calibration')
+setwd('/Users/tony/codes/BRICK/calibration')
 
 ## Set up MCMC stuff here so that it can be automated for HPC
-nnode_mcmc000 <- 8
-niter_mcmc000 <- 500000
+nnode_mcmc000 <- 1
+niter_mcmc000 <- 100
 
 ## Set up a filename for saving RData images along the way
 today=Sys.Date(); today=format(today,format="%d%b%Y")
@@ -473,9 +474,9 @@ if(nnode.mcmc == 1) {
 ## Save workspace image
 save.image(file=filename.saveprogress)
 
-## <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< TODO 
+## <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< TODO
 ## <<<<<<< automate the rest of this as in the MESS codes
-## <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< TODO 
+## <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< TODO
 
 ## Plot GR statistics as a function of iterations, decide where to cut off
 ## chains and use the tails of both for analysis

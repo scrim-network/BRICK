@@ -196,7 +196,7 @@ log.pri = function( parameters.in,
     Tcrit_pri = 0
     if(in.range) {
       var_pri = (-alpha.var.in - 1)*log(var.dais) + (-beta.var.in/var.dais)
-      if(fd.priors=='g') {
+      if(fd.priors=='gamma') {
         lambda_pri = dgamma(x=lambda, shape=shape.lambda, rate=rate.lambda, log=TRUE)
         Tcrit_pri = dgamma(x=-Tcrit, shape=shape.Tcrit, rate=rate.Tcrit, log=TRUE)
       }
