@@ -25,22 +25,18 @@
 ## along with BRICK.  If not, see <http://www.gnu.org/licenses/>.
 ##==============================================================================
 
-setwd('~/codes/BRICK/calibration')
-
 rm(list=ls())                        # Clear all previous variables
 
 ## Switch to your BRICK calibration directory
-setwd('/home/scrim/axw322/codes/BRICK/calibration')
+#setwd('/home/scrim/axw322/codes/BRICK/calibration')
+setwd('/Users/tony/codes/BRICK/calibration')
 
 ## Set up MCMC stuff here so that it can be automated for HPC
-nnode_mcmc000 <- 8
-niter_mcmc000 <- 1e6
+nnode_mcmc000 <- 1
+niter_mcmc000 <- 1e4
 
 ## Show plots? (probably want FALSE on HPC, non-interactive)
 l.doplots <- FALSE
-
-## Use an old estimate of rho.simple?
-l.oldrhosimple <- FALSE
 
 ## Set up a filename for saving RData images along the way
 today=Sys.Date(); today=format(today,format="%d%b%Y")
@@ -261,43 +257,6 @@ lines(obs.gis.time[oidx.gis], brick.out$simple.out$sle.gis[midx.gis], col="blue"
 plot(obs.sl.time[oidx.sl], obs.sl[oidx.sl], pch=20, ylab = 'sea level [m]', xlab='year')
 lines(brick.out$doeclim.out$time[midx.sl], brick.out$slr.out[midx.sl], col="purple", lwd=2)
 }
-##==============================================================================
-
-## Fix the SIMPLE (GIS) rho.simple statistical parameter at value from the
-## optimized coupled model. There are problems of convergence when it is
-## free-running in the calibration, caused by the high degree of autocorrelation
-## in the GIS residuals. The sigma.simple parameter also was trouble, but not
-## anymore (if convergence issues arise, this might be why).
-
-if(luse.simple) {
-
-  sigma.simple.fixed = NULL
-  rho.simple.fixed   = NULL
-
-  ## Read an old rho.simple.fixed?
-  if(l.oldrhosimple){
-    rho.simple.fixed = as.numeric(read.csv('../output_calibration/rho_simple_fixed_07May2017.csv'))
-  } else {
-    ## If rho/sigma.simple.fixed = NULL, then will be calibrated
-    resid = brick.out$simple.out$sle.gis[midx.gis] - obs.gis[oidx.gis]
-    ac = acf(resid, lag.max=5, plot=FALSE, main="")
-
-    ## If not in the declared parameter names, then fix the estimate of the
-    ## AR(1) process sqrt(variance) and autocorrelation
-    if(is.na(match("sigma.simple",parnames))) sigma.simple.fixed = sd(resid)
-    if(is.na(match("rho.simple",parnames)))   rho.simple.fixed = ac$acf[2]
-
-    ## rho.simple.fixed should be somewhere around 0.85-0.90
-    ## Fix it at a value you decide. Model results are insensitive to this choice,
-    ## provided it is realistic (between 0.85 and 1). Write to a file.
-
-    today=Sys.Date(); today=format(today,format="%d%b%Y")
-    filename=paste('../output_calibration/rho_simple_fixed_',today,'.csv', sep="")
-    write.table(rho.simple.fixed, file=filename, sep=",", qmethod="double", row.names=FALSE)
-  }
-  print(paste('rho.simple.fixed=',rho.simple.fixed))
-
-}
 
 ##==============================================================================
 ## Establish a gamma prior for drawing 1/tau.
@@ -381,6 +340,12 @@ nnode.mcmc = nnode_mcmc000        # number of nodes for parallel MCMC
 gamma.mcmc = 0.5                  # rate of adaptation (between 0.5 and 1, lower is faster adaptation)
 burnin = round(niter.mcmc*0.5)    # remove first ?? of chains for burn-in (not used)
 stopadapt.mcmc = round(niter.mcmc*1.0)# stop adapting after ?? iterations? (niter*1 => don't stop)
+
+
+## TONY TESTING
+rho.simple.fixed <- NULL
+sigma.simple.fixed <- NULL
+## END TONY TESTING
 
 ##==============================================================================
 ## Actually run the calibration

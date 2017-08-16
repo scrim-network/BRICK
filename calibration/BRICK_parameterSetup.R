@@ -79,11 +79,11 @@ if (luse.te) {
 parnames.simple   =NULL; p0.simple       =NULL; bound.lower.simple=NULL;
 bound.upper.simple=NULL; step.mcmc.simple=NULL; index.model.simple=NULL;
 if (luse.simple) {
-	parnames.simple   =c("a.simple" ,"b.simple" ,"alpha.simple","beta.simple","V0"      ,"sigma.simple") # parameters names
-	p0.simple         =c(-0.825     , 7.36      , 1.63e-4      , 2.85e-5     , 7.36     , 5e-4         ) # initial parameter guesses
-	bound.lower.simple=c( -4        , 5.888     , 0            , 0           , 7.16     , 0            ) # prior range lower bounds
-	bound.upper.simple=c( -1e-3     , 8.832     , 1e-3         , 1e-3        , 7.56     , 0.002        ) # prior range upper bounds
-	step.mcmc.simple  =c( 0.2       , 0.05      , 1e-5         , 1e-5        , 0.05     , 0.0001       ) # step sizes for initial MCMC
+	parnames.simple   =c("a.simple" ,"b.simple" ,"alpha.simple","beta.simple","V0"      ,"sigma.simple","rho.simple") # parameters names
+	p0.simple         =c(-0.825     , 7.36      , 1.63e-4      , 2.85e-5     , 7.36     , 5e-4         , 0.5        ) # initial parameter guesses
+	bound.lower.simple=c( -4        , 5.888     , 0            , 0           , 7.16     , 0            , -0.999     ) # prior range lower bounds
+	bound.upper.simple=c( -1e-3     , 8.832     , 1e-3         , 1e-3        , 7.56     , 0.002        ,  0.999     ) # prior range upper bounds
+	step.mcmc.simple  =c( 0.2       , 0.05      , 1e-5         , 1e-5        , 0.05     , 0.0001       ,  0.1       ) # step sizes for initial MCMC
 	index.model.simple=c(1,2,3,4,5)			# which are model parameters? (index within parnames.simple)
 }
 
