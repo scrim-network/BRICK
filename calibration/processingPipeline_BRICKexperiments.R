@@ -111,9 +111,9 @@ n.ensemble.gmsl = 500    # pick n.ensemble for BRICK-GMSL to match control
 n.ensemble.report = n.ensemble
 
 if(experiment=='c'){
-  filename.rho_simple_fixed = "../output_calibration/rho_simple_fixed_12Aug2017.csv"
-  filename.BRICKcalibration = "../output_calibration/BRICK-model_calibratedParameters_13Aug2017.nc"
-  filename.DAIScalibration  = "../output_calibration/DAIS_calibratedParameters_12Aug2017.nc"
+#  filename.rho_simple_fixed = "../output_calibration/rho_simple_fixed_12Aug2017.csv"
+  filename.BRICKcalibration = "../output_calibration/BRICK-model_calibratedParameters_16Aug2017.nc"
+  filename.DAIScalibration  = "../output_calibration/DAIS_calibratedParameters_17Aug2017.nc"
   filename.parameters       = paste('../output_calibration/BRICK-model_postcalibratedParameters_control_',today,appen,'.nc', sep="")
   filename.brickout         = paste('../output_model/BRICK-model_physical_control_',today,appen,'.nc',sep="")
   filename.vdout            = paste('../output_model/VanDantzig_RCP85_control_',today,appen,'.nc',sep="")
@@ -397,7 +397,7 @@ save.image(file=filename.saveprogress)
 
 ## Read rho.simple from file
 rho.simple.fixed=NA
-if(experiment!='g') {rho.simple.fixed = as.numeric(read.csv(filename.rho_simple_fixed))}
+if(exists('filename.rho_simple_fixed') & experiment!='g') {rho.simple.fixed = as.numeric(read.csv(filename.rho_simple_fixed))}
 
 ## Gather the fields for each simulation (easy referencing for plotting and
 ## analysis)

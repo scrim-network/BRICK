@@ -28,12 +28,12 @@
 rm(list=ls())                        # Clear all previous variables
 
 ## Switch to your BRICK calibration directory
-#setwd('/home/scrim/axw322/codes/BRICK/calibration')
-setwd('/Users/tony/codes/BRICK/calibration')
+setwd('/home/scrim/axw322/codes/BRICK/calibration')
+#setwd('/Users/tony/codes/BRICK/calibration')
 
 ## Set up MCMC stuff here so that it can be automated for HPC
-nnode_mcmc000 <- 1
-niter_mcmc000 <- 1e4
+nnode_mcmc000 <- 8
+niter_mcmc000 <- 2e6
 
 ## Show plots? (probably want FALSE on HPC, non-interactive)
 l.doplots <- FALSE
@@ -341,12 +341,6 @@ gamma.mcmc = 0.5                  # rate of adaptation (between 0.5 and 1, lower
 burnin = round(niter.mcmc*0.5)    # remove first ?? of chains for burn-in (not used)
 stopadapt.mcmc = round(niter.mcmc*1.0)# stop adapting after ?? iterations? (niter*1 => don't stop)
 
-
-## TONY TESTING
-rho.simple.fixed <- NULL
-sigma.simple.fixed <- NULL
-## END TONY TESTING
-
 ##==============================================================================
 ## Actually run the calibration
 if(FALSE){
@@ -359,9 +353,7 @@ amcmc.out1 = MCMC(log.post, niter.mcmc, p0.deoptim, scale=step.mcmc, adapt=TRUE,
                   oidx = oidx.all                , midx = midx.all            , obs=obs.all                   ,
                   obs.err = obs.err.all          , trends.te = trends.te      , bound.lower.in=bound.lower    ,
                   bound.upper.in=bound.upper     , shape.in=shape.invtau      , scale.in=scale.invtau         ,
-                  rho.simple.in=rho.simple.fixed , sigma.simple.in=sigma.simple.fixed, luse.brick=luse.brick  ,
-                  i0=i0                          , l.aisfastdy=l.aisfastdy
-                  )
+                  luse.brick=luse.brick          , i0=i0                      , l.aisfastdy=l.aisfastdy       )
 t.end=proc.time()                      # save timing
 chain1 = amcmc.out1$samples
 }
@@ -376,9 +368,7 @@ amcmc.extend1 = MCMC.add.samples(amcmc.out1, niter.mcmc,
                     oidx = oidx.all                , midx = midx.all            , obs=obs.all                    ,
                     obs.err = obs.err.all          , trends.te = trends.te      , bound.lower.in=bound.lower     ,
                     bound.upper.in=bound.upper     , shape.in=shape.invtau      , scale.in=scale.invtau          ,
-                    rho.simple.in=rho.simple.fixed , sigma.simple.in=sigma.simple.fixed, luse.brick=luse.brick   ,
-                    i0=i0                          , l.aisfastdy=l.aisfastdy
-                    )
+                    luse.brick=luse.brick          , i0=i0                      , l.aisfastdy=l.aisfastdy        )
 t.end=proc.time()
 chain1 = amcmc.extend1$samples
 }
@@ -396,9 +386,7 @@ amcmc.par1 = MCMC.parallel(log.post, niter.mcmc, p0.deoptim, n.chain=nnode.mcmc,
                   oidx = oidx.all                , midx = midx.all            , obs=obs.all                   ,
                   obs.err = obs.err.all          , trends.te = trends.te      , bound.lower.in=bound.lower    ,
                   bound.upper.in=bound.upper     , shape.in=shape.invtau      , scale.in=scale.invtau         ,
-                  rho.simple.in=rho.simple.fixed , sigma.simple.in=sigma.simple.fixed, luse.brick=luse.brick  ,
-                  i0=i0                          , l.aisfastdy=l.aisfastdy
-                  )
+                  luse.brick=luse.brick          , i0=i0                      , l.aisfastdy=l.aisfastdy       )
 t.end=proc.time()                      # save timing
 }
 
