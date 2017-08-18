@@ -5,4 +5,4 @@
 #PBS -m abe
 #PBS -M twong@psu.edu
 
-R --vanilla < /home/scrim/axw322/codes/BRICK/calibration/BRICK_calib_driver.R > /home/scrim/axw322/codes/BRICK/calibration/mcmc_brick.log
+R --vanilla < /home/scrim/axw322/codes/BRICK/calibration/BRICK_calib_driver.R > /home/scrim/axw322/codes/BRICK/calibration/mcmc_brick_rhosimple.log

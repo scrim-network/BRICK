@@ -42,8 +42,8 @@ setwd('~/codes/BRICK/output_model')
 ## define files that result from the rejection sampling calibration to GMSL
 ## (these file names are relative to the "BRICK/output_model" directory)
 
-filename.old <- 'BRICK_physical_fd-gamma_08May2017.nc'
-filename.new <- 'BRICK-model_physical_fd-gamma_13Aug2017.nc'
+filename.old <- 'BRICK-model_physical_fd-gamma_13Aug2017.nc'
+filename.new <- 'BRICK-model_physical_fd-gamma_17Aug2017.nc'
 
 ## define reference period (beginning and end years)
 ## if this is NULL, projections will be relative to 1986-2005 global mean sea
@@ -203,7 +203,7 @@ for (year in project.years.names) {
 ##==============================================================================
 
 # fit kernel density estimates to each of the sets of projections
-tmp <- density(x=sf.sealev[[rcp]][[ais]], from=lsl.lower, to=lsl.upper, n=lsl.n, kernel=kern)
+#tmp <- density(x=sf.sealev[[rcp]][[ais]], from=lsl.lower, to=lsl.upper, n=lsl.n, kernel=kern)
 
 # TODO
 # TODO!
