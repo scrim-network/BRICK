@@ -169,7 +169,7 @@ log.lik = function( parameters.in,
 
   ## Calculate contribution from thermosteric expansion
   llik.te = 0
-  if(luse.brick[,"luse.te"]) {
+  if(luse.brick[,"luse.te"] | luse.brick[,"luse.tee"]) {
 
     # Calculate the SLR residuals - only proceed if all TE SLR < total SLR
     # (all after the first 20 years, that is, because they are the 0 point)

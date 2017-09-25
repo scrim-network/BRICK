@@ -64,6 +64,7 @@ source('../fortran/R/sneasyF.R')        # the SNEASY model (includes DOECLIM, an
 source('../fortran/R/doeclimF.R')       # the DOECLIM model
 source('../fortran/R/GSIC_magiccF.R')   # the GSIC model
 source('../fortran/R/brick_te_F.R')     # TE (thermosteric expansion) model
+source('../fortran/R/brick_tee_F.R')    # TEE (explicit thermosteric expansion) model
 source('../fortran/R/simpleF.R')        # GIS (Greenland Ice Sheet) model
 source('../fortran/R/daisanto_fastdynF.R') # DAIS (Antarctic Ice Sheet) model
 source('../R/brick_lws.R')              # LWS (land water storage)
@@ -131,16 +132,21 @@ luse.sneasy   = FALSE    # Simple Nonlinear EArth SYstem model (DOECLIM+CCM)
 luse.doeclim  = TRUE    # diffusion-ocean-energy balance climate model
 luse.gsic     = TRUE    # glaciers and small ice caps contribution to SLR
 luse.te       = TRUE    # thermosteric expansion contribution to SLR
+luse.tee      = FALSE   # explicit thermosteric expansion contribution to SLR
 luse.simple   = TRUE    # Greenland ice sheet model
 luse.dais     = FALSE    # Antarctic ice sheet model
 luse.lws      = FALSE    # land water storage
-luse.brick = cbind(luse.sneasy, luse.doeclim, luse.gsic, luse.te, luse.simple,
-                   luse.dais, luse.lws)
+luse.brick = cbind(luse.sneasy, luse.doeclim, luse.gsic, luse.te, luse.tee, 
+		   luse.simple, luse.dais, luse.lws)
 
 ## If you are using DAIS, include the fast dynamics emulator?
 l.aisfastdy = FALSE
 if(!luse.dais) {l.aisfastdy = FALSE} # force FALSE if not using DAIS
 
+if(luse.te & luse.tee) {
+  luse.tee = FALSE 
+  print('Only use 1 thermosteric expansion model; switching off explicit model.')
+}
 ##==============================================================================
 ## Define parameters and their prior ranges
 ## -> Note: 'parnames' is defined here, which establishes how the parameters
@@ -377,7 +383,7 @@ chain1 = amcmc.extend1$samples
 if(TRUE){
 t.beg=proc.time()                    # save timing (running millions of iterations so best to have SOME idea...)
 amcmc.par1 = MCMC.parallel(log.post, niter.mcmc, p0.deoptim, n.chain=nnode.mcmc, n.cpu=nnode.mcmc,
-                  dyn.libs=c('../fortran/doeclim.so','../fortran/brick_te.so','../fortran/gsic_magicc.so','../fortran/simple.so'),
+                  dyn.libs=c('../fortran/doeclim.so','../fortran/brick_te.so','../fortran/brick_tee.so','../fortran/gsic_magicc.so','../fortran/simple.so'),
                   scale=step.mcmc, adapt=TRUE, acc.rate=accept.mcmc,
                   gamma=gamma.mcmc, list=TRUE, n.start=round(0.01*niter.mcmc),
                   parnames.in=parnames           , forcing.in=forcing         , l.project=l.project           ,

@@ -75,6 +75,18 @@ if (luse.te) {
 	index.model.te=c(1,2,3,4)			# which are model parameters? (index within parnames.te)
 }
 
+## BRICK-TEE
+parnames.tee  =Null; p0.tee       =NULL; bound.lower.tee=NULL;
+bound.upper.tee=NULL; step.mcmc.tee=NULL; index.model.tee=NULL;
+if (luse.tee) {
+        parnames.tee   =c("a.tee","TE0"  )        # parameters names
+        p0.tee          =c(0.16   , 0.0   )        # initial parameter guesses
+        bound.lower.tee =c(0.05   ,-0.0484)        # prior range lower bounds
+        bound.upper.tee=c(0.3     , 0.0484)        # prior range upper bounds
+        step.mcmc.tee    =0.05*(bound.upper.tee-bound.lower.tee) # set size for parameters in MCMC (proposals)
+        index.model.tee=c(1,2)                       # which are model parameters? (index within parnames.tee)
+}
+
 ## SIMPLE
 parnames.simple   =NULL; p0.simple       =NULL; bound.lower.simple=NULL;
 bound.upper.simple=NULL; step.mcmc.simple=NULL; index.model.simple=NULL;
