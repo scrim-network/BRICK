@@ -356,7 +356,7 @@ if(experiment=='g') {
   luse.dais     = FALSE   # Antarctic ice sheet model
   luse.gmsl     = TRUE    # Example of adding your own model component - GMSL
   luse.lws      = FALSE   # land water storage
-  luse.brick = cbind(luse.sneasy,luse.doeclim, luse.gsic, luse.te, luse.simple, luse.dais, luse.gmsl, luse.lws)
+  luse.brick = cbind(luse.sneasy,luse.doeclim, luse.gsic, luse.te, luse.tee, luse.simple, luse.dais, luse.gmsl, luse.lws)
   source('../R/BRICK_coupledModel_R07.R')
 }
 
