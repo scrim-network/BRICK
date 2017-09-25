@@ -16,6 +16,12 @@ It contains the sub-models
 * GMSL (Rahmstorf 2007, global mean sea level emulator)
 * Van Dantzig flood risk assessment (Van Dantzig, 1956)
 
+### An important note:
+
+The `master` branch contains the latest and greatest codes, including bug fixes and code enhancements relative to the model versions used in the [Wong et al 2017](http://www.geosci-model-dev-discuss.net/gmd-2016-303) and [Bakker et al 2017](https://www.nature.com/articles/s41598-017-04134-5) studies. Those codes may be found, respectively, in the branches `BRICKms` and `robustslr`. Thus, using codes from the `master` branch is advised.
+
+The `fastdy` branch contains codes including an emulator for the potential fast disintegration of the Antarctic ice sheet. This model enhancement will be brought into the `master` branch in due time.
+
 ## Directory structure
 
 ./

@@ -50,7 +50,8 @@ minimize_residuals_brick = function(
 																		obs.err,
 																		trends.te,
 																		luse.brick,
-																		i0
+																		i0,
+                                    l.aisfastdy
 																		){
 
 	T0 = parameters.in[match("T0",parnames.in)]
@@ -67,7 +68,8 @@ minimize_residuals_brick = function(
 													ind.norm.data     =ind.norm.data,
 													ind.norm.sl       =ind.norm.sl,
 													luse.brick        =luse.brick,
-													i0								=i0
+													i0								=i0,
+													l.aisfastdy       =l.aisfastdy
 													)
 
 	doeclim.norm.resid=0

@@ -37,6 +37,25 @@
 
 rm(list =ls()) #Clear global environment
 
+## Switch to your BRICK calibration directory
+setwd('/home/scrim/axw322/codes/BRICK/calibration')
+#setwd('/Users/tony/codes/BRICK/calibration')
+
+## Set up MCMC stuff here so that it can be automated for HPC
+nnode_mcmc000 <- 8
+niter_mcmc000 <- 1e6
+
+## Set up a filename for saving RData images along the way
+today=Sys.Date(); today=format(today,format="%d%b%Y")
+filename.saveprogress <- paste('DAIS_calib_MCMC_',today,'.RData',sep='')
+
+## Use the AIS fast dynamics emulator (Wong et al., 2017)
+l.aisfastdy <- TRUE
+fd.priors <- 'gamma'			# which prior distirbutions to use?
+
+## Set the seed (for reproducibility)
+set.seed(1234)
+
 ## Setup packages and libraries
 #install.packages('compiler')
 #install.packages('pscl')
@@ -44,9 +63,6 @@ library(pscl) # install inverse gamma distribution
 library(compiler)
 enableJIT(3)
 enableJIT(3)
-
-## Set the seed (for reproducibility)
-set.seed(1234)
 
 ## Read the data forcing for hindcasts and projections. Yields:
 ##  Ta (Antarctic temperature reduced to sea-level)
@@ -59,10 +75,17 @@ source('../calibration/DAIS_readData.R')
 
 ## Set Best Case (Case #4) from Shaffer (2014), and parameter ranges
     # >>> with anto? <<<
-parnames    = c('anto.a','anto.b','gamma','alpha.dais','mu'  ,'nu'  ,'P0' ,'kappa.dais','f0' ,'h0'  ,'c'  , 'b0','slope' ,'var.dais')
-parameters0 = c(  0.1574, 0.6677 ,  2    , 0.35       , 8.7  , 0.012, 0.35, 0.04       , 1.2 , 1471 , 95  , 775 , 0.0006 , 0.0004656)
-bound.lower = c( 0.0    , 0      ,  0.5  , 0          , 7.05 , 0.003,0.026, 0.025      , 0.6 , 735.5, 47.5, 740 , 0.00045, 0        )
-bound.upper = c( 1.0    , 2      ,  4.25 , 1          , 13.65, 0.015, 1.5 , 0.085      , 1.8 ,2206.5,142.5, 820 , 0.00075, 2        )
+if(l.aisfastdy) {
+  parnames    = c('anto.a','anto.b','gamma','alpha.dais','mu'  ,'nu'  ,'P0' ,'kappa.dais','f0' ,'h0'  ,'c'  , 'b0','slope' ,'lambda','Tcrit','var.dais')
+  parameters0 = c(  0.1574, 0.6677 ,  2    , 0.35       , 8.7  , 0.012, 0.35, 0.04       , 1.2 , 1471 , 95  , 775 , 0.0006 , 0.01   , -15   , 0.0004656)
+  bound.lower = c( 0.0    , 0      ,  0.5  , 0          , 7.05 , 0.003,0.026, 0.025      , 0.6 , 735.5, 47.5, 740 , 0.00045, 0.005  , -20   , 0        )
+  bound.upper = c( 1.0    , 2      ,  4.25 , 1          , 13.65, 0.015, 1.5 , 0.085      , 1.8 ,2206.5,142.5, 820 , 0.00075, 0.015  , -10   , 2        )
+} else {
+  parnames    = c('anto.a','anto.b','gamma','alpha.dais','mu'  ,'nu'  ,'P0' ,'kappa.dais','f0' ,'h0'  ,'c'  , 'b0','slope' ,'var.dais')
+  parameters0 = c(  0.1574, 0.6677 ,  2    , 0.35       , 8.7  , 0.012, 0.35, 0.04       , 1.2 , 1471 , 95  , 775 , 0.0006 , 0.0004656)
+  bound.lower = c( 0.0    , 0      ,  0.5  , 0          , 7.05 , 0.003,0.026, 0.025      , 0.6 , 735.5, 47.5, 740 , 0.00045, 0        )
+  bound.upper = c( 1.0    , 2      ,  4.25 , 1          , 13.65, 0.015, 1.5 , 0.085      , 1.8 ,2206.5,142.5, 820 , 0.00075, 2        )
+}
     # >>> with anto? and same prior ranges as Ruckert et al (2016, in prep) <<<
 #parnames    = c('anto.a','anto.b','gamma','alpha.dais','mu'  ,'nu'  ,'P0' ,'kappa.dais','f0' ,'h0'  ,'c'  , 'b0','slope' ,'var.dais')
 #parameters0 = c( 0.1574 , 0.6677 , 2     , 0.35       , 8.7  , 0.012, 0.35, 0.04       , 1.2 , 1471 , 95  , 775 , 0.0006 , 0.0004656)
@@ -74,9 +97,14 @@ bound.upper = c( 1.0    , 2      ,  4.25 , 1          , 13.65, 0.015, 1.5 , 0.08
 #bound.upper = c(  4.25 , 1          , 13.05, 0.018,0.525, 0.06       , 1.8 ,2206.5,142.5, 825 , 0.00075, 2        )
 #bound.lower = c(  0.5  , 0          , 4.35 , 0.006,0.175, 0.02       , 0.6 , 735.5, 47.5, 725 , 0.00045, 0        )
 
+## For prior distributions:
 alpha.var = 2     # alpha parameter for inverse gamma for var (E[x]=beta/(alpha+1))
 beta.var = 1      # beta parameter for inverse gamma for var (uncertainty parameter)
                   # note that the upper bound on var.dais is not actually imposed; just for plotting
+shape.lambda = 8.1              # gives 5% quantile at lambda=0.005 and
+rate.lambda = 100*shape.lambda  # gives mean at 0.01 m/yr, DeConto and Pollard (2016)
+rate.Tcrit = 1.37               # gives 5% quantile at Tcrit = -10 deg C
+shape.Tcrit = 15*rate.Tcrit     # gives mean at -15 deg C (negative requires multiplication of Tcrit by -1)
 
 ## Set the f0, h0 and c bounds, +/- a factor of "fac" from the defaults (Shaffer (2014))
 ## (bounds are from Ruckert et al (2016))
@@ -89,33 +117,45 @@ beta.var = 1      # beta parameter for inverse gamma for var (uncertainty parame
 #bound.lower[match('c',parnames)]=(1-fac)*parameters0[match('c',parnames)]
 
 ## Source the DAIS model
-source('../fortran/R/daisantoF.R')
+## (note that the _fastdyn version is used either way; if you selected
+##  l.aisfastdy=FALSE, it is neglected in the Fortran codes called)
+source('../fortran/R/daisanto_fastdynF.R')
 ##==============================================================================
 
 ## Get a standard hindcast and future projections (a "control" model)
+if(l.aisfastdy) {
+  Tcrit0 <- parameters0[match('Tcrit',parnames)]
+  lambda0 <- parameters0[match('lambda',parnames)]
+} else {
+  Tcrit0 <- NULL
+  lambda0 <- NULL
+}
 if(TRUE){
-AIS_melt = daisantoF(
-                anto.a=parameters0[match("anto.a",parnames)],
-                anto.b=parameters0[match("anto.b",parnames)],
-                gamma=parameters0[match("gamma",parnames)],
-                alpha=parameters0[match("alpha.dais",parnames)],
-                mu=parameters0[match("mu",parnames)],
-                nu=parameters0[match("nu",parnames)],
-                P0=parameters0[match("P0",parnames)],
-                kappa=parameters0[match("kappa.dais",parnames)],
-                f0=parameters0[match("f0",parnames)],
-                h0=parameters0[match("h0",parnames)],
-                c=parameters0[match("c",parnames)],
-                b0=parameters0[match("b0",parnames)],
-                slope=parameters0[match("slope",parnames)],
-                Tg=Tg.recon,
-                slope.Ta2Tg=slope.Ta2Tg,
-                intercept.Ta2Tg=intercept.Ta2Tg,
-                SL=SL,
-                dSL=dSL)
+  AIS_melt = daisanto_fastdynF(
+                anto.a = parameters0[match("anto.a",parnames)],
+                anto.b = parameters0[match("anto.b",parnames)],
+                gamma  = parameters0[match("gamma",parnames)],
+                alpha  = parameters0[match("alpha.dais",parnames)],
+                mu     = parameters0[match("mu",parnames)],
+                nu     = parameters0[match("nu",parnames)],
+                P0     = parameters0[match("P0",parnames)],
+                kappa  = parameters0[match("kappa.dais",parnames)],
+                f0     = parameters0[match("f0",parnames)],
+                h0     = parameters0[match("h0",parnames)],
+                c      = parameters0[match("c",parnames)],
+                b0     = parameters0[match("b0",parnames)],
+                slope  = parameters0[match("slope",parnames)],
+                Tcrit  = Tcrit0,
+                lambda = lambda0,
+                l.aisfastdy = l.aisfastdy,
+                Tg     = Tg.recon,
+                slope.Ta2Tg = slope.Ta2Tg,
+                intercept.Ta2Tg = intercept.Ta2Tg,
+                SL     = SL,
+                dSL    = dSL)
 }
 if(FALSE){
-AIS_melt = daisF(
+  AIS_melt = dais_fastdynF(
                 gamma = parameters0[match("gamma",parnames)],
                 alpha = parameters0[match("alpha.dais",parnames)],
                 mu    = parameters0[match("mu",parnames)],
@@ -127,6 +167,9 @@ AIS_melt = daisF(
                 c     = parameters0[match("c",parnames)],
                 b0    = parameters0[match("b0",parnames)],
                 slope = parameters0[match("slope",parnames)],
+                Tcrit = Tcrit0,
+                lambda= lambda0,
+                l.aisfastdy = l.aisfastdy,
                 Ta    = Ta,
                 Toc   = Toc,
                 SL    = SL,
@@ -222,10 +265,9 @@ for (i in 1:length(parnames)) {
   parameters.lhs[,i] <- qunif(parameters.lhs[,i], bound.lower[i], bound.upper[i])
 }
 colnames(parameters.lhs)=parnames
-t1=proc.time()
 
 lpost.lhs = rep(NA,n.lhs)
-
+t1=proc.time()
 pb <- txtProgressBar(min=0,max=n.lhs,initial=0,style=3)
 for (j in 1:n.lhs) {
   lpost.lhs[j] = log.post(  parameters.in = as.numeric(parameters.lhs[j,]),
@@ -241,10 +283,11 @@ for (j in 1:n.lhs) {
                             ind.norm.in = ind.relative,
                             alpha.var = alpha.var,
                             beta.var = beta.var,
-                            #shape.lambda = shape.lambda,
-                            #rate.lambda = rate.lambda,
-                            #shape.Tcrit = shape.Tcrit,
-                            #rate.Tcrit = rate.Tcrit,
+                            shape.lambda = shape.lambda,
+                            rate.lambda = rate.lambda,
+                            shape.Tcrit = shape.Tcrit,
+                            rate.Tcrit = rate.Tcrit,
+                            l.aisfastdy = l.aisfastdy,
                             slope.Ta2Tg.in = slope.Ta2Tg,
                             intercept.Ta2Tg.in = intercept.Ta2Tg,
                             Tg.in = Tg.recon,
@@ -259,31 +302,39 @@ t2=proc.time()
 parameters0.lhs = parameters.lhs[which(lpost.lhs==max(lpost.lhs)),]
 
 ## Get an updated model to compare against control
-AIS_melt0.lhs = daisantoF(
-                anto.a=parameters0.lhs[match("anto.a",parnames)],
-                anto.b=parameters0.lhs[match("anto.b",parnames)],
-                gamma = parameters0.lhs[match("gamma",parnames)],
-                alpha = parameters0.lhs[match("alpha.dais",parnames)],
-                mu    = parameters0.lhs[match("mu",parnames)],
-                nu    = parameters0.lhs[match("nu",parnames)],
-                P0    = parameters0.lhs[match("P0",parnames)],
-                kappa = parameters0.lhs[match("kappa.dais",parnames)],
-                f0    = parameters0.lhs[match("f0",parnames)],
-                h0    = parameters0.lhs[match("h0",parnames)],
-                c     = parameters0.lhs[match("c",parnames)],
-                b0    = parameters0.lhs[match("b0",parnames)],
-                slope = parameters0.lhs[match("slope",parnames)],
-#                Ta    = Ta,
-#                Toc   = Toc,
-                Tg    = Tg.recon,
-                slope.Ta2Tg = slope.Ta2Tg,
-                intercept.Ta2Tg = intercept.Ta2Tg,
-                SL    = SL,
-                dSL   = dSL,
-                includes_dSLais=1
-                )
+if(l.aisfastdy) {
+  Tcrit0 <- parameters0.lhs[match('Tcrit',parnames)]
+  lambda0 <- parameters0.lhs[match('lambda',parnames)]
+} else {
+  Tcrit0 <- NULL
+  lambda0 <- NULL
+}
+AIS_melt0.lhs = daisanto_fastdynF(anto.a=parameters0.lhs[match("anto.a",parnames)],
+                                  anto.b=parameters0.lhs[match("anto.b",parnames)],
+                                  gamma = parameters0.lhs[match("gamma",parnames)],
+                                  alpha = parameters0.lhs[match("alpha.dais",parnames)],
+                                  mu    = parameters0.lhs[match("mu",parnames)],
+                                  nu    = parameters0.lhs[match("nu",parnames)],
+                                  P0    = parameters0.lhs[match("P0",parnames)],
+                                  kappa = parameters0.lhs[match("kappa.dais",parnames)],
+                                  f0    = parameters0.lhs[match("f0",parnames)],
+                                  h0    = parameters0.lhs[match("h0",parnames)],
+                                  c     = parameters0.lhs[match("c",parnames)],
+                                  b0    = parameters0.lhs[match("b0",parnames)],
+                                  slope = parameters0.lhs[match("slope",parnames)],
+                                  Tcrit = Tcrit0,
+                                  lambda= lambda0,
+                                  l.aisfastdy = l.aisfastdy,
+#                                  Ta    = Ta,
+#                                  Toc   = Toc,
+                                  Tg    = Tg.recon,
+                                  slope.Ta2Tg = slope.Ta2Tg,
+                                  intercept.Ta2Tg = intercept.Ta2Tg,
+                                  SL    = SL,
+                                  dSL   = dSL,
+                                  includes_dSLais=1
+                                  )
 ##==============================================================================
-
 
 
 ##==============================================================================
@@ -297,7 +348,8 @@ source('../calibration/DAIS_assimLikelihood.R')
 library(adaptMCMC)
 accept.mcmc = 0.234										# Optimal as # parameters->infinity
 																			#	(Gelman et al, 1996; Roberts et al, 1997)
-niter.mcmc = 5e5											# number of iterations for MCMC
+niter.mcmc = niter_mcmc000											# number of iterations for MCMC
+nnode.mcmc = nnode_mcmc000                        # number of logical CPUs for parallel MCMC, if you will use it
 gamma.mcmc = 0.5											# rate of adaptation (between 0.5 and 1, lower is faster adaptation)
 burnin = round(niter.mcmc*0.5)				# remove first ?? of chains for burn-in
 stopadapt.mcmc = round(niter.mcmc*1.0)# stop adapting after ?? iterations? (niter*1 => don't stop)
@@ -314,6 +366,8 @@ amcmc.out1 = MCMC(log.post, niter.mcmc, parameters0.lhs, scale=step.mcmc, adapt=
                   trends.ais.in=trends.ais, trends.err.in=trends.err  , ind.trends.in=ind.trends  ,
                   ind.norm=ind.relative   , alpha.var=alpha.var       , beta.var=beta.var         ,
                   slope.Ta2Tg.in=slope.Ta2Tg , intercept.Ta2Tg.in=intercept.Ta2Tg , Tg.in=Tg.recon,
+                  shape.lambda=shape.lambda  , rate.lambda=rate.lambda, shape.Tcrit=shape.Tcrit   ,
+                  rate.Tcrit=rate.Tcrit      , l.aisfastdy=l.aisfastdy,
                   #Ta.in=Ta  , Toc.in=Toc ,
                   SL.in=SL  , dSL.in=dSL)
 t.end=proc.time()											# save timing
@@ -329,6 +383,8 @@ amcmc.extend1 = MCMC.add.samples(amcmc.out1, niter.mcmc,
                   trends.ais.in=trends.ais, trends.err.in=trends.err  , ind.trends.in=ind.trends  ,
                   ind.norm=ind.relative   , alpha.var=alpha.var       , beta.var=beta.var         ,
                   slope.Ta2Tg.in=slope.Ta2Tg , intercept.Ta2Tg.in=intercept.Ta2Tg , Tg.in=Tg.recon,
+                  shape.lambda=shape.lambda  , rate.lambda=rate.lambda, shape.Tcrit=shape.Tcrit   ,
+                  rate.Tcrit=rate.Tcrit      , l.aisfastdy=l.aisfastdy,
                   #Ta.in=Ta  , Toc.in=Toc ,
                   SL.in=SL  , dSL.in=dSL)
 t.end=proc.time()											# save timing
@@ -343,59 +399,35 @@ chain1 = amcmc.extend1$samples
 ##    the task, but does it in serial after the initial chains were in parallel.
 if(TRUE){
 t.beg=proc.time()										# save timing (running millions of iterations so best to have SOME idea...)
-amcmc.par1 = MCMC.parallel(log.post, niter.mcmc, parameters0.lhs, n.chain=4, n.cpu=4,
-                  dyn.libs='../fortran/dais.so', scale=step.mcmc, adapt=TRUE, acc.rate=accept.mcmc,
+amcmc.par1 = MCMC.parallel(log.post, niter.mcmc, parameters0.lhs, n.chain=nnode.mcmc, n.cpu=nnode.mcmc,
+                  dyn.libs='../fortran/dais_fastdyn.so', scale=step.mcmc, adapt=TRUE, acc.rate=accept.mcmc,
 									gamma=gamma.mcmc, list=TRUE, n.start=round(0.01*niter.mcmc),
 									parnames.in=parnames    , bound.lower.in=bound.lower, bound.upper.in=bound.upper,
                   obs.in=obs.targets      , obs.err.in=obs.err        , obs.step.in=obs.years     ,
                   trends.ais.in=trends.ais, trends.err.in=trends.err  , ind.trends.in=ind.trends  ,
                   ind.norm=ind.relative   , alpha.var=alpha.var       , beta.var=beta.var         ,
                   slope.Ta2Tg.in=slope.Ta2Tg , intercept.Ta2Tg.in=intercept.Ta2Tg , Tg.in=Tg.recon,
+                  shape.lambda=shape.lambda  , rate.lambda=rate.lambda, shape.Tcrit=shape.Tcrit   ,
+                  rate.Tcrit=rate.Tcrit      , l.aisfastdy=l.aisfastdy,
                   #Ta.in=Ta  , Toc.in=Toc ,
                   SL.in=SL  , dSL.in=dSL)
 t.end=proc.time()											# save timing
-chain1=amcmc.par1[[1]]$samples
-chain2=amcmc.par1[[2]]$samples
-chain3=amcmc.par1[[3]]$samples
-chain4=amcmc.par1[[4]]$samples
+#chain1=amcmc.par1[[1]]$samples
+#chain2=amcmc.par1[[2]]$samples
+#chain3=amcmc.par1[[3]]$samples
+#chain4=amcmc.par1[[4]]$samples
 }
 
 ## Save workspace image - you do not want to re-simulate all those!
-save.image(file = "DAIS-noFD_calib_MCMC.RData")
+save.image(file=filename.saveprogress)
 
 ##==============================================================================
 if(FALSE){
-## Check #1: History plots
+## Check history plots
 par(mfrow=c(4,4))
 for (pp in 1:length(parnames)) {
 	plot(chain1[,pp], type="l", ylab=parnames[pp], xlab="Number of Runs", main="")
 }
-
-## Check #2: Heidelberger and Welch's convergence diagnostic:
-heidel.diag(chain1, eps=0.1, pvalue=0.05)
-
-## Check #3: Gelman and Rubin's convergence diagnostic:
-# Converged when the potental scale reduction factor is less than 1.1
-set.seed(222)
-t.beg=proc.time()										# save timing (running millions of iterations so best to have SOME idea...)
-amcmc.out2 = MCMC(log.post, niter.mcmc, parameters0, scale=step.mcmc, adapt=TRUE, acc.rate=accept.mcmc,
-									gamma=gamma.mcmc, list=TRUE, n.start=round(0.01*niter.mcmc),
-									parnames.in=parnames, bound.lower.in=bound.lower, bound.upper.in=bound.upper,
-                  obs.in=obs.targets  , obs.err.in=obs.err        , obs.step.in=obs.years     ,
-                  alpha.var=alpha.var , beta.var=beta.var         ,
-                  slope.Ta2Tg.in=slope.Ta2Tg , intercept.Ta2Tg.in=intercept.Ta2Tg ,
-                  Ta.in=Tg.recon      , SL.in=SL )
-chain2 = amcmc.out2$samples
-t.end=proc.time()											# save timing
-
-mcmc1 = as.mcmc(chain1)
-mcmc2 = as.mcmc(chain2)
-
-mcmc_chain_list = mcmc.list(list(mcmc1, mcmc2))
-gelman.diag(mcmc_chain_list)
-
-# Reset seed back to original
-set.seed(1234)
 
 ## Histograms
 par(mfrow=c(4,4))
@@ -405,114 +437,100 @@ for (pp in 1:length(parnames)) {
 }
 ##==============================================================================
 
-## Determine when (in increments of 50,000 iterations, using Gelman and Rubin
+## Determine when (in increments of 10,000 iterations, using Gelman and Rubin
 ## diagnostic) the two parallel chains, which are assumed to be
 ## chain1=amcmc.par1[[1]]$samples and chain2=amcmc.par1[[2]]$samples
 ## as defined above in the MCMC.parallel(...) command.
 
 ## Initialize the testing of the Gelman and Rubin diagnostics
 niter.test = seq(from=50000, to=niter.mcmc, by=10000)
-gr.stat = rep(NA,length(niter.test))
+gr.test = rep(NA,length(niter.test))
 
 ## Calculate the statistic at a few spots throughout the chain. Once it is
 ## close to 1 (people often use GR<1.1 or 1.05), the between-chain variability
 ## is indistinguishable from the within-chain variability, and they are
 ## converged. It is only after the chains are converged that you should use the
 ## parameter values as posterior draws, for analysis.
-for (i in 1:length(niter.test)){
-  mcmc1 = as.mcmc(chain1[1:niter.test[i],])
-  mcmc2 = as.mcmc(chain2[1:niter.test[i],])
-  mcmc_chain_list = mcmc.list(list(mcmc1, mcmc2))
-  gr.stat[i] = gelman.diag(mcmc_chain_list)[2]
-}
+if(nnode.mcmc == 1) {
+  # don't do GR stats, just cut off first half of chains
+  print('only one chain; will lop off first half for burn-in instead of doing GR diagnostics')
+} else if(nnode.mcmc > 1) {
+  # this case is FAR more fun
+  # accumulate the names of the soon-to-be mcmc objects
+  string.mcmc.list <- 'mcmc1'
+  for (m in 2:nnode.mcmc) {
+    string.mcmc.list <- paste(string.mcmc.list, ', mcmc', m, sep='')
+  }
+  for (i in 1:length(niter.test)) {
+    for (m in 1:nnode.mcmc) {
+      # convert each of the chains into mcmc object
+      eval(parse(text=paste('mcmc',m,' <- as.mcmc(amcmc.par1[[m]]$samples[1:niter.test[i],])', sep='')))
+    }
+    eval(parse(text=paste('mcmc_chain_list = mcmc.list(list(', string.mcmc.list , '))', sep='')))
+    gr.test[i] <- as.numeric(gelman.diag(mcmc_chain_list)[2])
+  }
+} else {print('error - nnode.mcmc < 1 makes no sense')}
+
+## Save workspace image
+save.image(file=filename.saveprogress)
+
+## <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< TODO
+## <<<<<<< automate the rest of this as in the MESS codes
+## <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< TODO
 
 ## Plot GR statistics as a function of iterations, decide where to cut off
 ## chains and use the tails of both for analysis
-plot(niter.test,gr.stat)
+#plot(niter.test,gr.test)
 
-##==============================================================================
+#===============================================================================
+# Chop off burn-in
+#===============================================================================
+#
 
-## GR statistic gets and stays below 1.1 by iteration ...? (set this to n.burnin)
-n.burnin = 120000
-n.sample = nrow(chain1)-n.burnin
-parameters1=chain1[(n.burnin+1):nrow(chain1),]
-parameters2=chain2[(n.burnin+1):nrow(chain1),]
-parameters3=chain3[(n.burnin+1):nrow(chain1),]
-parameters4=chain4[(n.burnin+1):nrow(chain1),]
-parameters.posterior = rbind(parameters1,parameters2, parameters3, parameters4)
+# Note: here, we are only using the Gelman and Rubin diagnostic. But this is
+# only after looking at the quantile stability as iterations increase, as well
+# as the Heidelberger and Welch diagnostics, which suggest the chains are okay.
+# 'ifirst' is the first spot where the GR stat gets to and stays below gr.max
+# for all of the models.
+# save a separate ifirst for each experiment
+ifirst <- NULL
+if(nnode.mcmc==1) {
+  ifirst <- round(0.5*niter.mcmc)
+} else {
+  gr.max <- 1.1
+  lgr <- rep(NA, length(niter.test))
+  for (i in 1:length(niter.test)) {lgr[i] <- gr.test[i] < gr.max}
+  for (i in seq(from=length(niter.test), to=1, by=-1)) {
+    if( all(lgr[i:length(lgr)]) ) {ifirst <- niter.test[i]}
+  }
+}
+
+if(nnode.mcmc > 1) {
+  chains_burned <- vector('list', nnode.mcmc)
+  for (m in 1:nnode.mcmc) {
+   chains_burned[[m]] <- amcmc.par1[[m]]$samples[(ifirst+1):niter.mcmc,]
+  }
+} else {
+  chains_burned <- amcmc.out1$samples[(ifirst+1):niter.mcmc,]
+}
+
+# Combine all of the chains from 'ifirst' to 'niter_mcmc' into a potpourri of
+# [alleged] samples from the posterior. Only saving the transition covariance
+# matrix for one of the chains (if in parallel).
+if(nnode.mcmc==1) {
+  parameters.posterior <- chains_burned
+  covjump.posterior <- amcmc.out1$cov.jump
+} else {
+  parameters.posterior <- chains_burned[[1]]
+  covjump.posterior <- amcmc.par1[[1]]$cov.jump
+  for (m in 2:nnode.mcmc) {
+    parameters.posterior <- rbind(parameters.posterior, chains_burned[[m]])
+  }
+}
 n.parameters = ncol(parameters.posterior)
 
-## Fit PDFs to the parameter distributions
-pdf.all=vector('list',n.parameters)
-n.node=100
-for (pp in 1:n.parameters){
-  tmp = density(parameters.posterior[,pp],kernel='gaussian',
-                n=n.node,from=bound.lower[pp],to=bound.upper[pp])
-  pdf.all[[pp]] = tmp; names(pdf.all)[pp]=parnames[pp]
-}
-
-##==============================================================================
-## Plot the PDFs?
-par(mfrow=c(4,4))
-for (pp in 1:n.parameters){
-  plot(pdf.all[[pp]]$x,pdf.all[[pp]]$y,type='l',xlab=parnames[pp],ylab='density');
-}
-
-if(FALSE){
-## Plot all relative to older estimates?
-dat.parameters = read.csv("../output_calibration/DAIS_calibratedParameters_29Jul2016.csv")
-parameters.old = dat.parameters[1:(nrow(dat.parameters)-1), ]
-n.parameters.old=ncol(parameters.old)
-pdf.old=vector('list',n.parameters.old)
-n.node=200
-for (pp in 1:n.parameters.old){
-  tmp = density(parameters.old[,pp],kernel='gaussian',
-                n=n.node,from=bound.lower[pp],to=bound.upper[pp])
-  pdf.old[[pp]] = tmp; names(pdf.old)[pp]=parnames[pp]
-}
-par(mfrow=c(4,4))
-for (pp in 1:n.parameters){
-	plot(pdf.all[[pp]]$x,pdf.all[[pp]]$y,type='l',xlab=parnames[pp],col='red');
-  	lines(pdf.old[[pp]]$x,pdf.old[[pp]]$y,type='l',col='black');
-}
-}
-##==============================================================================
-
-## Note on bandwidths and number of nodes for Kernel density estimate fitting:
-##    With hundreds of thousands of parameters in the distributions we seek to
-##    fit KDEs to, the fits and bandwidths are fairly insensitive to the number
-##    of KDE nodes you plop down (n.node, above). With 300,000 = n.parameters,
-##    Tony tested n.node = 20, 50, 100, 200 and 1000. The bandwidths for
-##    n.node >= 50 are all the same to within 7 significant figures.
-
-## Write a CSV file with the successful parameter combinations and bandwidths
-## Structure of the CSV file is as follows. 5 columns, 2*n.sample rows (2 chains
-## with n.samples each).
-##    First row: Parameter names.
-##    Rows 2-??: The calibrated parameter values.
-##    Last row:  The bandwidths. These are the standard
-##               deviations of the normal distributions one should sample from.
-##               The idea is that if you pick a row out of this CSV file, and
-##               draw random-normally with these bandwidths (stdevs) around each
-##               parameter value, you are sampling from the joint distribution.
-bandwidths=rep(NA,n.parameters)
-for (i in 1:n.parameters){
-  bandwidths[i]=pdf.all[[i]]$bw
-}
-
-## Plot the distributions
-par(mfrow=c(4,4))
-for (p in 1:n.parameters) {
-  plot(pdf.all[[p]]$x,pdf.all[[p]]$y,type='l',xlab=parnames[p],ylab='density',main="")
-}
-
-## Write the calibrated parameters file (csv version - antiquated)
-#to.file = rbind(parameters.posterior,bandwidths)  # bandwidths are in the last row
-#rownames(to.file)=NULL
-#colnames(to.file)=parnames
-#today=Sys.Date(); today=format(today,format="%d%b%Y")
-#filename=paste('../output_calibration/DAIS_calibratedParameters_',today,'.csv', sep="")
-#write.table(to.file, file=filename, sep=",", qmethod="double", row.names=FALSE)
+# save results in case you need to revisit later
+save.image(file=filename.saveprogress)
 
 # Write the calibrated parameters file (netCDF version - better)
 

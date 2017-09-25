@@ -1,8 +1,9 @@
 # Define "all"
-all: dais.so simple.so brick_te.so gsic_magicc.so doeclim.so sneasy.so
+all: simple.so brick_te.so gsic_magicc.so doeclim.so sneasy.so dais_fastdyn.so
 
 # Fortran compiler:
-F90 = /usr/local/bin/gfortran # g95
+##F90 = /usr/local/bin/gfortran # g95
+F90 = /usr/bin/gfortran # g95
 
 # Directories: objpath, srcpath
 OP = ./obj
@@ -23,7 +24,7 @@ CPPFLAGS = -DMOC_NOISE
 ## The main programs/subroutines ##
 # ==============================================================
 
-dais.so: $(OP)/global.o $(OP)/dais.o $(OP)/run_dais.o
+dais_fastdyn.so: $(OP)/global.o $(OP)/dais_fastdyn.o $(OP)/run_dais_fastdyn.o
 	$(F90) -o $@ $(Flags) -shared $(Incl) $^
 
 simple.so: $(OP)/global.o $(OP)/simple.o $(OP)/run_simple.o
@@ -52,12 +53,12 @@ $(OP)/run_doeclim.o: $(OP)/global.o $(SP)/run_doeclim.f90
 $(OP)/doeclim.o: $(OP)/global.o $(SP)/doeclim.f90
 	$(F90) -c $(Flags) $(Incl) $(SP)/doeclim.f90 -o $@
 
-## DAIS ##
-$(OP)/run_dais.o: $(OP)/global.o $(OP)/dais.o $(SP)/run_dais.f90
-	$(F90) -c $(Flags) $(Incl) $(SP)/run_dais.f90 -o $@
+## DAIS, with fast dynamics emulator ##
+$(OP)/run_dais_fastdyn.o: $(OP)/global.o $(OP)/dais_fastdyn.o $(SP)/run_dais_fastdyn.f90
+	$(F90) -c $(Flags) $(Incl) $(SP)/run_dais_fastdyn.f90 -o $@
 
-$(OP)/dais.o: $(OP)/global.o $(SP)/dais.f90
-	$(F90) -c $(Flags) $(Incl) $(SP)/dais.f90 -o $@
+$(OP)/dais_fastdyn.o: $(OP)/global.o $(SP)/dais_fastdyn.f90
+	$(F90) -c $(Flags) $(Incl) $(SP)/dais_fastdyn.f90 -o $@
 
 ## SIMPLE ##
 $(OP)/run_simple.o: $(OP)/global.o $(OP)/simple.o $(SP)/run_simple.f90

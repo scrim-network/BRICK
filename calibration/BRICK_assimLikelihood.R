@@ -105,7 +105,8 @@ log.lik = function( parameters.in,
                     obs.err,
                     trends.te,
                     luse.brick,
-                    i0
+                    i0,
+                    l.aisfastdy=TRUE
                    ){
 
 	## Run the coupled BRICK model
@@ -119,7 +120,8 @@ log.lik = function( parameters.in,
                             ind.norm.data=ind.norm.data,
                             ind.norm.sl=ind.norm.sl,
                             luse.brick=luse.brick,
-                            i0=i0
+                            i0=i0,
+                            l.aisfastdy=l.aisfastdy
                           )
 
   ## Calculate contribution from DOECLIM temperature
@@ -304,7 +306,8 @@ log.post = function(  parameters.in,
                       obs.err,
                       trends.te,
                       luse.brick,
-                      i0
+                      i0,
+                      l.aisfastdy=TRUE
                       ){
 
   llik = 0
@@ -332,7 +335,8 @@ log.post = function(  parameters.in,
 										  obs.err=obs.err,
 											trends.te=trends.te,
                       luse.brick=luse.brick,
-                      i0=i0
+                      i0=i0,
+                      l.aisfastdy=l.aisfastdy
                       )
     lpost = llik + lpri
   } else {
