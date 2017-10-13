@@ -20,8 +20,8 @@
 ##  l.aisfastdy            logical, whether or not to use AIS fast dynamics emulator
 ##
 ## Requires:
-##  luse.brick, includes: luse.doeclim, luse.gsic, luse.te, luse.simple,
-##                        luse.dais, luse.lws, and luse.XXX, where XXX
+##  luse.brick, includes: luse.doeclim, luse.gsic, luse.te, luse.tee, luse.simple, 
+##			  luse.dais, luse.lws, and luse.XXX, where XXX
 ##                        may be replaced with your favorite model component
 ##
 ## Questions? Tony Wong <twong@psu.edu>
@@ -66,8 +66,13 @@ brick_model = function(parameters.in,
   slr.out = rep(0,length(mod.time))
   outcnt=1
 
-  # Initialize temperature for coupling
-  temp.couple = rep(NA, length(mod.time))
+  # Initialize temperature for coupling. Most models require normalization to 
+  # preindustrial (1850-1870) values, so that should be the default normalization 
+  # period as set in ind.norm.data. Exceptions are handled at their model calls.
+  temp.preindustrial = rep(NA, length(mod.time))
+
+  # Initialize ocean heat change for coupling
+  deltaH.couple = rep(NA, length(mod.time))
 
   #=============================================================================
   # SNEASY - Simple Nonlinear EArth SYstem model (including DOECLIM and CCM)
@@ -100,7 +105,8 @@ brick_model = function(parameters.in,
     #itmp = ind.norm.data[match("ocheat",ind.norm.data[,1]),2]:ind.norm.data[match("ocheat",ind.norm.data[,1]),3]
     #sneasy.out$ocheat = sneasy.out$ocheat - mean(sneasy.out$ocheat[itmp])
 
-    temp.couple = sneasy.out$temp + T0
+    temp.preindustrial = sneasy.out$temp + T0
+    deltaH.couple = diff(sneasy.out$ocheat) * 10^22 #in Joules
     brick.out[[outcnt]] = sneasy.out; names(brick.out)[outcnt]="sneasy.out"; outcnt=outcnt+1;
 
   }
@@ -134,15 +140,17 @@ brick_model = function(parameters.in,
     #itmp = ind.norm.data[match("ocheat",ind.norm.data[,1]),2]:ind.norm.data[match("ocheat",ind.norm.data[,1]),3]
     #doeclim.out$ocheat = doeclim.out$ocheat - mean(doeclim.out$ocheat[itmp])
 
-    temp.couple = doeclim.out$temp + T0
+    temp.preindustrial = doeclim.out$temp + T0
+    deltaH.couple = diff(doeclim.out$ocheat) * 10^22 #in Joules
     brick.out[[outcnt]] = doeclim.out; names(brick.out)[outcnt]="doeclim.out"; outcnt=outcnt+1;
 
   }
 
   #=============================================================================
   # Establish coupling if there is no module to estimate global mean surface temperature
+  # Normalization period for obs.temp should match those passed by SNEASY and DOECLIM (1850-1870)
 
-  if (!luse.brick[,"luse.doeclim"] & !luse.brick[,"luse.sneasy"]) {temp.couple=obs.temp}
+  if (!luse.brick[,"luse.doeclim"] & !luse.brick[,"luse.sneasy"]) {temp.preindustrial=obs.temp}
 
   #=============================================================================
   # GSIC-MAGICC - glaciers and small ice caps
@@ -157,11 +165,11 @@ brick_model = function(parameters.in,
 
     ## Normalize temperature to match what the sub-model expects (the parameters
     ## may assume a particular time period associated with Tg=0, for example)
-    # GSIC-MAGICC expects temp.couple relative to late 1800s, which it already is
+    # GSIC-MAGICC expects temp.preindustrial relative to late 1800s, which it already is
     # with ind.norm.data for temperature rel to 1850-70 (Wigley and Raper 2005)
 
     ## Run GSIC-MAGICC at these parameter values, using temperature output from DOECLIM
-    gsic.out = gsic_magiccF(beta0=beta0, V0=V0.gsic, n=n, Gs0=Gs0 , Tg=temp.couple, i0=i0$gsic)
+    gsic.out = gsic_magiccF(beta0=beta0, V0=V0.gsic, n=n, Gs0=Gs0 , Tg=temp.preindustrial, i0=i0$gsic)
 
     ## Subtract off normalization period model GSIC output as the zero point
     itmp = ind.norm.data[match("gsic",ind.norm.data[,1]),2]:ind.norm.data[match("gsic",ind.norm.data[,1]),3]
@@ -188,12 +196,12 @@ brick_model = function(parameters.in,
 
     ## Normalize temperature to match what the sub-model expects (the parameters
     ## may assume a particular time period associated with Tg=0, for example)
-    ## TE expects temp.couple relative to late 1800s, which it already is
+    ## TE expects temp.preindustrial relative to late 1800s, which it already is
     ## with ind.norm.data for temperature rel to 1850-70
 
     ## Run BRICK-TE (thermosteric expansion) model, using temp output from DOECLIM
     ## i0$te=1
-    te.out = brick_te_F(a=a.te , b=b.te, invtau=invtau.te, TE_0=TE0, Tg=temp.couple)
+    te.out = brick_te_F(a=a.te , b=b.te, invtau=invtau.te, TE_0=TE0, Tg=temp.preindustrial)
 
     ## Subtract off normalization period
     itmp = ind.norm.data[match("te",ind.norm.data[,1]),2]:ind.norm.data[match("te",ind.norm.data[,1]),3]
@@ -204,6 +212,30 @@ brick_model = function(parameters.in,
     ## Add this contribution to the total sea level rise
     slr.out = slr.out + (te.out.norm - mean(te.out.norm[ind.norm.sl]))
 
+  }
+
+  #=============================================================================
+  # TEE - explicit thermosteric expansion, 
+  #       optional replacement for TE, requires a deltaH time series from doeclim
+
+  if (luse.brick[,"luse.tee"]) {
+
+    ## Grab the BRICK-TEE parameters
+    a.tee  =parameters.in[match("a.tee",parnames.in)]
+    TE0    =parameters.in[match("TE0"  ,parnames.in)]
+
+    ## Run BRICK-TEE (explicit thermosteric expansion) model, using OHC output from DOECLIM
+    ## i0$te=1
+    te.out = brick_tee_F(a=a.tee, TE_0=TE0, deltaH=deltaH.couple)
+
+    ## Subtract off normalization period
+    itmp = ind.norm.data[match("te",ind.norm.data[,1]),2]:ind.norm.data[match("te",ind.norm.data[,1]),3]
+    te.out.norm = te.out - mean(te.out[itmp])
+
+    brick.out[[outcnt]] = te.out.norm; names(brick.out)[outcnt]="te.out"; outcnt=outcnt+1;
+
+    ## Add this contribution to the total sea level rise
+    slr.out = slr.out + (te.out.norm - mean(te.out.norm[ind.norm.sl]))
   }
 
   #=============================================================================
@@ -220,12 +252,12 @@ brick_model = function(parameters.in,
 
     ## Normalize temperature to match what the sub-model expects (the parameters
     ## may assume a particular time period associated with Tg=0, for example)
-    # SIMPLE expects temp.couple relative to 1960-1990. i0$gis should match this.
-    temp.couple = temp.couple - mean(temp.couple[i0$gis])
+    # SIMPLE expects temp.simple relative to 1960-1990. i0$gis should match this.
+    temp.simple = temp.preindustrial - mean(temp.preindustrial[i0$gis])
 
     ## Run SIMPLE (Greenland Ice Sheet model)
     simple.out = simpleF(a=a.simple, b=b.simple, alpha=alpha.simple,
-                         beta=beta.simple, V0=V0, Tg=temp.couple, i0=i0$gis)
+                         beta=beta.simple, V0=V0, Tg=temp.simple, i0=i0$gis)
 
     ## Add this contribution to the total sea level rise
     slr.out = slr.out + (simple.out$sle.gis - mean(simple.out$sle.gis[ind.norm.sl]))
@@ -303,7 +335,7 @@ brick_model = function(parameters.in,
                                    slope=slope   , l.aisfastdy=l.aisfastdy,
                                    Tcrit=Tcrit   , lambda=lambda,
                                    slope.Ta2Tg=slope.Ta2Tg.in, intercept.Ta2Tg=intercept.Ta2Tg.in,
-                                   Tg=temp.couple, SL=SL.couple, dSL=dSL.couple ,
+                                   Tg=temp.preindustrial, SL=SL.couple, dSL=dSL.couple ,
                                    includes_dSLais = include_dSLais)
       ## Subtract off normalization period
       itmp = ind.norm.data[match("ais",ind.norm.data[,1]),2]:ind.norm.data[match("ais",ind.norm.data[,1]),3]
@@ -323,7 +355,7 @@ brick_model = function(parameters.in,
     # (fed in from lws.params)
 
     lws.out <- brick_lws(lws.mean=lws.params$mean, lws.sd=lws.params$sd,
-                         lws0=lws.params$lws0, Tg=temp.couple)
+                         lws0=lws.params$lws0, Tg=temp.preindustrial)
 
     ## Subtract off normalization period
     lws.out <- lws.out - mean(lws.out[ind.norm.sl])
@@ -331,7 +363,7 @@ brick_model = function(parameters.in,
     ## Add this contribution to the total sea level rise
     slr.out = slr.out + lws.out
 
-    brick.out[[outcnt]] = simple.out; names(brick.out)[outcnt]="lws.out"; outcnt=outcnt+1;
+    brick.out[[outcnt]] = lws.out; names(brick.out)[outcnt]="lws.out"; outcnt=outcnt+1;
 
   }
 

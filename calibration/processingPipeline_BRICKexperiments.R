@@ -292,6 +292,7 @@ source('../fortran/R/daisanto_fastdynF.R')  # DAIS (Antarctic Ice Sheet) model, 
                     # and Toc (Antarctic/high-latitude ocean temperature)
 source('../fortran/R/GSIC_magiccF.R')   # the GSIC model
 source('../fortran/R/brick_te_F.R')     # TE (thermal expansion) model
+source('../fortran/R/brick_tee_F.R')    # TEE (explicit thermal expansion) model
 source('../fortran/R/simpleF.R')        # GIS (Greenland Ice Sheet) model
 source('../R/gmsl_r07.R')        # the GMSL model
 
@@ -336,10 +337,11 @@ luse.sneasy   = FALSE    # Simple Nonlinear EArth SYstem model (DOECLIM+CCM)
 luse.doeclim  = TRUE    # diffusion-ocean-energy balance climate model
 luse.gsic     = TRUE    # glaciers and small ice caps contribution to SLR
 luse.te       = TRUE    # thermal expansion contribution to SLR
+luse.tee      = FALSE   # explicit thermal expansion contribution to SLR
 luse.simple   = TRUE    # Greenland ice sheet model
 luse.dais     = TRUE    # Antarctic ice sheet model
 luse.lws      = FALSE   # for now, use LWS sampler hard-coded
-luse.brick = cbind(luse.sneasy,luse.doeclim, luse.gsic, luse.te, luse.simple, luse.dais, luse.lws)
+luse.brick = cbind(luse.sneasy,luse.doeclim, luse.gsic, luse.te, luse.tee, luse.simple, luse.dais, luse.lws)
 
 ## Source the appropriate BRICK model for your purposes
 if(experiment=='c') {source('../R/BRICK_coupledModel.R')}
@@ -349,11 +351,12 @@ if(experiment=='g') {
   luse.doeclim  = TRUE    # diffusion-ocean-energy balance climate model
   luse.gsic     = FALSE   # glaciers and small ice caps contribution to SLR
   luse.te       = FALSE   # thermal expansion contribution to SLR
+  luse.tee	= FALSE   # explicit thermal expansion contribution to SLR
   luse.simple   = FALSE   # Greenland ice sheet model
   luse.dais     = FALSE   # Antarctic ice sheet model
   luse.gmsl     = TRUE    # Example of adding your own model component - GMSL
   luse.lws      = FALSE   # land water storage
-  luse.brick = cbind(luse.sneasy,luse.doeclim, luse.gsic, luse.te, luse.simple, luse.dais, luse.gmsl, luse.lws)
+  luse.brick = cbind(luse.sneasy,luse.doeclim, luse.gsic, luse.te, luse.tee, luse.simple, luse.dais, luse.gmsl, luse.lws)
   source('../R/BRICK_coupledModel_R07.R')
 }
 

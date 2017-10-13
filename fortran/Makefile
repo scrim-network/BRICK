@@ -1,5 +1,5 @@
 # Define "all"
-all: simple.so brick_te.so gsic_magicc.so doeclim.so sneasy.so dais_fastdyn.so
+all: simple.so brick_te.so brick_tee.so gsic_magicc.so doeclim.so sneasy.so dais_fastdyn.so
 
 # Fortran compiler:
 ##F90 = /usr/local/bin/gfortran # g95
@@ -32,6 +32,9 @@ simple.so: $(OP)/global.o $(OP)/simple.o $(OP)/run_simple.o
 
 brick_te.so: $(OP)/global.o $(OP)/brick_te.o $(OP)/run_brick_te.o
 	$(F90) -o $@ $(Flags) -shared $(Incl) $^
+
+brick_tee.so: $(OP)/global.o $(OP)/brick_tee.o $(OP)/run_brick_tee.o
+        $(F90) -o $@ $(Flags) -shared $(Incl) $^
 
 gsic_magicc.so: $(OP)/global.o $(OP)/gsic_magicc.o $(OP)/run_gsic_magicc.o
 	$(F90) -o $@ $(Flags) -shared $(Incl) $^
@@ -73,6 +76,13 @@ $(OP)/run_brick_te.o: $(OP)/global.o $(OP)/brick_te.o $(SP)/run_brick_te.f90
 
 $(OP)/brick_te.o: $(OP)/global.o $(SP)/brick_te.f90
 	$(F90) -c $(Flags) $(Incl) $(SP)/brick_te.f90 -o $@
+
+## brick_tee ##
+$(OP)/run_brick_tee.o: $(OP)/global.o $(OP)/brick_tee.o $(SP)/run_brick_tee.f90
+        $(F90) -c $(Flags) $(Incl) $(SP)/run_brick_tee.f90 -o $@
+
+$(OP)/brick_tee.o: $(OP)/global.o $(SP)/brick_tee.f90
+        $(F90) -c $(Flags) $(Incl) $(SP)/brick_tee.f90 -o $@
 
 ## gsic_magicc ##
 $(OP)/run_gsic_magicc.o: $(OP)/global.o $(OP)/gsic_magicc.o $(SP)/run_gsic_magicc.f90
