@@ -20,8 +20,8 @@
 ##  l.aisfastdy            logical, whether or not to use AIS fast dynamics emulator
 ##
 ## Requires:
-##  luse.brick, includes: luse.doeclim, luse.gsic, luse.te, luse.simple,
-##                        luse.dais, luse.lws, and luse.XXX, where XXX
+##  luse.brick, includes: luse.doeclim, luse.gsic, luse.te, luse.tee, luse.simple, 
+##			  luse.dais, luse.lws, and luse.XXX, where XXX
 ##                        may be replaced with your favorite model component
 ##
 ## Questions? Tony Wong <twong@psu.edu>
@@ -71,6 +71,9 @@ brick_model = function(parameters.in,
   # period as set in ind.norm.data. Exceptions are handled at their model calls.
   temp.preindustrial = rep(NA, length(mod.time))
 
+  # Initialize ocean heat change for coupling
+  deltaH.couple = rep(NA, length(mod.time))
+
   #=============================================================================
   # SNEASY - Simple Nonlinear EArth SYstem model (including DOECLIM and CCM)
 
@@ -103,6 +106,7 @@ brick_model = function(parameters.in,
     #sneasy.out$ocheat = sneasy.out$ocheat - mean(sneasy.out$ocheat[itmp])
 
     temp.preindustrial = sneasy.out$temp + T0
+    deltaH.couple = diff(sneasy.out$ocheat) * 10^22 #in Joules
     brick.out[[outcnt]] = sneasy.out; names(brick.out)[outcnt]="sneasy.out"; outcnt=outcnt+1;
 
   }
@@ -137,6 +141,7 @@ brick_model = function(parameters.in,
     #doeclim.out$ocheat = doeclim.out$ocheat - mean(doeclim.out$ocheat[itmp])
 
     temp.preindustrial = doeclim.out$temp + T0
+    deltaH.couple = diff(doeclim.out$ocheat) * 10^22 #in Joules
     brick.out[[outcnt]] = doeclim.out; names(brick.out)[outcnt]="doeclim.out"; outcnt=outcnt+1;
 
   }
@@ -207,6 +212,30 @@ brick_model = function(parameters.in,
     ## Add this contribution to the total sea level rise
     slr.out = slr.out + (te.out.norm - mean(te.out.norm[ind.norm.sl]))
 
+  }
+
+  #=============================================================================
+  # TEE - explicit thermosteric expansion, 
+  #       optional replacement for TE, requires a deltaH time series from doeclim
+
+  if (luse.brick[,"luse.tee"]) {
+
+    ## Grab the BRICK-TEE parameters
+    a.tee  =parameters.in[match("a.tee",parnames.in)]
+    TE0    =parameters.in[match("TE0"  ,parnames.in)]
+
+    ## Run BRICK-TEE (explicit thermosteric expansion) model, using OHC output from DOECLIM
+    ## i0$te=1
+    te.out = brick_tee_F(a=a.tee, TE_0=TE0, deltaH=deltaH.couple)
+
+    ## Subtract off normalization period
+    itmp = ind.norm.data[match("te",ind.norm.data[,1]),2]:ind.norm.data[match("te",ind.norm.data[,1]),3]
+    te.out.norm = te.out - mean(te.out[itmp])
+
+    brick.out[[outcnt]] = te.out.norm; names(brick.out)[outcnt]="te.out"; outcnt=outcnt+1;
+
+    ## Add this contribution to the total sea level rise
+    slr.out = slr.out + (te.out.norm - mean(te.out.norm[ind.norm.sl]))
   }
 
   #=============================================================================

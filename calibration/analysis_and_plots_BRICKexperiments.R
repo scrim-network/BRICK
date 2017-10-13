@@ -767,6 +767,7 @@ luse.sneasy <- FALSE
 luse.doeclim <- TRUE
 luse.gsic <- FALSE
 luse.te <- FALSE
+luse.tee <- FALSE
 luse.simple <- FALSE
 luse.dais <- FALSE
 luse.gmsl	<- TRUE
@@ -807,6 +808,7 @@ luse.sneasy <- FALSE
 luse.doeclim <- TRUE
 luse.gsic <- TRUE
 luse.te <- TRUE
+luse.tee <- FALSE
 luse.simple <- TRUE
 luse.dais <- FALSE
 luse.brick <- cbind(luse.sneasy,luse.doeclim, luse.gsic, luse.te, luse.simple, luse.dais)
@@ -836,6 +838,7 @@ luse.sneasy <- FALSE
 luse.doeclim <- TRUE
 luse.gsic <- TRUE
 luse.te <- TRUE
+luse.tee <- FALSE
 luse.simple <- TRUE
 luse.dais <- TRUE
 luse.brick <- cbind(luse.sneasy, luse.doeclim, luse.gsic, luse.te, luse.simple, luse.dais)
