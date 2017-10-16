@@ -34,7 +34,7 @@ brick_te.so: $(OP)/global.o $(OP)/brick_te.o $(OP)/run_brick_te.o
 	$(F90) -o $@ $(Flags) -shared $(Incl) $^
 
 brick_tee.so: $(OP)/global.o $(OP)/brick_tee.o $(OP)/run_brick_tee.o
-        $(F90) -o $@ $(Flags) -shared $(Incl) $^
+	$(F90) -o $@ $(Flags) -shared $(Incl) $^
 
 gsic_magicc.so: $(OP)/global.o $(OP)/gsic_magicc.o $(OP)/run_gsic_magicc.o
 	$(F90) -o $@ $(Flags) -shared $(Incl) $^
@@ -79,10 +79,10 @@ $(OP)/brick_te.o: $(OP)/global.o $(SP)/brick_te.f90
 
 ## brick_tee ##
 $(OP)/run_brick_tee.o: $(OP)/global.o $(OP)/brick_tee.o $(SP)/run_brick_tee.f90
-        $(F90) -c $(Flags) $(Incl) $(SP)/run_brick_tee.f90 -o $@
+	$(F90) -c $(Flags) $(Incl) $(SP)/run_brick_tee.f90 -o $@
 
 $(OP)/brick_tee.o: $(OP)/global.o $(SP)/brick_tee.f90
-        $(F90) -c $(Flags) $(Incl) $(SP)/brick_tee.f90 -o $@
+	$(F90) -c $(Flags) $(Incl) $(SP)/brick_tee.f90 -o $@
 
 ## gsic_magicc ##
 $(OP)/run_gsic_magicc.o: $(OP)/global.o $(OP)/gsic_magicc.o $(SP)/run_gsic_magicc.f90
