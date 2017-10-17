@@ -95,7 +95,7 @@ minimize_residuals_brick = function(
 		gsic.norm.resid = mean(abs( (obs$gsic[oidx$gsic]-brick.out$gsic.out[midx$gsic])/obs.err$gsic[oidx$gsic] ))
 	}
 
-  if(luse.brick[,"luse.te"]) {
+  if(luse.brick[,"luse.te"] | luse.brick[,"luse.tee"]) {
     # Note 1: the trends from IPCC are in mm/year, and model output is m
     # Note 2: these calculate the least squares regression slope coefficients. It
     # is more than twice as fast to calcualte by hand like this than to use R's

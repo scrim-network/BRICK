@@ -76,7 +76,7 @@ if (luse.te) {
 }
 
 ## BRICK-TEE
-parnames.tee  =Null; p0.tee       =NULL; bound.lower.tee=NULL;
+parnames.tee   =NULL; p0.tee       =NULL; bound.lower.tee=NULL;
 bound.upper.tee=NULL; step.mcmc.tee=NULL; index.model.tee=NULL;
 if (luse.tee) {
         parnames.tee   =c("a.tee","TE0"  )        # parameters names
@@ -127,18 +127,24 @@ if (luse.lws) {
 ##==============================================================================
 ## Combine for coupled model
 ## Leave LWS out, because not calibrated
-parnames    = c(parnames.doeclim, parnames.sneasy, parnames.gsic, parnames.te, parnames.simple, parnames.dais)
-p0          = c(p0.doeclim      , p0.sneasy      , p0.gsic      , p0.te      , p0.simple      , p0.dais      )
-bound.lower = c(bound.lower.doeclim, bound.lower.sneasy, bound.lower.gsic,
-                bound.lower.te     , bound.lower.simple, bound.lower.dais)
-bound.upper = c(bound.upper.doeclim, bound.upper.sneasy, bound.upper.gsic,
-                bound.upper.te     , bound.upper.simple, bound.upper.dais)
-step.mcmc   = c(step.mcmc.doeclim  , step.mcmc.sneasy  , step.mcmc.gsic  ,
-                step.mcmc.te       , step.mcmc.simple  , step.mcmc.dais  )
+parnames    = c(parnames.doeclim, parnames.sneasy, parnames.gsic, parnames.te,
+                parnames.tee    , parnames.simple, parnames.dais)
+p0          = c(p0.doeclim      , p0.sneasy      , p0.gsic      , p0.te      ,
+                p0.tee          , p0.simple      , p0.dais      )
+bound.lower = c(bound.lower.doeclim, bound.lower.sneasy, bound.lower.gsic  ,
+                bound.lower.te     , bound.lower.tee   , bound.lower.simple,
+                bound.lower.dais   )
+bound.upper = c(bound.upper.doeclim, bound.upper.sneasy, bound.upper.gsic  ,
+                bound.upper.te     , bound.upper.tee   , bound.upper.simple,
+                bound.upper.dais   )
+step.mcmc   = c(step.mcmc.doeclim  , step.mcmc.sneasy  , step.mcmc.gsic    ,
+                step.mcmc.te       , step.mcmc.tee     , step.mcmc.simple  ,
+                step.mcmc.dais     )
 index.model = c(match(parnames.doeclim[index.model.doeclim],parnames),
                 match(parnames.sneasy[index.model.sneasy]  ,parnames),
 				match(parnames.gsic[index.model.gsic]      ,parnames),
 				match(parnames.te[index.model.te]          ,parnames),
+                match(parnames.tee[index.model.tee]        ,parnames),
 				match(parnames.simple[index.model.simple]  ,parnames),
 				match(parnames.dais[index.model.dais]      ,parnames))
 index.all = 1:length(p0); index.stat = index.all[is.na(pmatch(index.all,index.model))]
