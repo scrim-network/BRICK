@@ -273,14 +273,15 @@ lines(brick.out$doeclim.out$time[midx.sl], brick.out$slr.out[midx.sl], col="purp
 ## previous testing with uniform priors on 1/tau confirm) that the gamma is an
 ## excellent approximation of the distribution of 1/tau (or tau)
 
+shape.invtau = NULL    # initialize
+scale.invtau = NULL    # initialize
+
 if(luse.te) {
 
   invtau.hat = 1/200     # preliminary guess at what the expected value of 1/tau should be
                          # (The timescale and extent of thermal expansion of the oceans due to climate change, Marcelja, 2009)
   q05 = 1/1290           # 82-1290 y are bounds given by Mengel et al (2015) for tau
   q95 = 1/82             # use them as the 5-95% bounds for our 1/tau
-  shape.invtau = NULL    # initialize
-  scale.invtau = NULL    # initialize
 
   ## Gamma distribution has only 2 degrees of freedom. So can only fit 2 of these
   ## 3 requirements.
