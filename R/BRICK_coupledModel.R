@@ -339,10 +339,10 @@ brick_model = function(parameters.in,
                                    includes_dSLais = include_dSLais)
       ## Subtract off normalization period
       itmp = ind.norm.data[match("ais",ind.norm.data[,1]),2]:ind.norm.data[match("ais",ind.norm.data[,1]),3]
-      dais.out.norm = dais.out$Vais - mean(dais.out$Vais[itmp])
-      brick.out[[outcnt]] = dais.out.norm; names(brick.out)[outcnt]="dais.out"; outcnt=outcnt+1;
+      dais.out$Vais = dais.out$Vais - mean(dais.out$Vais[itmp])
+      brick.out[[outcnt]] = dais.out; names(brick.out)[outcnt]="dais.out"; outcnt=outcnt+1;
       ## Add this contribution to the total sea level rise
-      slr.out = slr.out + (dais.out.norm - mean(dais.out.norm[ind.norm.sl]))
+      slr.out = slr.out + (dais.out$Vais - mean(dais.out$Vais[ind.norm.sl]))
     }
   }
 
