@@ -39,8 +39,8 @@ filename.vandantzig.uniform = '../output_model/VanDantzig_fd-uniform_2065_08May2
 filename.vandantzig.gamma = '../output_model/VanDantzig_fd-gamma_2065_08May2017.nc'
 
 ## File name for the BRICK post-calibrated parameters (netcdf) (the BRICK output came from these guys)
-filename.parameters.uniform = '../output_calibration/BRICK-model_postcalibratedParameters_fd-uniform_08May2017.nc'
-filename.parameters.gamma = '../output_calibration/BRICK-model_postcalibratedParameters_fd-gamma_08May2017.nc'
+filename.parameters.uniform = '../output_calibration/BRICK_postcalibratedParameters_fd-uniform_08May2017.nc'
+filename.parameters.gamma = '../output_calibration/BRICK_postcalibratedParameters_fd-gamma_08May2017.nc'
 
 ## Other files
 filename.rho_simple_fixed = "../output_calibration/rho_simple_fixed_07May2017.csv"
