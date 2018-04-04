@@ -27,31 +27,57 @@
 
 rm(list=ls())                        # Clear all previous variables
 
+library("optparse")
+
+option_list = list(
+  make_option(c("-m", "--mode"), type="character", default="mcmc", help="choose between {mcmc,post}"),
+  make_option(c("-n", "--niter"), type="integer", default=100, help="number of iterations"),
+  make_option(c("-N", "--nnode"), type="integer", default=2, help="number of chains"),
+  make_option(c("-d", "--deoptim_iter"), type="integer", default=100, help="number of iterations"),
+  make_option(c("-u", "--odup"), type="integer", default=4, help="ocean diffusivity upper bound"),
+  make_option(c("-b", "--begyear"), type="integer", default=1850, help="start year of calibration"),
+  make_option(c("-e", "--endyear"), type="integer", default=2009, help="end year of calibration"),
+  make_option(c("-f", "--forcing"), type="character", default="urban", help="forcing dataset in {urban,giss}"),
+  make_option(c("-s", "--sprior"), type="character", default="inf", help="prior for climate sensitivity in {inf, uninf}"),
+  make_option(c("-x", "--save"), type="character", default="rds", help="save either via 'workspace' or 'rds'"),
+  make_option(c("-o", "--outdir"), type="character", default="../scratch", help="output directory, no trailing slash"),
+  make_option(c("-t", "--firstnormyear"), type="integer", default=1850, help="beginning of the interval used to normalize temp data"),
+  make_option(c("-T", "--lastnormyear"), type="integer", default=1870, help="end of the interval used to normalize temp data")
+); 
+
+opt_parser = OptionParser(option_list=option_list);
+opt = parse_args(opt_parser);
+
 ## Switch to your BRICK calibration directory
-setwd('/home/scrim/axw322/codes/BRICK/calibration')
+#setwd('/home/scrim/axw322/codes/BRICK/calibration')
 #setwd('/Users/tony/codes/BRICK/calibration')
 
 ## Set up MCMC stuff here so that it can be automated for HPC
-nnode_mcmc000 <- 8
-niter_mcmc000 <- 2e6
+nnode_mcmc000 <- opt$nnode
+niter_mcmc000 <- opt$niter
 
 ## Show plots? (probably want FALSE on HPC, non-interactive)
 l.doplots <- FALSE
 
+if (opt$save == "workspace") {
 ## Set up a filename for saving RData images along the way
 today=Sys.Date(); today=format(today,format="%d%b%Y")
 filename.saveprogress <- paste('BRICK_calib_MCMC_',today,'.RData',sep='')
+}
 
 ## Set the seed (for reproducibility)
 set.seed(1234)
 #set.seed(as.double(Sys.time())) # should yield same distributions... (a good test!)
+
+## Prior flag
+l.informed.prior.S <- (opt$sprior == "inf")
 
 ## Do you want to use RCP8.5 to make projections? (l.project=TRUE)
 ## Or do you want to use historical data to make hindcasts? (l.project=FALSE)
 ## Note -- l.project=FALSE => Kriegler (2005) data, same as Urban and Keller (2010)
 l.project = FALSE
 #begyear = 1765  # SNEASY start date
-begyear = 1850  # DOECLIM start date
+begyear = opt$begyear  # DOECLIM start date
 endyear = 2009
 tstep   = 1
 mod.time= seq(from=begyear, to=endyear, by=tstep)
@@ -70,7 +96,7 @@ source('../fortran/R/daisanto_fastdynF.R') # DAIS (Antarctic Ice Sheet) model
 source('../R/brick_lws.R')              # LWS (land water storage)
 
 ## Source some useful functions for manipulating data
-source('../R/forcing_total.R')          # function to add up the total forcing
+source(sprintf('../R/forcing_total_%s.R', opt$forcing))         # function to add up the total forcing
 source('../R/compute_indices.R')        # function to determine the model and
                                         # data indices for comparisons
 ##==============================================================================
@@ -110,8 +136,8 @@ names(obs.err.all) = c(    "temp"      , "ocheat"      , "gis"      , "gsic"    
 ## Set the indices for normalization that are consistent with each data set
 ind.norm.data = data.frame(
     c( "temp"              , "ocheat"            , "gsic"             , "gis"               , "te"                 , "ais"               , "sl"                ) ,
-    c(which(mod.time==1850),which(mod.time==1960),which(mod.time==1960),which(mod.time==1960),which(mod.time==1961),which(mod.time==1961),which(mod.time==1961)) ,
-    c(which(mod.time==1870),which(mod.time==1990),which(mod.time==1960),which(mod.time==1990),which(mod.time==1990),which(mod.time==1990),which(mod.time==1990)) )
+    c(which(mod.time==opt$firstnormyear),which(mod.time==1960),which(mod.time==1960),which(mod.time==1960),which(mod.time==1961),which(mod.time==1961),which(mod.time==1961)) ,
+    c(which(mod.time==opt$lastnormyear),which(mod.time==1990),which(mod.time==1960),which(mod.time==1990),which(mod.time==1990),which(mod.time==1990),which(mod.time==1990)) )
 
 ## Set the indices of the initial condition for each sub-model
 i0 = vector("list",nrow(ind.norm.data)); names(i0)=as.character(ind.norm.data[,1])
@@ -189,11 +215,11 @@ if(luse.sneasy) {
 
 } else {
 
-  if(l.project) {
-    forcing = read.csv( '../data/forcing_rcp85.csv', header=TRUE )
-  } else {
-    forcing = read.csv( '../data/forcing_hindcast.csv', header=TRUE )
-  }
+if(l.project) {
+  forcing = read.csv( '../data/forcing_rcp85.csv', header=TRUE )
+} else {
+  forcing = read.csv(sprintf('../data/forcing_hindcast_%s.csv', opt$forcing), header=TRUE )
+}
 
 }
 
@@ -215,7 +241,7 @@ source('../R/BRICK_coupledModel.R')
 library(DEoptim)
 source('../calibration/BRICK_DEoptim.R')
 p0.deoptim=p0                          # initialize optimized initial parameters
-niter.deoptim=200                      # number of iterations for DE optimization
+niter.deoptim=opt$deoptim_iter         # number of iterations for DE optimization
 NP.deoptim=11*length(index.model)      # population size for DEoptim (do at least 10*[N parameters])
 F.deoptim=0.8                          # as suggested by Storn et al (2006)
 CR.deoptim=0.9                        # as suggested by Storn et al (2006)
@@ -344,50 +370,19 @@ accept.mcmc = 0.234               # Optimal as # parameters->infinity
                                   # (Gelman et al, 1996; Roberts et al, 1997)
 niter.mcmc = niter_mcmc000        # number of iterations for MCMC
 nnode.mcmc = nnode_mcmc000        # number of nodes for parallel MCMC
-gamma.mcmc = 0.5                  # rate of adaptation (between 0.5 and 1, lower is faster adaptation)
+gamma.mcmc = 0.6                  # rate of adaptation (between 0.5 and 1, lower is faster adaptation)
 burnin = round(niter.mcmc*0.5)    # remove first ?? of chains for burn-in (not used)
 stopadapt.mcmc = round(niter.mcmc*1.0)# stop adapting after ?? iterations? (niter*1 => don't stop)
 
+if(opt$mode == "mcmc") {
 ##==============================================================================
 ## Actually run the calibration
-if(FALSE){
-t.beg=proc.time()                      # save timing (running millions of iterations so best to have SOME idea...)
-amcmc.out1 = MCMC(log.post, niter.mcmc, p0.deoptim, scale=step.mcmc, adapt=TRUE, acc.rate=accept.mcmc,
-                  gamma=gamma.mcmc               , list=TRUE                  , n.start=round(0.01*niter.mcmc),
-                  parnames.in=parnames           , forcing.in=forcing         , l.project=l.project           ,
-                  #slope.Ta2Tg.in=slope.Ta2Tg    , intercept.Ta2Tg.in=intercept.Ta2Tg,
-                  ind.norm.data=ind.norm.data    , ind.norm.sl=ind.norm       , mod.time=mod.time             ,
-                  oidx = oidx.all                , midx = midx.all            , obs=obs.all                   ,
-                  obs.err = obs.err.all          , trends.te = trends.te      , bound.lower.in=bound.lower    ,
-                  bound.upper.in=bound.upper     , shape.in=shape.invtau      , scale.in=scale.invtau         ,
-                  luse.brick=luse.brick          , i0=i0                      , l.aisfastdy=l.aisfastdy       )
-t.end=proc.time()                      # save timing
-chain1 = amcmc.out1$samples
-}
-
-## Extend and run more MCMC samples?
-if(FALSE){
-t.beg=proc.time()
-amcmc.extend1 = MCMC.add.samples(amcmc.out1, niter.mcmc,
-                    parnames.in=parnames           , forcing.in=forcing         , l.project=l.project            ,
-                    #slope.Ta2Tg.in=slope.Ta2Tg    , intercept.Ta2Tg.in=intercept.Ta2Tg,
-                    ind.norm.data=ind.norm.data    , ind.norm.sl=ind.norm       , mod.time=mod.time              ,
-                    oidx = oidx.all                , midx = midx.all            , obs=obs.all                    ,
-                    obs.err = obs.err.all          , trends.te = trends.te      , bound.lower.in=bound.lower     ,
-                    bound.upper.in=bound.upper     , shape.in=shape.invtau      , scale.in=scale.invtau          ,
-                    luse.brick=luse.brick          , i0=i0                      , l.aisfastdy=l.aisfastdy        )
-t.end=proc.time()
-chain1 = amcmc.extend1$samples
-}
-
-## If you want to run 2 (or more) chains in parallel (save time, more sampling)
-if(TRUE){
 t.beg=proc.time()                    # save timing (running millions of iterations so best to have SOME idea...)
 amcmc.par1 = MCMC.parallel(log.post, niter.mcmc, p0.deoptim, n.chain=nnode.mcmc, n.cpu=nnode.mcmc,
                   dyn.libs=c('../fortran/doeclim.so','../fortran/brick_te.so','../fortran/brick_tee.so','../fortran/gsic_magicc.so','../fortran/simple.so'),
                   scale=step.mcmc, adapt=TRUE, acc.rate=accept.mcmc,
                   gamma=gamma.mcmc, list=TRUE, n.start=round(0.01*niter.mcmc),
-                  parnames.in=parnames           , forcing.in=forcing         , l.project=l.project           ,
+                  parnames.in=parnames           , forcing.in=forcing         , l.project=l.project           , l.informed.prior.S=l.informed.prior.S,
                   #slope.Ta2Tg.in=slope.Ta2Tg    , intercept.Ta2Tg.in=intercept.Ta2Tg,
                   ind.norm.data=ind.norm.data    , ind.norm.sl=ind.norm       , mod.time=mod.time             ,
                   oidx = oidx.all                , midx = midx.all            , obs=obs.all                   ,
@@ -399,10 +394,18 @@ t.end=proc.time()                      # save timing
 
 if(luse.sneasy) {cleanup.sneasy()}  # deallocates memory after SNEASY is done
 
+if(opt$save == "workspace") {
 ## Save workspace image - you do not want to re-simulate all those!
 save.image(file=filename.saveprogress)
+} else if (opt$save == "rds") {
+saveRDS(file=sprintf("%s/brick_mcmc_f%s_s%s_e%d_t%d_o%d_n%d.rds", opt$outdir, opt$forcing, opt$sprior, endyear, opt$lastnormyear, opt$odup, niter.mcmc), amcmc.par1)
+}
+
+if (opt$mode == "post") {
 
 ##==============================================================================
+amcmc.par1 = readRDS(sprintf("%s/brick_mcmc_f%s_s%s_e%d_t%d_o%d_n%d.rds", opt$outdir, opt$forcing, opt$sprior, endyear, opt$lastnormyear, opt$odup, niter.mcmc))
+chain1 = amcmc.par1[[1]]
 
 ## Diagnostic plots
 if(l.doplots) {
@@ -538,7 +541,7 @@ outnc <- nc_create(filename.parameters, list(parameters.var,parnames.var))
 ncvar_put(outnc, parameters.var, t(parameters.posterior))
 ncvar_put(outnc, parnames.var, parnames)
 nc_close(outnc)
-
+}
 ##==============================================================================
 
 ##==============================================================================

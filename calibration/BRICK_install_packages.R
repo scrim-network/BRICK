@@ -25,7 +25,7 @@
 ##==============================================================================
 
 install.packages('adaptMCMC')
-install.packages('compiler')
+#install.packages('compiler')
 install.packages('DEoptim')
 install.packages('doParallel')
 install.packages('fExtremes')
@@ -33,17 +33,17 @@ install.packages('fields')
 install.packages('fMultivar')
 install.packages('foreach')
 install.packages('gplots')
-install.packages('graphics')
+#install.packages('graphics')
 install.packages('lhs')
 install.packages('maps')
-install.packages('methods')
+#install.packages('methods')
 install.packages('ncdf4')
 install.packages('plotrix')
 install.packages('pscl')
 install.packages('RColorBrewer')
 install.packages('sensitivity')
 install.packages('sn')
-install.packages('stats')
+#install.packages('stats')
 
 ##==============================================================================
 ## End

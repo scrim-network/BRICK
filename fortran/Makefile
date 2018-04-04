@@ -3,11 +3,13 @@ all: simple.so brick_te.so brick_tee.so gsic_magicc.so doeclim.so sneasy.so dais
 
 # Fortran compiler:
 ##F90 = /usr/local/bin/gfortran # g95
-F90 = /usr/bin/gfortran # g95
+##F90 = /usr/bin/gfortran # g95
+F90 := $(shell which gfortran)
 
 # Directories: objpath, srcpath
 OP = ./obj
 SP = ./src
+OP_build_dummy := $(shell mkdir -p $(OP))
 
 # Compiler flags:
 Optimization = -O3
