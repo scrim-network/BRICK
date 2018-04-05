@@ -118,11 +118,13 @@ log.lik = function(	parameters.in,
 log.pri = function( parameters.in,
                     parnames.in,
                     bound.lower.in,
-                    bound.upper.in
+                    bound.upper.in,
+                    l.informed.prior.S
                     ){
 
 	# Pluck off the model and statistical parameters
-  S            =parameters.in[match("S"            ,parnames.in)]
+  ind.S = match("S"            ,parnames.in)
+  S            =parameters.in[ind.S]
 	kappa.doeclim=parameters.in[match("kappa.doeclim",parnames.in)]
 	alpha.doeclim=parameters.in[match("alpha.doeclim",parnames.in)]
 	T0           =parameters.in[match("T0"           ,parnames.in)]
@@ -132,8 +134,15 @@ log.pri = function( parameters.in,
 	sigma.H      =parameters.in[match("sigma.H"      ,parnames.in)]
 	rho.H        =parameters.in[match("rho.H"        ,parnames.in)]
 
-	in.range = all(parameters.in >= bound.lower.in) & all(parameters.in <= bound.upper.in)
-  lpri.S=0
+	
+	in.range.vec = ((parameters.in >= bound.lower.in) & (parameters.in <= bound.upper.in))
+	if(l.informed.prior.S) {
+	  in.range = all(in.range.vec[-ind.S])
+	  lpri.S = dlnorm(S, meanlog=1.10704, sdlog=0.264, log=TRUE)
+	} else {
+	  in.range = all(in.range.vec)
+	  lpri.S = 0
+	}
 
 	if(in.range){
 		lpri.uni = 0									# Sum of all uniform priors (log(1)=0)
@@ -154,6 +163,7 @@ log.post = function(  parameters.in,
                       bound.lower.in,
                       bound.upper.in,
                       l.project=FALSE,
+                      l.informed.prior.S=FALSE,
                       mod.time,
                       midx,
                       oidx,
@@ -165,7 +175,8 @@ log.post = function(  parameters.in,
 	lpri = log.pri( parameters.in=parameters.in,
                   parnames.in=parnames.in,
                   bound.lower.in=bound.lower.in,
-                  bound.upper.in=bound.upper.in
+                  bound.upper.in=bound.upper.in,
+	                l.informed.prior.S=l.informed.prior.S
                   )
   	if(is.finite(lpri)) { # evaluate likelihood if nonzero prior probability
     	lpost = log.lik(  parameters.in=parameters.in,

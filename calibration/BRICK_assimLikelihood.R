@@ -258,7 +258,7 @@ if(FALSE) {
 ##==============================================================================
 ## (log of the) prior probability
 log.pri = function(parameters.in , parnames.in, bound.lower.in, bound.upper.in,
-                    shape.in, scale.in )
+                    shape.in, scale.in, l.informed.prior.S )
 {
 
 	# Pluck off the model and statistical parameters (only ones without uniform prior)
@@ -268,12 +268,19 @@ log.pri = function(parameters.in , parnames.in, bound.lower.in, bound.upper.in,
   lpri.S      = 0
   lpri.invtau = 0
 
-	in.range = all(parameters.in > bound.lower.in) & all(parameters.in < bound.upper.in)
+	in.range.vec = ((parameters.in >= bound.lower.in) & (parameters.in <= bound.upper.in))
+	in.range = all(in.range.vec)
+	if(l.informed.prior.S) {
+        S = parameters.in[ind.S]
+    	lpri.S = log(dcauchy(S,location=3,scale=2) / 	# S has truncated Cauchy(3,2) prior
+    		(pcauchy(bound.upper.in[1],location=3,scale=2)-pcauchy(bound.lower.in[1],location=3,scale=2)))
+
+	} else {
+	  lpri.S = 0
+	}
 
 	if(in.range){
 		lpri.uni = 0									# Sum of all uniform priors (log(1)=0)
-#    lpri.S = log(dcauchy(parameters.in[ind.S],location=3,scale=2) / 	# S has truncated Cauchy(3,2) prior
-#					(pcauchy(bound.upper[ind.S],location=3,scale=2)-pcauchy(bound.lower[ind.S],location=3,scale=2)))
     if(!is.na(ind.invtau)) {lpri.invtau = dgamma( parameters.in[ind.invtau], shape=shape.in, scale=scale.in, log=TRUE)}
 		lpri = lpri.uni + lpri.S + lpri.invtau
 #    lpri = lpri.uni
@@ -291,6 +298,7 @@ log.post = function(  parameters.in,
                       bound.lower.in,
                       bound.upper.in,
                       l.project=FALSE,
+		      l.informed.prior.S=FALSE,
                       rho.simple.in=NULL,
                       sigma.simple.in=NULL,
                       shape.in,
@@ -315,6 +323,7 @@ log.post = function(  parameters.in,
                   parnames.in=parnames.in,
                   bound.lower.in=bound.lower.in,
                   bound.upper.in=bound.upper.in,
+		  l.informed.prior.S=l.informed.prior.S,
                   shape.in=shape.in,
                   scale.in=scale.in )
   if(is.finite(lpri)) { # evaluate likelihood if nonzero prior probability

@@ -16,3 +16,8 @@ output_model/
 *.o
 */obj
 *.zip
+.Rproj.user
+.idea
+scratch
+results
+*.Rproj

@@ -37,9 +37,11 @@ forcing_total <- function(  forcing       ,
                             l.project     ,
                             begyear       ,
                             endyear       ,
-                            flnd = 0.29
+                            flnd = 0.29   ,
+                            forc.type = 'urban' # urban, giss
                             ){
 
+  if (forc.type == 'urban') {
   if(!l.project) {
 
     ## Hindcasts
@@ -53,6 +55,11 @@ forcing_total <- function(  forcing       ,
     forcing.total = forcing$co2 + forcing$nonco2 + alpha.doeclim*forcing$aerosol.direct + alpha.doeclim*forcing$aerosol.indirect +
 		                forcing$solar + forcing$volcanic + forcing$other
 
+  }
+  } else if (forc.type == 'giss') {
+      forcing.total = forcing$ghg + forcing$o3 + forcing$sh2o + forcing$stra + forcing$solar + forcing$land + alpha.doeclim*(forcing$refa + forcing$aie + forcing$bc + forcing$snow)  
+  } else {
+  	stop("forcing type not supported")
   }
 
   ## Clip forcing at the beginning and end of the model simulation

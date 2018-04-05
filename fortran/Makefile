@@ -1,13 +1,12 @@
-# Define "all"
-all: simple.so brick_te.so brick_tee.so gsic_magicc.so doeclim.so sneasy.so dais_fastdyn.so
-
 # Fortran compiler:
 ##F90 = /usr/local/bin/gfortran # g95
-F90 = /usr/bin/gfortran # g95
+##F90 = /usr/bin/gfortran # g95
+F90 := $(shell which gfortran)
 
 # Directories: objpath, srcpath
 OP = ./obj
 SP = ./src
+OP_build_dummy := $(shell mkdir -p $(OP))
 
 # Compiler flags:
 Optimization = -O3
@@ -23,6 +22,8 @@ CPPFLAGS = -DMOC_NOISE
 # ==============================================================
 ## The main programs/subroutines ##
 # ==============================================================
+# Define "all"
+all: simple.so brick_te.so brick_tee.so gsic_magicc.so doeclim.so sneasy.so dais_fastdyn.so
 
 dais_fastdyn.so: $(OP)/global.o $(OP)/dais_fastdyn.o $(OP)/run_dais_fastdyn.o
 	$(F90) -o $@ $(Flags) -shared $(Incl) $^

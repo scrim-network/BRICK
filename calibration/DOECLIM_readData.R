@@ -44,15 +44,15 @@
 # HADCRUT4 annual global mean surface temperature
 # Note: all ensemble member files have same time series of ucnertainties, so just
 # grabbing the first one.
-dat = read.table("../data/HadCRUT.4.4.0.0.annual_ns_avg.txt")
+dat = read.table("../data/HadCRUT.4.6.0.0.annual_ns_avg.txt")
 obs.temp = dat[,2]
 obs.temp.time = dat[,1]
-dat = read.table("../data/HadCRUT.4.4.0.0.annual_ns_avg_realisations/HadCRUT.4.4.0.0.annual_ns_avg.1.txt")
+dat = read.table("../data/HadCRUT.4.6.0.0.annual_ns_avg_realisations/HadCRUT.4.6.0.0.annual_ns_avg.1.txt")
 obs.temp.err = dat[,3]
 
 # Normalize temperature anomaly so 1961-1990 mean is 0
-ibeg=which(obs.temp.time==1850)
-iend=which(obs.temp.time==1870)
+ibeg=which(obs.temp.time==opt$firstnormyear)
+iend=which(obs.temp.time==opt$lastnormyear)
 obs.temp = obs.temp - mean(obs.temp[ibeg:iend])
 
 # annual global ocean heat content (0-3000 m)
