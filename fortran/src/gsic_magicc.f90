@@ -113,8 +113,8 @@ subroutine gsic_magicc_step_forward(Tg, SeaLevel)
 
 ! Start model
     SeaLevel = Gs + tstep * (beta0 * (Tg - Teq) * (1.-(Gs/V0))**n)
-    IF( SeaLevel_Current .GT. V0 ) THEN
-        SeaLevel_Current = V0
+    IF( SeaLevel .GT. V0 ) THEN
+        SeaLevel = V0
     ENDIF
     Gs       = SeaLevel
 
