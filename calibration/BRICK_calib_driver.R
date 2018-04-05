@@ -52,6 +52,9 @@ opt = parse_args(opt_parser);
 #setwd('/home/scrim/axw322/codes/BRICK/calibration')
 #setwd('/Users/tony/codes/BRICK/calibration')
 
+## Create output dir
+dir.create(opt$outdir)
+
 ## Set up MCMC stuff here so that it can be automated for HPC
 nnode_mcmc000 <- opt$nnode
 niter_mcmc000 <- opt$niter
@@ -96,7 +99,7 @@ source('../fortran/R/daisanto_fastdynF.R') # DAIS (Antarctic Ice Sheet) model
 source('../R/brick_lws.R')              # LWS (land water storage)
 
 ## Source some useful functions for manipulating data
-source(sprintf('../R/forcing_total_%s.R', opt$forcing))         # function to add up the total forcing
+source('../R/forcing_total.R')          # function to add up the total forcing
 source('../R/compute_indices.R')        # function to determine the model and
                                         # data indices for comparisons
 ##==============================================================================
@@ -398,13 +401,35 @@ if(opt$save == "workspace") {
 ## Save workspace image - you do not want to re-simulate all those!
 save.image(file=filename.saveprogress)
 } else if (opt$save == "rds") {
-saveRDS(file=sprintf("%s/brick_mcmc_f%s_s%s_e%d_t%d_o%d_n%d.rds", opt$outdir, opt$forcing, opt$sprior, endyear, opt$lastnormyear, opt$odup, niter.mcmc), amcmc.par1)
+saveRDS(file=sprintf("%s/brick_mcmc_f%s_s%s_t%d%d_z%d%d_o%d_n%d.rds",
+                                 opt$outdir,
+                                 opt$forcing,
+                                 opt$sprior,
+                                 begyear,
+                                 endyear,
+                                 opt$firstnormyear,
+                                 opt$lastnormyear,
+                                 opt$odup,
+                                 niter.mcmc), amcmc.par1)
 }
 
 if (opt$mode == "post") {
 
+if (opt$save == "rds") {
 ##==============================================================================
-amcmc.par1 = readRDS(sprintf("%s/brick_mcmc_f%s_s%s_e%d_t%d_o%d_n%d.rds", opt$outdir, opt$forcing, opt$sprior, endyear, opt$lastnormyear, opt$odup, niter.mcmc))
+    amcmc.par1 = readRDS(sprintf("%s/brick_mcmc_f%s_s%s_t%d%d_z%d%d_o%d_n%d.rds",
+                                 opt$outdir,
+                                 opt$forcing,
+                                 opt$sprior,
+                                 begyear,
+                                 endyear,
+                                 opt$firstnormyear,
+                                 opt$lastnormyear,
+                                 opt$odup,
+                                 niter.mcmc))
+} else {
+    stop("Not implemented yet")
+}
 chain1 = amcmc.par1[[1]]
 
 ## Diagnostic plots

@@ -127,6 +127,7 @@ brick_model = function(parameters.in,
     forcing.total = forcing_total(forcing=forcing.in,
                                   alpha.doeclim=alpha.doeclim,
                                   l.project=l.project,
+                                  forc.type=opt$forcing,
                                   begyear=mod.time[1],
                                   endyear=mod.time[length(mod.time)])
 
