@@ -33,16 +33,16 @@ option_list = list(
   make_option(c("-m", "--mode"), type="character", default="mcmc", help="choose between {mcmc,post}"),
   make_option(c("-n", "--niter"), type="integer", default=100, help="number of iterations"),
   make_option(c("-N", "--nnode"), type="integer", default=2, help="number of chains"),
-  make_option(c("-d", "--deoptim_iter"), type="integer", default=100, help="number of iterations"),
+  make_option(c("-d", "--deoptim_iter"), type="integer", default=200, help="number of iterations"),
   make_option(c("-u", "--odup"), type="integer", default=4, help="ocean diffusivity upper bound"),
-  make_option(c("-b", "--begyear"), type="integer", default=1850, help="start year of calibration"),
-  make_option(c("-e", "--endyear"), type="integer", default=2009, help="end year of calibration"),
+  make_option(c("-t", "--begyear"), type="integer", default=1850, help="start year of calibration"),
+  make_option(c("-T", "--endyear"), type="integer", default=2009, help="end year of calibration"),
   make_option(c("-f", "--forcing"), type="character", default="urban", help="forcing dataset in {urban,giss}"),
   make_option(c("-s", "--sprior"), type="character", default="inf", help="prior for climate sensitivity in {inf, uninf}"),
   make_option(c("-x", "--save"), type="character", default="rds", help="save either via 'workspace' or 'rds'"),
   make_option(c("-o", "--outdir"), type="character", default="../scratch", help="output directory, no trailing slash"),
-  make_option(c("-t", "--firstnormyear"), type="integer", default=1850, help="beginning of the interval used to normalize temp data"),
-  make_option(c("-T", "--lastnormyear"), type="integer", default=1870, help="end of the interval used to normalize temp data")
+  make_option(c("-z", "--firstnormyear"), type="integer", default=1850, help="beginning of the interval used to normalize temp data"),
+  make_option(c("-Z", "--lastnormyear"), type="integer", default=1870, help="end of the interval used to normalize temp data")
 ); 
 
 opt_parser = OptionParser(option_list=option_list);
@@ -81,7 +81,7 @@ l.informed.prior.S <- (opt$sprior == "inf")
 l.project = FALSE
 #begyear = 1765  # SNEASY start date
 begyear = opt$begyear  # DOECLIM start date
-endyear = 2009
+endyear = opt$endyear
 tstep   = 1
 mod.time= seq(from=begyear, to=endyear, by=tstep)
 begyear.norm = 1961
