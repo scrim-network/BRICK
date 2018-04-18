@@ -542,7 +542,7 @@ if(experiment=='g') {
   lw.time.1970 <- 1970:2009
   i1970 <- which(mod.time==lw.time.1970[1]):which(mod.time==lw.time.1970[length(lw.time.1970)])
   lw.1970 <- (0.12/1000)*(lw.time.1970 - lw.time.1970[1])
-  lw.err.1970 <- (0.25*(0.2-0.03)/1000)*sqrt(lw.time.1970 - lw.time.1970[1])
+  lw.err.1970 <- (0.25*(0.22-0.03)/1000)*sqrt(lw.time.1970 - lw.time.1970[1])
   # 1993-2010: 0.38 [0.26 to 0.49]
   lw.time.1992 <- 1992:2009
   i1992 <- which(mod.time==lw.time.1992[1]):which(mod.time==lw.time.1992[length(lw.time.1992)])
