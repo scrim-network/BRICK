@@ -136,7 +136,7 @@ luse.tee      = FALSE   # explicit thermosteric expansion contribution to SLR
 luse.simple   = TRUE    # Greenland ice sheet model
 luse.dais     = FALSE    # Antarctic ice sheet model
 luse.lws      = FALSE    # land water storage
-luse.brick = cbind(luse.sneasy, luse.doeclim, luse.gsic, luse.te, luse.tee, 
+luse.brick = cbind(luse.sneasy, luse.doeclim, luse.gsic, luse.te, luse.tee,
 		   luse.simple, luse.dais, luse.lws)
 
 ## If you are using DAIS, include the fast dynamics emulator?
@@ -144,7 +144,7 @@ l.aisfastdy = FALSE
 if(!luse.dais) {l.aisfastdy = FALSE} # force FALSE if not using DAIS
 
 if(luse.te & luse.tee) {
-  luse.tee = FALSE 
+  luse.tee = FALSE
   print('Only use 1 thermosteric expansion model; switching off explicit model.')
 }
 ##==============================================================================

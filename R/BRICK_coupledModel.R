@@ -20,7 +20,7 @@
 ##  l.aisfastdy            logical, whether or not to use AIS fast dynamics emulator
 ##
 ## Requires:
-##  luse.brick, includes: luse.doeclim, luse.gsic, luse.te, luse.tee, luse.simple, 
+##  luse.brick, includes: luse.doeclim, luse.gsic, luse.te, luse.tee, luse.simple,
 ##			  luse.dais, luse.lws, and luse.XXX, where XXX
 ##                        may be replaced with your favorite model component
 ##
@@ -66,8 +66,8 @@ brick_model = function(parameters.in,
   slr.out = rep(0,length(mod.time))
   outcnt=1
 
-  # Initialize temperature for coupling. Most models require normalization to 
-  # preindustrial (1850-1870) values, so that should be the default normalization 
+  # Initialize temperature for coupling. Most models require normalization to
+  # preindustrial (1850-1870) values, so that should be the default normalization
   # period as set in ind.norm.data. Exceptions are handled at their model calls.
   temp.preindustrial = rep(NA, length(mod.time))
 
@@ -215,7 +215,7 @@ brick_model = function(parameters.in,
   }
 
   #=============================================================================
-  # TEE - explicit thermosteric expansion, 
+  # TEE - explicit thermosteric expansion,
   #       optional replacement for TE, requires a deltaH time series from doeclim
 
   if (luse.brick[,"luse.tee"]) {
