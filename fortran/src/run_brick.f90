@@ -25,18 +25,27 @@
 
 !===============================================================================
 
-subroutine run_brick(ns, tstep, &
-                     forcing_in, doeclim_t2co, doeclim_kappa, doeclim_T0, &                 ! DOECLIM input/ouput
-                     time_out, temp_out, heatflux_mixed_out, heatflux_interior_out, &
-                     gsic_magicc_beta0, gsic_magicc_V0, gsic_magicc_n, &                    ! GSIC input/output
-                     gsic_magicc_Gs0, gsic_magicc_Teq, sl_gsic_out, &
-                     brick_te_a, brick_te_b, brick_te_invtau, &                             ! TE input/output
-                     brick_te_V0, sl_te_out, &
-                     simple_a, simple_b, simple_alpha, &                                    ! SIMPLE input/output
-                     simple_beta, simple_V0, sl_gis_out, vol_gis_out, &
-                     anto_a, anto_b, slope_Ta2Tg, intercept_Ta2Tg, &                        ! DAIS input/output
-                     dais_parameters, sl_ais_out, rad_ais_out, vol_ais_out, &
-                     sl_out)
+subroutine run_brick(ns                , tstep                ,                  &
+                     forcing_in        , doeclim_t2co         , doeclim_kappa  , & ! DOECLIM input/output
+                     doeclim_T0        , time_out             , temp_out       , &
+                     heatflux_mixed_out, heatflux_interior_out,                  &
+                     gsic_magicc_beta0 , gsic_magicc_V0       , gsic_magicc_n  , & ! GSIC input/output
+                     gsic_magicc_Gs0   , gsic_magicc_Teq      , sl_gsic_out    , &
+                     brick_te_a        , brick_te_b           , brick_te_invtau, & ! TE input/output
+                     brick_te_V0       , sl_te_out            ,                  &
+                     simple_a          , simple_b             , simple_alpha   , & ! SIMPLE input/output
+                     simple_beta       , simple_V0            , sl_gis_out     , &
+                     vol_gis_out       ,                                         &
+                     anto_a            , anto_b               , slope_Ta2Tg    , & ! DAIS input/output
+                     intercept_Ta2Tg   , dais_b0              , dais_slope     , &
+                     dais_mu           , dais_h0              , dais_c         , &
+                     dais_chr          , dais_P0              , dais_kappa     , &
+                     dais_nu           , dais_f0              , dais_gamma     , &
+                     dais_alpha        , dais_Tfrz            , dais_rho_w     , &
+                     dais_rho_i        , dais_rho_m           , dais_Toc0      , &
+                     dais_Rad0         , dais_Aoc             , dais_lf        , &
+                     sl_ais_out        , rad_ais_out          , vol_ais_out    , &
+                     sl_out)                                                       ! full sea level output
 
 !===============================================================================
 ! Inputs:
@@ -68,7 +77,26 @@ subroutine run_brick(ns, tstep, &
 !   anto_b              Toc when Tg=0
 !   slope_Ta2Tg         slope of regression of Tg (global) as linear function of Ta (antarctic)
 !   intercept_Ta2Tg     intercept of regression of Tg as a linear function of Ta
-!   dais_parameters     13 parameters for DAIS-ANTO model (details within the DAIS model structure)
+!   dais_b0             undisturbed bed height at the continent center, m
+!   dais_slope          slope of ice sheet bed before loading, -
+!   dais_mu             profile parameter for parabolic ice surface (related to ice stress), m0.5
+!   dais_h0             height of runoff line at AIS surface temperaure of 0 deg C, m
+!   dais_c              temperaure sensitivity of runoff line height, m/deg C
+!   dais_chr            runoff line height uncertainty parameter, unitless
+!   dais_P0             annual precipitation for AIS surf temp Ta=0, m (ice equivalent)
+!   dais_kappa          coefficient for exponential dependency of precip on Ta, 1/degC
+!   dais_nu             propportionality constant relating runoff to precip, 1/m0.5 1/yr0.5
+!   dais_f0             proportionality constant for ice flow at groudning line, m/yr
+!   dais_gamma          power for relation of ice flow speed to water depth, -
+!   dais_alpha          partition parameter for efect of ocean subsurf temp on ice flux, -
+!   dais_Tfrz           freezing temperature of sea water, deg C
+!   dais_rho_w          sea water density, kg/m3
+!   dais_rho_i          ice density, kg/m3
+!   dais_rho_m          rock density, kg/m3
+!   dais_Toc0           Antarctic ocean subsurface reference temperature, deg C
+!   dais_Rad0           Antarctic ice sheet reference radius, m
+!   dais_Aoc            ocean surface area, m2
+!   dais_lf             AIS shore mean AIS sea level fingerprint, -
 ! 
 ! Outputs:
 !   temp_out  	        Global mean surface temperature [degC]
@@ -114,7 +142,26 @@ subroutine run_brick(ns, tstep, &
     real(DP),     intent(IN) :: anto_b
     real(DP),     intent(IN) :: slope_Ta2Tg
     real(DP),     intent(IN) :: intercept_Ta2Tg
-    real(DP), dimension(21), intent(IN) :: dais_parameters
+    real(DP),     intent(IN) :: dais_b0
+    real(DP),     intent(IN) :: dais_slope
+    real(DP),     intent(IN) :: dais_mu
+    real(DP),     intent(IN) :: dais_h0
+    real(DP),     intent(IN) :: dais_c
+    real(DP),     intent(IN) :: dais_chr
+    real(DP),     intent(IN) :: dais_P0
+    real(DP),     intent(IN) :: dais_kappa
+    real(DP),     intent(IN) :: dais_nu
+    real(DP),     intent(IN) :: dais_f0
+    real(DP),     intent(IN) :: dais_gamma
+    real(DP),     intent(IN) :: dais_alpha
+    real(DP),     intent(IN) :: dais_Tfrz
+    real(DP),     intent(IN) :: dais_rho_w
+    real(DP),     intent(IN) :: dais_rho_i
+    real(DP),     intent(IN) :: dais_rho_m
+    real(DP),     intent(IN) :: dais_Toc0
+    real(DP),     intent(IN) :: dais_Rad0
+    real(DP),     intent(IN) :: dais_Aoc
+    real(DP),     intent(IN) :: dais_lf
 
 ! output variables
     real(DP), dimension(ns), intent(OUT) :: time_out
@@ -138,10 +185,7 @@ subroutine run_brick(ns, tstep, &
     ! assign global variables
     deltat = 1.0d0
     nsteps = ns
-    Tfrz = dais_parameters(12)
-
-!DEBUG
-print *, 'here01 - before init_brick'
+    Tfrz = dais_Tfrz
 
     i=1
     call init_brick(i, tstep, forcing_in(i), &
@@ -153,19 +197,18 @@ print *, 'here01 - before init_brick'
                     brick_te_V0, sl_te_out(i), &
                     simple_a, simple_b, simple_alpha, simple_beta, &
                     simple_V0, sl_gis_out(i), vol_gis_out(i), &
-                    dais_parameters, sl_ais_out(i), rad_ais_out(i), vol_ais_out(i), &
+                    dais_b0, dais_slope, dais_mu, dais_h0, dais_c, &
+                    dais_chr, dais_P0, dais_kappa, dais_nu, dais_f0, &
+                    dais_gamma, dais_alpha, dais_Tfrz, dais_rho_w, &
+                    dais_rho_i, dais_rho_m, dais_Toc0, dais_Rad0, &
+                    dais_Aoc, dais_lf, &
+                    sl_ais_out(i), rad_ais_out(i), vol_ais_out(i), &
                     sl_out(i))
-
-!DEBUG
-print *, 'here02 - after init_brick'
 
 ! estimate outputs
 
 ! forward integration, from beginning to end of simulation
     do i=2,ns
-
-!DEBUG
-print *, 'here03 - time-stepping'
 
         ! step the model forward
         call brick_step_forward(i, forcing_in(i), &

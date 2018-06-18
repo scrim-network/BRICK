@@ -1,5 +1,5 @@
 # Define "all"
-all: dais.so simple.so brick_te.so gsic_magicc.so brick.so
+all: doeclim.so dais.so simple.so brick_te.so gsic_magicc.so brick.so
 
 # Fortran compiler:
 F90 = /usr/local/bin/gfortran # g95
@@ -23,6 +23,9 @@ Flags = ${SOFlags} -fno-range-check #$(Modpath)
 ## The main programs/subroutines ##
 # ==============================================================
 
+doeclim.so: $(OP)/global.o $(OP)/doeclim.o $(OP)/run_doeclim.o
+	$(F90) -o $@ $(Flags) -shared $(Incl) $^
+
 dais.so: $(OP)/global.o $(OP)/dais.o $(OP)/run_dais.o
 	$(F90) -o $@ $(Flags) -shared $(Incl) $^
 
@@ -35,7 +38,7 @@ brick_te.so: $(OP)/global.o $(OP)/brick_te.o $(OP)/run_brick_te.o
 gsic_magicc.so: $(OP)/global.o $(OP)/gsic_magicc.o $(OP)/run_gsic_magicc.o
 	$(F90) -o $@ $(Flags) -shared $(Incl) $^
 
-brick.so: $(OP)/global.o $(OP)/dais.o $(OP)/brick_te.o $(OP)/simple.o $(OP)/gsic_magicc.o $(OP)/brick.o $(OP)/run_brick.o
+brick.so: $(OP)/global.o $(OP)/doeclim.o $(OP)/dais.o $(OP)/brick_te.o $(OP)/simple.o $(OP)/gsic_magicc.o $(OP)/brick.o $(OP)/run_brick.o
 	$(F90) -o $@ $(Flags) -shared $(Incl) $^
 
 # ==============================================================
@@ -48,6 +51,13 @@ $(OP)/run_brick.o: $(OP)/global.o $(OP)/brick.o $(SP)/run_brick.f90
 
 $(OP)/brick.o: $(OP)/global.o $(OP)/dais.o $(OP)/brick_te.o $(OP)/simple.o $(OP)/gsic_magicc.o $(SP)/brick.f90
 	$(F90) -c $(Flags) $(Incl) $(SP)/brick.f90 -o $@
+
+## DOECLIM ##
+$(OP)/run_doeclim.o: $(OP)/global.o $(OP)/doeclim.o $(SP)/run_doeclim.f90
+	$(F90) -c $(Flags) $(Incl) $(SP)/run_doeclim.f90 -o $@
+
+$(OP)/doeclim.o: $(OP)/global.o $(SP)/doeclim.f90
+	$(F90) -c $(Flags) $(Incl) $(SP)/doeclim.f90 -o $@
 
 ## DAIS ##
 $(OP)/run_dais.o: $(OP)/global.o $(OP)/dais.o $(SP)/run_dais.f90

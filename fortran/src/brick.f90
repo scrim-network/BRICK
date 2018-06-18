@@ -40,16 +40,23 @@ module brick
 contains
 
 !===============================================================================
-subroutine init_brick(nstep, tstep_in, forcing_current, &
-                      S_doeclim_in, kappa_doeclim_in, T0_doeclim_in, &
-                      temp_init_out, heatflux_mixed_init_out, heatflux_interior_init_out, &
-                      beta0_gsic_magicc_in, V0_gsic_magicc_in, n_gsic_magicc_in, &
-                      Teq_gsic_magicc_in, Gs0_gsic_magicc_in, sl_gsic_init_out, &
-                      a_te_in, b_te_in, invtau_te_in, V0_te_in, sl_te_init_out, &
-                      a_simple_in, b_simple_in, alpha_simple_in, beta_simple_in, &
-                      V0_simple_in, sl_gis_init_out, vol_gis_init_out, &
-                      parameters_dais_in, sl_ais_init_out, rad_ais_init_out, vol_ais_init_out, &
-                      sl_init_out)
+subroutine init_brick(nstep               , tstep_in               , forcing_current           , &
+                      S_doeclim_in        , kappa_doeclim_in       , T0_doeclim_in             , &
+                      temp_init_out       , heatflux_mixed_init_out, heatflux_interior_init_out, &
+                      beta0_gsic_magicc_in, V0_gsic_magicc_in      , n_gsic_magicc_in          , &
+                      Teq_gsic_magicc_in  , Gs0_gsic_magicc_in     , sl_gsic_init_out          , &
+                      a_te_in             , b_te_in                , invtau_te_in              , &
+                      V0_te_in            , sl_te_init_out         , a_simple_in               , &
+                      b_simple_in         , alpha_simple_in        , beta_simple_in            , &
+                      V0_simple_in        , sl_gis_init_out        , vol_gis_init_out          , &
+                      b0_dais_in          , slope_dais_in          , mu_dais_in                , &
+                      h0_dais_in          , c_dais_in              , chr_dais_in               , &
+                      P0_dais_in          , kappa_dais_in          , nu_dais_in                , &
+                      f0_dais_in          , gamma_dais_in          , alpha_dais_in             , &
+                      Tfrz_dais_in        , rho_w_dais_in          , rho_i_dais_in             , &
+                      rho_m_dais_in       , Toc0_dais_in           , Rad0_dais_in              , &
+                      Aoc_dais_in         , lf_dais_in             , sl_ais_init_out           , &
+                      rad_ais_init_out    , vol_ais_init_out       , sl_init_out               )
 !  =========================================================================
 !   Initialize the BRICK parameters and initial variables
 !  =========================================================================
@@ -74,7 +81,26 @@ subroutine init_brick(nstep, tstep_in, forcing_current, &
     real(DP), intent(IN) :: alpha_simple_in
     real(DP), intent(IN) :: beta_simple_in
     real(DP), intent(IN) :: V0_simple_in
-    real(DP), dimension(21), intent(IN) :: parameters_dais_in
+    real(DP), intent(IN) :: b0_dais_in
+    real(DP), intent(IN) :: slope_dais_in
+    real(DP), intent(IN) :: mu_dais_in
+    real(DP), intent(IN) :: h0_dais_in
+    real(DP), intent(IN) :: c_dais_in
+    real(DP), intent(IN) :: chr_dais_in
+    real(DP), intent(IN) :: P0_dais_in
+    real(DP), intent(IN) :: kappa_dais_in
+    real(DP), intent(IN) :: nu_dais_in
+    real(DP), intent(IN) :: f0_dais_in
+    real(DP), intent(IN) :: gamma_dais_in
+    real(DP), intent(IN) :: alpha_dais_in
+    real(DP), intent(IN) :: Tfrz_dais_in
+    real(DP), intent(IN) :: rho_w_dais_in
+    real(DP), intent(IN) :: rho_i_dais_in
+    real(DP), intent(IN) :: rho_m_dais_in
+    real(DP), intent(IN) :: Toc0_dais_in
+    real(DP), intent(IN) :: Rad0_dais_in
+    real(DP), intent(IN) :: Aoc_dais_in
+    real(DP), intent(IN) :: lf_dais_in
 
     real(DP), intent(OUT) :: temp_init_out
     real(DP), intent(OUT) :: heatflux_mixed_init_out
@@ -116,8 +142,11 @@ subroutine init_brick(nstep, tstep_in, forcing_current, &
 
 ! AIS-DAIS
     sea_level_noAIS = sl_gsic_init_out + sl_te_init_out + sl_gis_init_out
-    call init_dais(tstep, parameters_dais_in, sea_level_noAIS, &
-                   rad_ais_init_out, vol_ais_init_out )
+    call init_dais(tstep, b0_dais_in, slope_dais_in, mu_dais_in, h0_dais_in, c_dais_in, &
+                   chr_dais_in, P0_dais_in, kappa_dais_in, nu_dais_in, f0_dais_in, &
+                   gamma_dais_in, alpha_dais_in, Tfrz_dais_in, rho_w_dais_in, rho_i_dais_in, &
+                   rho_m_dais_in, Toc0_dais_in, Rad0_dais_in, Aoc_dais_in, lf_dais_in, &
+                   sea_level_noAIS, rad_ais_init_out, vol_ais_init_out )
     sl_ais_init_out = 0.0d0
 
 ! GMSL
