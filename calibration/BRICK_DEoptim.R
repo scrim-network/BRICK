@@ -53,17 +53,29 @@ minimize_residuals_brick = function(
 	luse.brick
 ){
 
+    # handle the chr vs (c, h0) cases
+		ind_chr <- match("chr", parnames.in)
+		if (is.na(ind_chr)) {
+		  chr.dais <- 1
+			c.dais <- parameters.in[match("c",parnames.in)]
+			h0.dais <- parameters.in[match("h0",parnames.in)]
+		} else {
+		  chr.dais <- parameters.in[match("chr",parnames.in)]
+			c.dais <- 95
+			h0.dais <- 1471
+		}
+
     brick.out <- brickF(tstep=tstep,
                         mod.time=mod.time,
                         forcing.raw = forcing.raw,
-						l.project = l.project,
+												l.project = l.project,
                         S.doeclim = parameters.in[match("S.doeclim",parnames.in)],
                         kappa.doeclim = parameters.in[match("kappa.doeclim",parnames.in)],
-						alpha.doeclim = parameters.in[match("alpha.doeclim",parnames.in)],
+												alpha.doeclim = parameters.in[match("alpha.doeclim",parnames.in)],
                         T0.doeclim = parameters.in[match("T0.doeclim",parnames.in)],
                         H0.doeclim = parameters.in[match("H0.doeclim",parnames.in)],
                         beta0.gsic = parameters.in[match("beta0.gsic",parnames.in)],
-						V0.gsic = parameters.in[match("V0.gsic",parnames.in)],
+												V0.gsic = parameters.in[match("V0.gsic",parnames.in)],
                         n.gsic = parameters.in[match("n.gsic",parnames.in)],
                         Gs0.gsic = parameters.in[match("Gs0.gsic",parnames.in)],
                         a.simple = parameters.in[match("a.simple",parnames.in)],
@@ -82,9 +94,9 @@ minimize_residuals_brick = function(
                         b0.dais = parameters.in[match("b0",parnames.in)],
                         slope.dais = parameters.in[match("slope",parnames.in)],
                         mu.dais = parameters.in[match("mu",parnames.in)],
-#                        h0.dais = parameters.in[match("h0",parnames.in)],
-#                        c.dais = parameters.in[match("c",parnames.in)],
-                        chr.dais = parameters.in[match("chr",parnames.in)],
+                        h0.dais = h0.dais,
+                        c.dais = c.dais,
+                        chr.dais = chr.dais,
                         P0.dais = parameters.in[match("P0",parnames.in)],
                         kappa.dais = parameters.in[match("kappa.dais",parnames.in)],
                         nu.dais = parameters.in[match("nu",parnames.in)],

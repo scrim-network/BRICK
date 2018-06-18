@@ -43,11 +43,11 @@ brick.so: $(OP)/global.o $(OP)/dais.o $(OP)/brick_te.o $(OP)/simple.o $(OP)/gsic
 # ==============================================================
 
 ## BRICK ##
-$(OP)/run_brick.o: $(OP)/global.o $(OP)/brick.o $(SP)/run_brick_slr.f90
-	$(F90) -c $(Flags) $(Incl) $(SP)/run_brick_slr.f90 -o $@
+$(OP)/run_brick.o: $(OP)/global.o $(OP)/brick.o $(SP)/run_brick.f90
+	$(F90) -c $(Flags) $(Incl) $(SP)/run_brick.f90 -o $@
 
-$(OP)/brick.o: $(OP)/global.o $(OP)/dais.o $(OP)/brick_te.o $(OP)/simple.o $(OP)/gsic_magicc.o $(SP)/brick_slr.f90
-	$(F90) -c $(Flags) $(Incl) $(SP)/brick_slr.f90 -o $@
+$(OP)/brick.o: $(OP)/global.o $(OP)/dais.o $(OP)/brick_te.o $(OP)/simple.o $(OP)/gsic_magicc.o $(SP)/brick.f90
+	$(F90) -c $(Flags) $(Incl) $(SP)/brick.f90 -o $@
 
 ## DAIS ##
 $(OP)/run_dais.o: $(OP)/global.o $(OP)/dais.o $(SP)/run_dais.f90

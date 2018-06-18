@@ -8,9 +8,14 @@
 ## observational data) and backward (to obtain estimates of initial conditions
 ## in 1850). These are informed from the backward integration estimates.
 ##
-## Note1 -- when defining the names, be sure to use the names which are looked up
-##			 -- in the BRICK model code that separates the parameters for each model
-##       -- Valid parameter names, and their models can be found in the README file
+## Note1 -- As above, the following parameters' prior distribution ranges have
+##          been modified to account for the new beginning of 1850 and forward
+##          integration of all components:
+##              Gs0,
+##
+## Note2 -- when defining the names, be sure to use the names which are looked up
+##			    in the BRICK model code that separates the parameters for each model
+##          Valid parameter names, and their models can be found in the README file
 ##
 ## Question? Tony Wong <twong@psu.edu>
 ##==============================================================================
@@ -47,10 +52,10 @@ parnames.gsic   =NULL; p0.gsic       =NULL; bound.lower.gsic=NULL;
 bound.upper.gsic=NULL; step.mcmc.gsic=NULL; index.model.gsic=NULL;
 if (luse.gsic) {
 	parnames.gsic   =c("beta0.gsic","V0.gsic","n.gsic","Gs0.gsic", "sigma.gsic", "rho.gsic")	# parameters names
-	p0.gsic		    =c(0.00058, 0.41    , 0.82, 0.0     , 0.00045     , 0.89      )	# initial parameter guesses
-	bound.lower.gsic=c(0      , 0.31    , 0.55, -0.037	, 0           ,  0        )	# prior range lower bounds
-	bound.upper.gsic=c(0.041  , 0.53    , 1.0 ,  0.024	, 0.00150     ,  0.999    )	# prior range upper bounds
-	step.mcmc.gsic	=c(0.01   , 0.01    , 0.1 , 0.01    , 0.0001      , 0.01      )	# step size for parameters in MCMC (proposals)
+	p0.gsic         =c(0.00058     , 0.41    , 0.82   , -0.00957 , 0.00045     , 0.89      )	# initial parameter guesses
+	bound.lower.gsic=c(0           , 0.31    , 0.55   , -0.0536  , 0           , 0         )	# prior range lower bounds
+	bound.upper.gsic=c(0.041       , 0.53    , 1.0    ,  0.0791	 , 0.00150     , 0.999     )	# prior range upper bounds
+	step.mcmc.gsic	=c(0.01        , 0.01    , 0.1    , 0.01     , 0.0001      , 0.01      )	# step size for parameters in MCMC (proposals)
 	index.model.gsic=c(1,2,3,4)			# which are model parameters? (index within parnames.gsic)
 }
 
@@ -72,9 +77,9 @@ parnames.simple   =NULL; p0.simple       =NULL; bound.lower.simple=NULL;
 bound.upper.simple=NULL; step.mcmc.simple=NULL; index.model.simple=NULL;
 if (luse.simple) {
 	parnames.simple   =c("a.simple" ,"b.simple" ,"alpha.simple","beta.simple","V0.simple","sigma.simple",'rho.simple') # parameters names
-	p0.simple         =c(-0.825     , 7.36      , 1.63e-4      , 2.85e-5     , 7.38      , 5e-4         , 0.85       ) # initial parameter guesses
-	bound.lower.simple=c( -4        , 5.888     , 0            , 0           , 7.15      , 0            , 0          ) # prior range lower bounds
-	bound.upper.simple=c( -1e-3     , 8.832     , 1e-3         , 1e-3        , 7.58      , 0.002        , 0.999      ) # prior range upper bounds
+	p0.simple         =c(-0.825     , 7.36      , 1.63e-4      , 2.85e-5     , 7.36      , 5e-4         , 0.85       ) # initial parameter guesses
+	bound.lower.simple=c( -4        , 5.888     , 0            , 0           , 7.16      , 0            , 0          ) # prior range lower bounds
+	bound.upper.simple=c( -1e-3     , 8.832     , 1e-3         , 1e-3        , 7.56      , 0.002        , 0.999      ) # prior range upper bounds
 	step.mcmc.simple  =c( 0.2       , 0.05      , 1e-5         , 1e-5        , 0.05      , 0.0001       , 0.006      ) # step sizes for initial MCMC
 	index.model.simple=c(1,2,3,4,5)			# which are model parameters? (index within parnames.simple)
 }

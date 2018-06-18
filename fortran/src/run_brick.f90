@@ -140,6 +140,9 @@ subroutine run_brick(ns, tstep, &
     nsteps = ns
     Tfrz = dais_parameters(12)
 
+!DEBUG
+print *, 'here01 - before init_brick'
+
     i=1
     call init_brick(i, tstep, forcing_in(i), &
                     doeclim_t2co, doeclim_kappa, doeclim_T0, &
@@ -153,10 +156,16 @@ subroutine run_brick(ns, tstep, &
                     dais_parameters, sl_ais_out(i), rad_ais_out(i), vol_ais_out(i), &
                     sl_out(i))
 
+!DEBUG
+print *, 'here02 - after init_brick'
+
 ! estimate outputs
 
 ! forward integration, from beginning to end of simulation
     do i=2,ns
+
+!DEBUG
+print *, 'here03 - time-stepping'
 
         ! step the model forward
         call brick_step_forward(i, forcing_in(i), &

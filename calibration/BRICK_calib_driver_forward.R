@@ -25,7 +25,7 @@
 ## along with BRICK.  If not, see <http://www.gnu.org/licenses/>.
 ##==============================================================================
 
-#setwd('~/brick/calibration')
+setwd('~/codes/brick/calibration')
 
 rm(list=ls())												# Clear all previous variables
 
@@ -60,15 +60,18 @@ luse.dais     = TRUE    # Antarctic ice sheet model
 luse.gmsl     = TRUE
 luse.brick = cbind(luse.doeclim, luse.gsic, luse.te, luse.simple, luse.dais)
 
+## Using the reparameterized DAIS, with chr instead of c and h0?
+## (FALSE means the "old BRICK" configuration, with c and h0 parameters)
+luse.chr <- TRUE
+
 ## Source the models
 source('../fortran/R/brickF.R')		# the full BRICK model
 
 ## Define parameters and their prior ranges
 ## -> Note: 'parnames' is defined here, which establishes how the parameters
 ##    are passed around into DEoptim, MCMC, likelihood functions, and the models
-#source('../calibration/BRICK_parameterSetup.R')
-#source('../calibration/BRICK_parameterSetup_no-gamma.R')
-source('../calibration/BRICK_parameterSetup_chr.R')
+if (luse.chr) {source('../calibration/BRICK_parameterSetup_chr.R')
+} else {source('../calibration/BRICK_parameterSetup.R')}
 
 ## Source some useful functions for manipulating data
 source('../R/forcing_total.R')		# function to add up the total forcing
@@ -86,11 +89,39 @@ if(l.project) {
 
 ##==============================================================================
 ## Read the model calibration data sets
-source('../calibration/DOECLIM_readData.R')		# read DOECLIM calibration data
+source('../calibration/DOECLIM_readData.R')	# read DOECLIM calibration data
 source('../calibration/GSIC_readData.R')		# read GSIC calibration data
-source('../calibration/SIMPLE_readData.R')		# GIS data, and trends in mass balance
+source('../calibration/SIMPLE_readData.R')	# GIS data, and trends in mass balance
 source('../calibration/DAIS_readData.R')		# DAIS forcing data (if at all uncoupled)
 source('../calibration/TE_readData.R')			# read TE data
+##==============================================================================
+
+
+##==============================================================================
+## Set up normalization periods, and get a reference temperature for each model
+## component, out of the temperature data set used for calibration
+
+# Set up a reference temperature (pre-industrial) from temperature data set
+# Even if the DOECLIM_readData.R routine sets up obs.temp as relative to
+# preindustrial, do this anyway in case that changes.
+tref.preindustrial <- mean(obs.temp[match(1850,obs.temp.time):match(1870,obs.temp.time)])
+
+# temperature
+# done in DOECLIM_readData.R
+
+# ocean heat
+
+# GSIC
+tref.gsic <- tref.preindustrial
+
+# TE
+tref.te <- tref.preindustrial
+
+# GIS
+
+# AIS
+
+
 ##==============================================================================
 
 
@@ -126,6 +157,15 @@ ind.norm.data = data.frame(
 ##==============================================================================
 ## Use differential optimization (DEoptim) algorithm to find suitable initial
 ## parameters for the MCMC chains
+
+#==================
+# DEBUG
+parameters.in <- p0
+parnames.in <- parnames
+forcing.raw <- forcing
+
+# DEBUG
+#==================
 
 print('Starting preliminary optimization to find starting parameter values...')
 

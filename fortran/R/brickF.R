@@ -32,7 +32,7 @@
 #   forcing.raw         CO2 (RCP8.5) and aerosol, non-CO2 radiative forcings
 #                       (co2,nonco2.land/ocean,aerosol.land/ocean,solar.land/ocean,
 #                       volc.land/ocean,tot.land,tot.ocean)
-#	l.project			logical - projections (RCP) or historical forcing?
+#	  l.project           logical - projections (RCP) or historical forcing?
 #
 # Other input:
 #
@@ -40,6 +40,7 @@
 #                       and global surface temperature anomalies
 #   intercept.Ta2Tg     intercept of this linear regression (if slope and intercept
 #                       are not provided, assumed to be Antarctic temperature already)
+#
 #						NB: these are fitted Tg relative to 1850 and Ta relative
 #						to 1961-1990 mean = -18 deg C (Shaffer 2014)
 #
@@ -50,9 +51,9 @@
 # -- DOECLIM --
 #   S           climate sensitivity (inc temp from 2xCO2) [deg C]
 #   kappa       ocean vertical heat diffusivity [cm2/s]
-#	alpha		aerosol scaling factor [-]
-#	T0			uncertain initial condition (offset), temperature [deg C]
-#	H0			uncertain initial condition (offset), ocean heat uptake [10^22 J]
+#   alpha       aerosol scaling factor [-]
+#	  T0          uncertain initial condition (offset), temperature [deg C]
+#	  H0          uncertain initial condition (offset), ocean heat uptake [10^22 J]
 #
 # -- GSIC-MAGICC --
 #   beta0       initial mass balance sensitivity (how long it takes GSIC to respond to
@@ -83,7 +84,7 @@
 #   mu          Profile parameter for parabolic ice sheet surface (related to ice stress) [m0.5]
 #   h0          hr(Ta=0): Height of runoff line at Ta = 0 [m]
 #   c           Sensitivity of Height of runoff line (hr) [m/degC]
-#	chr			calibration parameter for runoff line height [-]
+#	  chr         calibration parameter for runoff line height [-] (instead of c and h0)
 #   P0          P(Ta=0): Annual precipitation for Ta = 0 [m (ice equivalent)]
 #   kappa       Coefficient for the exponential dependency of precipitation on Ta [degC-1]
 #   nu          Proportionality constant relating runoff decrease with height to precipitation [m^(-1/2) yr^(-1/2)]
@@ -188,12 +189,12 @@ brickF <- function(
 	tstep,
     mod.time,
     forcing.raw,
-	l.project,
+		l.project,
     S.doeclim = 3.1,
     kappa.doeclim = 3.5,
-	alpha.doeclim = 1.1,
-	T0.doeclim = 0,
-	H0.doeclim = 0,
+		alpha.doeclim = 1.1,
+		T0.doeclim = 0,
+		H0.doeclim = 0,
     beta0.gsic = 0.000577,
     V0.gsic = 0.4,
     n.gsic = 0.82,
@@ -217,7 +218,7 @@ brickF <- function(
     mu.dais = 8.7,
     h0.dais = 1471,
     c.dais = 95,
-	chr.dais = 1,
+		chr.dais = 1,
     P0.dais = 0.35,
     kappa.dais = 4 * 10^(-2),
     nu.dais = 1.2 * 10^(-2),
@@ -236,11 +237,10 @@ brickF <- function(
 ){
 
 forcing.total <- forcing_total(forcing=forcing.raw,
-							  alpha.doeclim=alpha.doeclim,
-                              l.project=l.project,
-							  begyear=mod.time[1],
-							  endyear=mod.time[length(mod.time)]
-							  )
+                               alpha.doeclim=alpha.doeclim,
+															 l.project=l.project,
+															 begyear=mod.time[1],
+															 endyear=mod.time[length(mod.time)])
 
   # determine series length
   ns <- length(forcing.total)
@@ -267,7 +267,7 @@ forcing.total <- forcing_total(forcing=forcing.raw,
                         Aoc.dais,
                         lf,
                         includes_dSLais,
-						chr.dais)
+												chr.dais)
 
   # call fortran
   f.output <- .Fortran("run_brick",
@@ -276,7 +276,7 @@ forcing.total <- forcing_total(forcing=forcing.raw,
         forcing_in = as.double(forcing.total),
         doeclim_t2co = as.double(S.doeclim),
         doeclim_kappa = as.double(kappa.doeclim),
-		doeclim_T0 = as.double(T0.doeclim),
+				doeclim_T0 = as.double(T0.doeclim),
         time_out = as.double(mod.time),
         temp_out = as.double(rep(0,ns)),
         heatflux_mixed_out = as.double(rep(0,ns)),
@@ -307,12 +307,11 @@ forcing.total <- forcing_total(forcing=forcing.raw,
         sl_ais_out = as.double(rep(-999.99,ns)),
         rad_ais_out = as.double(rep(-999.99,ns)),
         vol_ais_out = as.double(rep(-999.99,ns)),
-        sl_out = as.double(rep(-999.99,ns))
-    )
+        sl_out = as.double(rep(-999.99,ns)))
 
     f.output$ocheat = flux.to.heat(f.output$heatflux_mixed_out,
-								   f.output$heatflux_interior_out)$ocean.heat +
-								   H0.doeclim
+		                               f.output$heatflux_interior_out)$ocean.heat +
+																	 H0.doeclim
 
     return(f.output)
 

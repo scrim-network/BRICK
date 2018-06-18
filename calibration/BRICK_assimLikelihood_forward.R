@@ -115,14 +115,14 @@ log.lik = function( parameters.in,
     brick.out <- brickF(tstep=tstep,
                         mod.time=mod.time,
                         forcing.raw = forcing.raw,
-						l.project = l.project,
+                        l.project = l.project,
                         S.doeclim = parameters.in[match("S.doeclim",parnames.in)],
                         kappa.doeclim = parameters.in[match("kappa.doeclim",parnames.in)],
-						alpha.doeclim = parameters.in[match("alpha.doeclim",parnames.in)],
+                        alpha.doeclim = parameters.in[match("alpha.doeclim",parnames.in)],
                         T0.doeclim = parameters.in[match("T0.doeclim",parnames.in)],
                         H0.doeclim = parameters.in[match("H0.doeclim",parnames.in)],
                         beta0.gsic = parameters.in[match("beta0.gsic",parnames.in)],
-						V0.gsic = parameters.in[match("V0.gsic",parnames.in)],
+                        V0.gsic = parameters.in[match("V0.gsic",parnames.in)],
                         n.gsic = parameters.in[match("n.gsic",parnames.in)],
                         Gs0.gsic = parameters.in[match("Gs0.gsic",parnames.in)],
                         a.simple = parameters.in[match("a.simple",parnames.in)],
@@ -161,8 +161,8 @@ log.lik = function( parameters.in,
   	rho.T     =parameters.in[match("rho.T"  ,parnames.in)]
 
     # Normalize temperature
-	itmp <- ind.norm.data[which(ind.norm.data[,1]=='temp'),2]:ind.norm.data[which(ind.norm.data[,1]=='temp'),3]
-	temperature.model <- brick.out$temp_out - mean(brick.out$temp_out[itmp])
+    itmp <- ind.norm.data[which(ind.norm.data[,1]=='temp'),2]:ind.norm.data[which(ind.norm.data[,1]=='temp'),3]
+    temperature.model <- brick.out$temp_out - mean(brick.out$temp_out[itmp])
 
     # Calculate the DOECLIM temperature residuals; apply AR1 error model
     resid.temp= obs$temp[oidx$temp] - temperature.model[midx$temp]
@@ -191,12 +191,12 @@ log.lik = function( parameters.in,
   if(!is.null(oidx$gsic) & luse.brick[,"luse.gsic"]) {
 
     # Grab the GSIC statistical parameters
-	sigma.gsic=parameters.in[match("sigma.gsic",parnames.in)]
+    sigma.gsic=parameters.in[match("sigma.gsic",parnames.in)]
     rho.gsic  =parameters.in[match("rho.gsic"  ,parnames.in)]
 
     # Normalize GSIC
-	itmp <- ind.norm.data[which(ind.norm.data[,1]=='gsic'),2]:ind.norm.data[which(ind.norm.data[,1]=='gsic'),3]
-	gsic.model <- brick.out$sl_gsic_out - mean(brick.out$sl_gsic_out[itmp])
+    itmp <- ind.norm.data[which(ind.norm.data[,1]=='gsic'),2]:ind.norm.data[which(ind.norm.data[,1]=='gsic'),3]
+    gsic.model <- brick.out$sl_gsic_out - mean(brick.out$sl_gsic_out[itmp])
 
     # Calculate the GSIC residuals; apply AR1 error model
     resid.gsic= obs$gsic[oidx$gsic] - gsic.model[midx$gsic]
@@ -218,10 +218,10 @@ if(TRUE){
 	  for (i in 1:nrow(trends.te)) {
 		  x = seq(trends.te[i,6],trends.te[i,7]);                 barx = mean(x);
 		  y = brick.out$sl_te_out[trends.te[i,6]:trends.te[i,7]]; bary = mean(y);
-	  	  trends.mod[i] = sum( (x-rep(barx,length(x)))*(y-rep(bary,length(y))))/sum( (x-rep(barx,length(x)))^2 )
+      trends.mod[i] = sum( (x-rep(barx,length(x)))*(y-rep(bary,length(y))))/sum( (x-rep(barx,length(x)))^2 )
 	  }
       resid.trends = 1000*trends.mod - trends.te[,1]
-	  err.trends   = 0.5*(trends.te[,3]-trends.te[,2])
+      err.trends   = 0.5*(trends.te[,3]-trends.te[,2])
       llik.te = sum (dnorm(resid.trends, mean=rep(0,length(resid.trends)), sd = sqrt(err.trends^2), log=TRUE))
 } else {
       #obs.err.te1 <- sqrt( 0.5*diff(trends.te[1,6:7]) ) * 0.5*(trends.te[1,3]-trends.te[1,2])/1000
@@ -250,8 +250,8 @@ if(TRUE){
     if(!is.null(sigma.simple.fixed)) sigma.simple=sigma.simple.fixed
 
     # Normalize GIS; observations are relative to 1960-1990 average (SIMPLE_readData.R)
-	itmp <- ind.norm.data[which(ind.norm.data[,1]=='gis'),2]:ind.norm.data[which(ind.norm.data[,1]=='gis'),3]
-	gis.model <- brick.out$sl_gis_out - mean(brick.out$sl_gis_out[itmp])
+    itmp <- ind.norm.data[which(ind.norm.data[,1]=='gis'),2]:ind.norm.data[which(ind.norm.data[,1]=='gis'),3]
+    gis.model <- brick.out$sl_gis_out - mean(brick.out$sl_gis_out[itmp])
 
     # Calibrate SIMPLE based on GIS data alone?
     resid.simple = obs$gis[oidx$gis] - gis.model[midx$gis] #Calculate the residuals
@@ -264,39 +264,39 @@ if(TRUE){
   llik.dais = 0
   if(luse.brick[,"luse.dais"]) {
 
-        var.dais <- parameters.in[match("var.dais",parnames.in)]
+    var.dais <- parameters.in[match("var.dais",parnames.in)]
 
-        # First part is from Shepherd et al 2012 instrumental point (from
-        # Ruckert et al 2017, or Wong et al 2017)
-        itmp            <- ind.norm.data[which(ind.norm.data[,1]=='ais'),2]:ind.norm.data[which(ind.norm.data[,1]=='ais'),3]
-        ais.model       <- brick.out$sl_ais_out - mean(brick.out$sl_ais_out[itmp])
-        ais.instr.resid <- obs$ais[oidx$ais] - ais.model[midx$ais]
+    # First part is from Shepherd et al 2012 instrumental point (from
+    # Ruckert et al 2017, or Wong et al 2017)
+    itmp            <- ind.norm.data[which(ind.norm.data[,1]=='ais'),2]:ind.norm.data[which(ind.norm.data[,1]=='ais'),3]
+    ais.model       <- brick.out$sl_ais_out - mean(brick.out$sl_ais_out[itmp])
+    ais.instr.resid <- obs$ais[oidx$ais] - ais.model[midx$ais]
 
-        llik.instr <- sum(dnorm(ais.instr.resid, mean=0, sd=sqrt(var.dais + obs.err$ais[oidx$ais]^2), log=TRUE))
+    llik.instr <- sum(dnorm(ais.instr.resid, mean=0, sd=sqrt(var.dais + obs.err$ais[oidx$ais]^2), log=TRUE))
 
 if(FALSE){
-        # Second part is from IPCC trends
-        trends.mod = rep(0, nrow(trends.ais))
-        for (i in 1:nrow(trends.ais)) {
-            x = seq(trends.ais[i,6],trends.ais[i,7]);                  barx = mean(x);
-            y = brick.out$sl_ais_out[trends.ais[i,6]:trends.ais[i,7]]; bary = mean(y);
-            trends.mod[i] = sum( (x-rep(barx,length(x)))*(y-rep(bary,length(y))))/sum( (x-rep(barx,length(x)))^2 )
-        }
-        resid.trends <- 1000*trends.mod - trends.ais[,1]
-        err.trends   <- 0.5*(trends.ais[,3]-trends.ais[,2])
-        llik.trends  <- sum(dnorm(resid.trends, mean=rep(0,length(resid.trends)), sd=sqrt(err.trends^2), log=TRUE))
+    # Second part is from IPCC trends
+    trends.mod = rep(0, nrow(trends.ais))
+    for (i in 1:nrow(trends.ais)) {
+        x = seq(trends.ais[i,6],trends.ais[i,7]);                  barx = mean(x);
+        y = brick.out$sl_ais_out[trends.ais[i,6]:trends.ais[i,7]]; bary = mean(y);
+        trends.mod[i] = sum( (x-rep(barx,length(x)))*(y-rep(bary,length(y))))/sum( (x-rep(barx,length(x)))^2 )
+    }
+    resid.trends <- 1000*trends.mod - trends.ais[,1]
+    err.trends   <- 0.5*(trends.ais[,3]-trends.ais[,2])
+    llik.trends  <- sum(dnorm(resid.trends, mean=rep(0,length(resid.trends)), sd=sqrt(err.trends^2), log=TRUE))
 } else {
-      #obs.err.ais1 <- sqrt( 0.5*diff(trends.ais[1,6:7]) ) * 0.5*(trends.ais[1,3]-trends.ais[1,2])/1000
-      #obs.ais1 <- trends.ais[1,1]*0.5*diff(trends.ais[1,6:7])/1000
-      mod.ais1 <- brick.out$sl_te_out[trends.ais[1,6]+0.5*diff(trends.ais[1,6:7])] - brick.out$sl_te_out[trends.ais[1,6]]
+    #obs.err.ais1 <- sqrt( 0.5*diff(trends.ais[1,6:7]) ) * 0.5*(trends.ais[1,3]-trends.ais[1,2])/1000
+    #obs.ais1 <- trends.ais[1,1]*0.5*diff(trends.ais[1,6:7])/1000
+    mod.ais1 <- brick.out$sl_te_out[trends.ais[1,6]+0.5*diff(trends.ais[1,6:7])] - brick.out$sl_te_out[trends.ais[1,6]]
 
-      #obs.err.ais2 <- sqrt( 0.5*diff(trends.ais[2,6:7]) ) * 0.5*(trends.ais[2,3]-trends.ais[2,2])/1000
-      #obs.ais2 <- trends.ais[2,1]*0.5*diff(trends.ais[2,6:7])/1000
-      mod.ais2 <- brick.out$sl_te_out[trends.ais[2,6]+0.5*diff(trends.ais[2,6:7])] - brick.out$sl_te_out[trends.ais[2,6]]
+    #obs.err.ais2 <- sqrt( 0.5*diff(trends.ais[2,6:7]) ) * 0.5*(trends.ais[2,3]-trends.ais[2,2])/1000
+    #obs.ais2 <- trends.ais[2,1]*0.5*diff(trends.ais[2,6:7])/1000
+    mod.ais2 <- brick.out$sl_te_out[trends.ais[2,6]+0.5*diff(trends.ais[2,6:7])] - brick.out$sl_te_out[trends.ais[2,6]]
 
-      llik.trends <- sum (dnorm(c(mod.ais1, mod.ais2), mean=c(obs.ais1,obs.ais2), sd=c(obs.err.ais1,obs.err.ais2), log=TRUE))
+    llik.trends <- sum (dnorm(c(mod.ais1, mod.ais2), mean=c(obs.ais1,obs.ais2), sd=c(obs.err.ais1,obs.err.ais2), log=TRUE))
 }
-      llik.dais <- llik.instr + llik.trends
+    llik.dais <- llik.instr + llik.trends
   }
 
   # Calculate contribution from total sea level rise
@@ -357,45 +357,45 @@ log.pri = function(parameters.in,
     ind.inf.dn <- c()
     #in.range <- all(parameters.in > bound.lower) &
     #            all(parameters.in < bound.upper)
-	in.range <- all(parameters.in > bound.lower) &
+    in.range <- all(parameters.in > bound.lower) &
                 all(parameters.in[-ind.inf.up] < bound.upper[-ind.inf.up])
 
-	if(in.range){
-        lpri.uni = 0									# Sum of all uniform priors (log(1)=0)
+    if(in.range){
+      lpri.uni = 0									# Sum of all uniform priors (log(1)=0)
 
-        # Mechanistically-motivated priors
-        lpri.invtau    <- dgamma( parameters.in[ind.invtau], shape=invtau.prior.fit[1], scale=invtau.prior.fit[2], log=TRUE )
-        lpri.vdais     <- vdais.prior.fit[1]*log(vdais.prior.fit[2])- log(gamma(vdais.prior.fit[1])) +
+      # Mechanistically-motivated priors
+      lpri.invtau    <- dgamma( parameters.in[ind.invtau], shape=invtau.prior.fit[1], scale=invtau.prior.fit[2], log=TRUE )
+      lpri.vdais     <- vdais.prior.fit[1]*log(vdais.prior.fit[2])- log(gamma(vdais.prior.fit[1])) +
                         (-vdais.prior.fit[1]-1)*log(parameters.in[ind.vdais]) - vdais.prior.fit[2]/parameters.in[ind.vdais]
-        lpri.vgmsl     <- vgmsl.prior.fit[1]*log(vgmsl.prior.fit[2])- log(gamma(vgmsl.prior.fit[1])) +
+      lpri.vgmsl     <- vgmsl.prior.fit[1]*log(vgmsl.prior.fit[2])- log(gamma(vgmsl.prior.fit[1])) +
                         (-vgmsl.prior.fit[1]-1)*log(parameters.in[ind.vgmsl]) - vgmsl.prior.fit[2]/parameters.in[ind.vgmsl]
-        lpri.anto      <- log(dmsn( parameters.in[ind.anto], anto.prior.fit$beta, anto.prior.fit$Omega, anto.prior.fit$alpha)/anto.prior.fit$cnorm)
+      lpri.anto      <- log(dmsn( parameters.in[ind.anto], anto.prior.fit$beta, anto.prior.fit$Omega, anto.prior.fit$alpha)/anto.prior.fit$cnorm)
 
-        # Other priors you might use
-#        lpri.S         <- log(dcauchy(parameters.in[ind.S],location=3,scale=2) / 	# S has truncated Cauchy(3,2) prior
+      # Other priors you might use
+#     lpri.S         <- log(dcauchy(parameters.in[ind.S],location=3,scale=2) / 	# S has truncated Cauchy(3,2) prior
 #					         (pcauchy(bound.upper[ind.S],location=3,scale=2)-pcauchy(bound.lower[ind.S],location=3,scale=2)))
-#        lpri.Gs0       <- dbeta(range.to.beta(parameters.in[ind.Gs0], bound.lower[ind.Gs0], bound.upper[ind.Gs0]),
+#     lpri.Gs0       <- dbeta(range.to.beta(parameters.in[ind.Gs0], bound.lower[ind.Gs0], bound.upper[ind.Gs0]),
 #                          shape1=Gs0.gsic.prior[1], shape2=Gs0.gsic.prior[2], log=TRUE)
-#        lpri.V0.gsic   <- dbeta(range.to.beta(parameters.in[ind.V0.gsic], bound.lower[ind.V0.gsic], bound.upper[ind.V0.gsic]),
+#     lpri.V0.gsic   <- dbeta(range.to.beta(parameters.in[ind.V0.gsic], bound.lower[ind.V0.gsic], bound.upper[ind.V0.gsic]),
 #                          shape1=V0.gsic.prior[1], shape2=V0.gsic.prior[2], log=TRUE)
-#        lpri.V0.te     <- dbeta(range.to.beta(parameters.in[ind.V0.te], bound.lower[ind.V0.te], bound.upper[ind.V0.te]),
+#     lpri.V0.te     <- dbeta(range.to.beta(parameters.in[ind.V0.te], bound.lower[ind.V0.te], bound.upper[ind.V0.te]),
 #                          shape1=V0.te.prior[1], shape2=V0.te.prior[2], log=TRUE)
-#        lpri.V0.simple <- dbeta(range.to.beta(parameters.in[ind.V0.simple], bound.lower[ind.V0.simple], bound.upper[ind.V0.simple]),
+#     lpri.V0.simple <- dbeta(range.to.beta(parameters.in[ind.V0.simple], bound.lower[ind.V0.simple], bound.upper[ind.V0.simple]),
 #                          shape1=V0.simple.prior[1], shape2=V0.simple.prior[2], log=TRUE)
-#        lpri.rgsic     <- dbeta(range.to.beta(parameters.in[ind.rgsic], bound.lower[ind.rgsic], bound.upper[ind.rgsic]),
+#     lpri.rgsic     <- dbeta(range.to.beta(parameters.in[ind.rgsic], bound.lower[ind.rgsic], bound.upper[ind.rgsic]),
 #                          shape1=rho.gsic.prior[1], shape2=rho.gsic.prior[2], log=TRUE)
-#        lpri.gsic      <- log(dmsn( parameters.in[ind.gsic], gsic.prior.fit$beta, gsic.prior.fit$Omega, gsic.prior.fit$alpha)/gsic.prior.fit$cnorm)
-#        lpri.te        <- log(dmsn( parameters.in[ind.te], te.prior.fit$beta, te.prior.fit$Omega, te.prior.fit$alpha)/te.prior.fit$cnorm)
-#        lpri.doeclim   <- log(dmsn( parameters.in[ind.doeclim], doeclim.prior.fit$beta, doeclim.prior.fit$Omega, doeclim.prior.fit$alpha)/doeclim.prior.fit$cnorm)
-#        lpri.simple    <- log(dmsn( parameters.in[ind.simple], simple.prior.fit$beta, simple.prior.fit$Omega, simple.prior.fit$alpha)/simple.prior.fit$cnorm)
-#        lpri.dais      <- log(dmsn( parameters.in[ind.dais], dais.prior.fit$beta, dais.prior.fit$Omega, dais.prior.fit$alpha)/dais.prior.fit$cnorm)
-#        lpri = lpri.uni +
-#               lpri.doeclim + lpri.gsic + lpri.dais + lpri.te + lpri.simple + lpri.anto +
-#               lpri.vdais + lpri.vgmsl + lpri.Gs0 + lpri.V0.gsic + lpri.V0.te + lpri.V0.simple
+#     lpri.gsic      <- log(dmsn( parameters.in[ind.gsic], gsic.prior.fit$beta, gsic.prior.fit$Omega, gsic.prior.fit$alpha)/gsic.prior.fit$cnorm)
+#     lpri.te        <- log(dmsn( parameters.in[ind.te], te.prior.fit$beta, te.prior.fit$Omega, te.prior.fit$alpha)/te.prior.fit$cnorm)
+#     lpri.doeclim   <- log(dmsn( parameters.in[ind.doeclim], doeclim.prior.fit$beta, doeclim.prior.fit$Omega, doeclim.prior.fit$alpha)/doeclim.prior.fit$cnorm)
+#     lpri.simple    <- log(dmsn( parameters.in[ind.simple], simple.prior.fit$beta, simple.prior.fit$Omega, simple.prior.fit$alpha)/simple.prior.fit$cnorm)
+#     lpri.dais      <- log(dmsn( parameters.in[ind.dais], dais.prior.fit$beta, dais.prior.fit$Omega, dais.prior.fit$alpha)/dais.prior.fit$cnorm)
+#     lpri = lpri.uni +
+#            lpri.doeclim + lpri.gsic + lpri.dais + lpri.te + lpri.simple + lpri.anto +
+#            lpri.vdais + lpri.vgmsl + lpri.Gs0 + lpri.V0.gsic + lpri.V0.te + lpri.V0.simple
 
-        lpri = lpri.uni + lpri.invtau + lpri.vdais + lpri.vgmsl + lpri.anto
+      lpri = lpri.uni + lpri.invtau + lpri.vdais + lpri.vgmsl + lpri.anto
 	} else {
-        lpri = -Inf
+      lpri = -Inf
 	}
 
 	return(lpri)

@@ -50,7 +50,7 @@ obs.temp.time = dat[,1]
 dat = read.table("../data/HadCRUT.4.4.0.0.annual_ns_avg_realisations/HadCRUT.4.4.0.0.annual_ns_avg.1.txt")
 obs.temp.err = dat[,3]
 
-# Normalize temperature anomaly so 1961-1990 mean is 0
+# Normalize temperature anomaly so ibeg:iend mean is 0
 ibeg=which(obs.temp.time==1850)
 iend=which(obs.temp.time==1870)
 obs.temp = obs.temp - mean(obs.temp[ibeg:iend])
