@@ -158,35 +158,35 @@ ind.norm.data = data.frame(
 ## Use differential optimization (DEoptim) algorithm to find suitable initial
 ## parameters for the MCMC chains
 
-#==================
-# DEBUG
-parameters.in <- p0
-parnames.in <- parnames
-forcing.raw <- forcing
-
-# DEBUG
-#==================
-
 print('Starting preliminary optimization to find starting parameter values...')
 
 require('DEoptim')
 library(DEoptim)
 source('../calibration/BRICK_DEoptim.R')
-p0.deoptim=p0								# initialize optimized initial parameters
-niter.deoptim=250					  		# number of iterations for DE optimization
-NP.deoptim=15*length(index.model)			# population size for DEoptim (do at least 10*[N parameters])
-F.deoptim=0.8								# as suggested by Storn et al (2006)
-CR.deoptim=0.9								# as suggested by Storn et al (2006)
+
+# set up opimization
+p0.deoptim <- p0                     # initialize optimized initial parameters
+niter.deoptim <- 300                 # number of iterations for DE optimization
+NP.deoptim <- 20*length(index.model) # population size for DEoptim (do at least 10*[N parameters])
+F.deoptim <- 0.8                     # as suggested by Storn et al (2006)
+CR.deoptim <- 0.9                    # as suggested by Storn et al (2006)
+
+# need a tighter upper bound on the thermal expansion timescale
+bound.lower.deoptim <- bound.lower
+bound.upper.deoptim <- bound.upper
+bound.upper.deoptim[match('invtau.te', parnames)] <- 0.01
+
 outDEoptim <- DEoptim(minimize_residuals_brick, bound.lower[index.model], bound.upper[index.model],
 				DEoptim.control(NP=NP.deoptim,itermax=niter.deoptim,F=F.deoptim,CR=CR.deoptim,trace=FALSE),
 				parnames.in=parnames[index.model], forcing.raw=forcing       , l.project=l.project      ,
-				tstep=tstep						 , slope.Ta2Tg=slope.Ta2Tg	 , intercept.Ta2Tg=intercept.Ta2Tg,
+				tstep=tstep                      , slope.Ta2Tg=slope.Ta2Tg   , intercept.Ta2Tg=intercept.Ta2Tg,
 				ind.norm.data=ind.norm.data      , ind.norm.sl=ind.norm.sl   , mod.time=mod.time        ,
 				oidx = oidx.all                  , midx = midx.all           , obs=obs.all              ,
 				obs.err = obs.err.all            , trends.te = trends.te     , trends.ais = trends.ais	,
 				luse.brick = luse.brick
 				)
 p0.deoptim[index.model] = outDEoptim$optim$bestmem
+names(p0.deoptim) <- parnames
 
 ## Run the model and examine output at these parameter values. Note that since
 ## there is not much thermal expansion data, no GMSL data is assimilated before
@@ -194,6 +194,19 @@ p0.deoptim[index.model] = outDEoptim$optim$bestmem
 ## the modelled TE sea-level rise is likely absurdly rapid during the beginning
 ## of the simulation. The DEoptim is only to get decent starting values for the
 ## more rigorous MCMC calibration below, so don't worry about it.
+
+# handle the chr vs (c, h0) cases
+ind_chr <- match("chr", parnames)
+if (is.na(ind_chr)) {
+	chr.dais <- 1
+	c.dais <- p0.deoptim[match("c",parnames)]
+	h0.dais <- p0.deoptim[match("h0",parnames)]
+} else {
+	chr.dais <- p0.deoptim[match("chr", parnames)]
+	c.dais <- 95
+	h0.dais <- 1471
+}
+
 brick.out <- brickF(tstep=tstep,
                     mod.time=mod.time,
                     forcing.raw = forcing,
@@ -223,9 +236,9 @@ brick.out <- brickF(tstep=tstep,
                     b0.dais = p0.deoptim[match("b0",parnames)],
                     slope.dais = p0.deoptim[match("slope",parnames)],
                     mu.dais = p0.deoptim[match("mu",parnames)],
-                    h0.dais = p0.deoptim[match("h0",parnames)],
-                    c.dais = p0.deoptim[match("c",parnames)],
-                    chr.dais = p0.deoptim[match("chr",parnames)],
+                    h0.dais = h0.dais,
+                    c.dais = c.dais,
+                    chr.dais = chr.dais,
                     P0.dais = p0.deoptim[match("P0",parnames)],
                     kappa.dais = p0.deoptim[match("kappa.dais",parnames)],
                     nu.dais = p0.deoptim[match("nu",parnames)],

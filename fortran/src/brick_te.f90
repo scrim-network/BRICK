@@ -81,7 +81,7 @@ subroutine init_brick_te(time_step, equil_sensitivity, equil_T0, &
 
 ! Initial values
     thermal = TE_0
-    TE           = thermal
+    TE      = thermal
 
 end subroutine init_brick_te
 !------------------------------------------------------------------------------
@@ -103,7 +103,7 @@ subroutine brick_te_step_forward(Tg, thermal_previous, thermal_current)
     implicit none
 
     real(DP), intent(IN)  :: Tg
-    real(DP), intent(IN) :: thermal_previous
+    real(DP), intent(IN)  :: thermal_previous
 
     real(DP), intent(OUT) :: thermal_current
 

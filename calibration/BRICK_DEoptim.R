@@ -115,11 +115,11 @@ minimize_residuals_brick = function(
 	# Temperature/ocean heat uptake contributions
 	if(luse.brick[,"luse.doeclim"]) {
   		if(!is.null(oidx$temp)) {
-			itmp <- ind.norm.data[which(ind.norm.data[,1]=='temp'),2]:ind.norm.data[which(ind.norm.data[,1]=='temp'),3]
-			temperature.model <- brick.out$temp_out - mean(brick.out$temp_out[itmp])
-			doeclim.norm.resid <- doeclim.norm.resid +
-						mean(abs( (obs$temp[oidx$temp]-(temperature.model[midx$temp])        )/
-    											obs.err$temp[oidx$temp]     ))
+				itmp <- ind.norm.data[which(ind.norm.data[,1]=='temp'),2]:ind.norm.data[which(ind.norm.data[,1]=='temp'),3]
+				temperature.model <- brick.out$temp_out - mean(brick.out$temp_out[itmp])
+				doeclim.norm.resid <- doeclim.norm.resid +
+							mean(abs( (obs$temp[oidx$temp]-(temperature.model[midx$temp])        )/
+	    											obs.err$temp[oidx$temp]     ))
 		}
 		if(!is.null(oidx$ocheat)) {
 			# ocean heat uptake does not need to be normalized
@@ -141,12 +141,12 @@ minimize_residuals_brick = function(
 		# Check SLR_TE < SLR total
 		sl.resid.te <- (obs$sl[oidx$sl] - mean(obs$sl[oidx$sl[1:20]])) -
 		               (brick.out$sl_te_out[midx$sl] - mean(brick.out$sl_te_out[midx$sl[1:20]]))
-	    if(all(sl.resid.te[20:length(sl.resid.te)] > 0)){
+	  if(all(sl.resid.te[20:length(sl.resid.te)] > 0)){
 			# Note 1: the trends from IPCC are in mm/year, and model output is m
-	    	# Note 2: these calculate the least squares regression slope coefficients. It
-	    	# is more than twice as fast to calcualte by hand like this than to use R's
-	    	# "lm(...)" function.
-	    	# Note 3: Need 1000*trends.mod because they're in meters, but trends.te is mm
+	    # Note 2: these calculate the least squares regression slope coefficients. It
+	   	# is more than twice as fast to calcualte by hand like this than to use R's
+	   	# "lm(...)" function.
+	   	# Note 3: Need 1000*trends.mod because they are in meters, but trends.te is mm
 			# Note 4: No normalization needed, because these are trends (slopes)
 
 			trends.mod = rep(0, nrow(trends.te))
@@ -155,7 +155,7 @@ minimize_residuals_brick = function(
 				y = brick.out$sl_te_out[trends.te[i,6]:trends.te[i,7]]; bary = mean(y);
 		  		trends.mod[i] = sum( (x-rep(barx,length(x)))*(y-rep(bary,length(y))))/sum( (x-rep(barx,length(x)))^2 )
 			}
-		  	resid.trends = 1000*trends.mod - trends.te[,1]
+		  resid.trends = 1000*trends.mod - trends.te[,1]
 			err.trends   = 0.5*(trends.te[,3]-trends.te[,2])
 			te.norm.resid = mean(abs(resid.trends)/ err.trends )
 		} else {
@@ -198,7 +198,7 @@ minimize_residuals_brick = function(
 					y = brick.out$sl_ais_out[trends.ais[i,6]:trends.ais[i,7]]; bary = mean(y);
 			  		trends.mod[i] = sum( (x-rep(barx,length(x)))*(y-rep(bary,length(y))))/sum( (x-rep(barx,length(x)))^2 )
 				}
-			  	resid.trends = 1000*trends.mod - trends.ais[,1]
+			  resid.trends = 1000*trends.mod - trends.ais[,1]
 				err.trends   = 0.5*(trends.ais[,3]-trends.ais[,2])
 				ais.trend.resid = mean(abs(resid.trends)/ err.trends )
 
@@ -211,7 +211,11 @@ minimize_residuals_brick = function(
 		}
 	}
 
-	# GMSL contribution
+	# GMSL contribution (reduced for land water storage trends)
+	# -- CAUTION! --
+	#    This is not accounting for the obvious correlation in residuals between
+	#    the different components of GMSL and the residuals in GMSL.
+	# -- CAUTION! --
 	sl.model <- brick.out$sl_out - mean(brick.out$sl_out[ind.norm.sl])
 	resid.sl_lw.1900 <- mean( abs(obs$sl_lw$r1900$sl - (sl.model[obs$sl_lw$r1900$midx]-sl.model[max(obs$sl_lw$r1900$midx)])) / obs$sl_lw$r1900$err )
 	resid.sl_lw.1970 <- mean( abs(obs$sl_lw$r1970$sl - (sl.model[obs$sl_lw$r1970$midx]-sl.model[max(obs$sl_lw$r1970$midx)])) / obs$sl_lw$r1970$err )

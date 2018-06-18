@@ -64,9 +64,10 @@ parnames.te   =NULL; p0.te       =NULL; bound.lower.te=NULL;
 bound.upper.te=NULL; step.mcmc.te=NULL; index.model.te=NULL;
 if (luse.te) {
 	parnames.te   =c("a.te","b.te" ,"invtau.te" ,"V0.te")   # parameters names
-	p0.te		  =c(0.3616, 0.5   , 1/200      , 0.0   )   # initial parameter guesses
+	p0.te		      =c(0.3616, 0.5   , 1/200      , 0.0   )   # initial parameter guesses
 	bound.lower.te=c(0.0   , 0.0   , 0          ,-0.046	)   # prior range lower bounds
-	bound.upper.te=c(0.8595, 2.193 , 1          , 0.074	)   # prior range upper bounds
+##	bound.upper.te=c(0.8595, 2.193 , 1          , 0.074	)   # prior range upper bounds
+	bound.upper.te=c(0.8595, 2.193 , 0.01       , 0.074	)   # prior range upper bounds
 	step.mcmc.te	=0.05*(bound.upper.te-bound.lower.te)   # set size for parameters in MCMC (proposals)
 	step.mcmc.te[3] <- 0.05*(1/82 - 1/1290)                 # step size for invtau needs to be smaller
 	index.model.te=c(1,2,3,4)			# which are model parameters? (index within parnames.te)

@@ -186,7 +186,7 @@ if(.Platform$OS.type == "unix") {
 }
 
 brickF <- function(
-	tstep,
+    tstep,
     mod.time,
     forcing.raw,
 		l.project,
@@ -244,30 +244,6 @@ forcing.total <- forcing_total(forcing=forcing.raw,
 
   # determine series length
   ns <- length(forcing.total)
-
-  # wrap up the DAIS parameters
-  # TODO - bundle the other models' parameter like this?
-  parameters.dais <- c( b0.dais,
-                        slope.dais,
-                        mu.dais,
-                        h0.dais,
-                        c.dais,
-                        P0.dais,
-                        kappa.dais,
-                        nu.dais,
-                        f0.dais,
-                        gamma.dais,
-                        alpha.dais,
-                        Tf.dais,
-                        rho_w.dais,
-                        rho_i.dais,
-                        rho_m.dais,
-                        Toc_0.dais,
-                        Rad0.dais,
-                        Aoc.dais,
-                        lf,
-                        includes_dSLais,
-												chr.dais)
 
   # call fortran
   f.output <- .Fortran("run_brick",
