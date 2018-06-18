@@ -166,7 +166,7 @@ source('../calibration/BRICK_DEoptim.R')
 
 # set up opimization
 p0.deoptim <- p0                     # initialize optimized initial parameters
-niter.deoptim <- 300                 # number of iterations for DE optimization
+niter.deoptim <- 500                 # number of iterations for DE optimization
 NP.deoptim <- 20*length(index.model) # population size for DEoptim (do at least 10*[N parameters])
 F.deoptim <- 0.8                     # as suggested by Storn et al (2006)
 CR.deoptim <- 0.9                    # as suggested by Storn et al (2006)
@@ -267,6 +267,22 @@ plot(mod.time, brick.out$sl_ais_out - mean(brick.out$sl_ais_out[ind.norm.sl]), t
 	# plot 7 -- SLR match
 plot(obs.sl.time[oidx.sl], obs.sl[oidx.sl], pch=20, ylab = 'sea level [m]', xlab='year')
 lines(mod.time, brick.out$sl_out-mean(brick.out$sl_out[ind.norm.sl]), col="purple", lwd=2)
+
+
+# write initial optimization parameters and results to a CSV file
+
+# optimization parameters
+write.table(x=p0.deoptim, file="../output_calibration/parameters.deoptim.csv", sep=',', col.names=FALSE)
+
+# results for temperature, ocean heat, and sea-level rise (and components)
+output.names <- c('year','temp','ocheat','gsic','gis','ais','te','gmsl')
+
+output.to.file <- cbind(brick.out$time_out   , brick.out$temp_out  , brick.out$ocheat    ,
+                        brick.out$sl_gsic_out, brick.out$sl_gis_out, brick.out$sl_ais_out,
+												brick.out$sl_te_out  , brick.out$sl_out)
+colnames(output.to.file) <- output.names
+
+write.table(output.to.file, file="../output_calibration/output.deoptim.csv", sep=',', col.names=output.names, row.names=FALSE)
 
 print('  ... done.')
 ##==============================================================================
