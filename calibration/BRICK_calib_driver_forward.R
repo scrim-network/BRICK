@@ -62,7 +62,7 @@ luse.brick = cbind(luse.doeclim, luse.gsic, luse.te, luse.simple, luse.dais)
 
 ## Using the reparameterized DAIS, with chr instead of c and h0?
 ## (FALSE means the "old BRICK" configuration, with c and h0 parameters)
-luse.chr <- TRUE
+luse.chr <- FALSE
 
 ## Source the models
 source('../fortran/R/brickF.R')		# the full BRICK model
@@ -269,20 +269,23 @@ plot(obs.sl.time[oidx.sl], obs.sl[oidx.sl], pch=20, ylab = 'sea level [m]', xlab
 lines(mod.time, brick.out$sl_out-mean(brick.out$sl_out[ind.norm.sl]), col="purple", lwd=2)
 
 
-# write initial optimization parameters and results to a CSV file
+# write initial optimization parameters and results to CSV files
+if (luse.chr) {
+  filename.parameters <- "../output_calibration/parameters_deoptim_chr.csv"
+  filename.model <- "../output_calibration/output_deoptim_chr.csv"
+} else {
+  filename.parameters <- "../output_calibration/parameters_deoptim_ch0.csv"
+  filename.model <- "../output_calibration/output_deoptim_ch0.csv"
+}
 
-# optimization parameters
-write.table(x=p0.deoptim, file="../output_calibration/parameters.deoptim.csv", sep=',', col.names=FALSE)
+write.table(x=p0.deoptim, file=filename.parameters, sep=',', col.names=FALSE)
 
-# results for temperature, ocean heat, and sea-level rise (and components)
 output.names <- c('year','temp','ocheat','gsic','gis','ais','te','gmsl')
-
 output.to.file <- cbind(brick.out$time_out   , brick.out$temp_out  , brick.out$ocheat    ,
                         brick.out$sl_gsic_out, brick.out$sl_gis_out, brick.out$sl_ais_out,
 												brick.out$sl_te_out  , brick.out$sl_out)
 colnames(output.to.file) <- output.names
-
-write.table(output.to.file, file="../output_calibration/output.deoptim.csv", sep=',', col.names=output.names, row.names=FALSE)
+write.table(output.to.file, file=filename.model, sep=',', col.names=output.names, row.names=FALSE)
 
 print('  ... done.')
 ##==============================================================================
