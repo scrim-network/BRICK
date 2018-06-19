@@ -167,7 +167,7 @@ source('../calibration/BRICK_DEoptim.R')
 # set up opimization
 p0.deoptim <- p0                     # initialize optimized initial parameters
 niter.deoptim <- 500                 # number of iterations for DE optimization
-NP.deoptim <- 20*length(index.model) # population size for DEoptim (do at least 10*[N parameters])
+NP.deoptim <- 50*length(index.model) # population size for DEoptim (do at least 10*[N parameters])
 F.deoptim <- 0.8                     # as suggested by Storn et al (2006)
 CR.deoptim <- 0.9                    # as suggested by Storn et al (2006)
 
@@ -286,6 +286,14 @@ write.table(output.to.file, file="../output_calibration/output.deoptim.csv", sep
 
 print('  ... done.')
 ##==============================================================================
+
+
+
+##============================================================================##
+## NOTE:  this is where Tony stopped for the preliminary BRICK-steptogether   ##
+##        simulation                                                          ##
+##============================================================================##
+
 
 
 ##==============================================================================
