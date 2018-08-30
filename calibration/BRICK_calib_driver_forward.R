@@ -62,7 +62,7 @@ luse.brick = cbind(luse.doeclim, luse.gsic, luse.te, luse.simple, luse.dais)
 
 ## Using the reparameterized DAIS, with chr instead of c and h0?
 ## (FALSE means the "old BRICK" configuration, with c and h0 parameters)
-luse.chr <- FALSE
+luse.chr <- TRUE
 
 ## Source the models
 source('../fortran/R/brickF.R')		# the full BRICK model
@@ -194,6 +194,11 @@ names(p0.deoptim) <- parnames
 ## the modelled TE sea-level rise is likely absurdly rapid during the beginning
 ## of the simulation. The DEoptim is only to get decent starting values for the
 ## more rigorous MCMC calibration below, so don't worry about it.
+
+## >>>>>> For debugging:
+filename.in <- '../output_calibration/parameters_deoptim_chr.csv'
+tmp <- read.csv(filename.in, header=FALSE)
+
 
 # handle the chr vs (c, h0) cases
 ind_chr <- match("chr", parnames)
