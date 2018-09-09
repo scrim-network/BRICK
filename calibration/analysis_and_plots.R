@@ -1211,6 +1211,110 @@ table=data.frame(rbind(cat(row.S),cat(row.kappa.doeclim),cat(row.alpha.doeclim),
 
 
 
+
+##==============================================================================
+##==============================================================================
+## BONUS FIGURE -- SLR PROJECTIONS (DIFFERENT RCP SCENARIOS), VS IPCC AR5
+##=============
+
+ncdata <- nc_open(filename.brick)
+  t.proj = ncvar_get(ncdata, 'time_proj')
+  slr.rcp26 = ncvar_get(ncdata, 'GlobalSeaLevel_RCP26')
+  slr.rcp45 = ncvar_get(ncdata, 'GlobalSeaLevel_RCP45')
+  slr.rcp85 = ncvar_get(ncdata, 'GlobalSeaLevel_RCP85')
+nc_close(ncdata)
+
+
+## Initialize arrays for the output
+slr.rcp26.05 = rep(NA,length(t.proj)); slr.rcp26.50 = rep(NA,length(t.proj)); slr.rcp26.95 = rep(NA,length(t.proj))
+slr.rcp45.05 = rep(NA,length(t.proj)); slr.rcp45.50 = rep(NA,length(t.proj)); slr.rcp45.95 = rep(NA,length(t.proj))
+slr.rcp85.05 = rep(NA,length(t.proj)); slr.rcp85.50 = rep(NA,length(t.proj)); slr.rcp85.95 = rep(NA,length(t.proj))
+
+source('../Useful/MultipleOutput.R') # defines the ":=" operator
+
+## Actually tally up the data
+for (t in 1:length(t.proj)){
+	c(slr.rcp26.05[t], slr.rcp26.50[t], slr.rcp26.95[t]) := quantile(slr.rcp26[t,], c(0.05,.50,.95), na.rm=TRUE)
+  c(slr.rcp45.05[t], slr.rcp45.50[t], slr.rcp45.95[t]) := quantile(slr.rcp45[t,], c(0.05,.50,.95), na.rm=TRUE)
+  c(slr.rcp85.05[t], slr.rcp85.50[t], slr.rcp85.95[t]) := quantile(slr.rcp85[t,], c(0.05,.50,.95), na.rm=TRUE)
+}
+
+iproj = which(t.proj==2000):which(t.proj==2100)
+i2100 = which(t.proj==2100)
+
+## Get IPCC AR5 5-95% interval for comparison
+## NOTE: these are relative to 1986-2005 period!
+ind.ar5 = which(mod.time==1986):which(mod.time==2005)
+
+# These are medians and likely ranges, but as detailed in 13.5.1 (IPCC AR5), the
+# "likely" range here is defined as 5-95% interval. From Table 13.5.
+# RCP2.6              RCP4.5              RCP6.0              RCP8.5
+#0.44 [0.28 to 0.61] 0.53 [0.36 to 0.71] 0.55 [0.38 to 0.73] 0.74 [0.52 to 0.98]
+
+slr.rcp26.ar5 = c(.28, .44, 0.61)
+slr.rcp45.ar5 = c(.36, .53, 0.71)
+slr.rcp85.ar5 = c(.52, .74, 0.98)
+
+
+
+pdf(paste(plotdir,'projections_SLR_total_vs_ipccar5.pdf',sep=''),width=5,height=3.5,colormodel='cmyk')
+par(mfrow=c(1,1))
+# UNIFORM RCP85
+par(mai=c(.65,.65,.20,.4))
+plot(t.proj[iproj],slr.rcp85.50[iproj],type='l',col=rgb(col85[1],col85[2],col85[3]),lwd=2, ann='',
+		 xlim=c(2000,2111), ylim=c(0,1.7), xaxt='n', yaxt='n', xaxs='i', yaxs='i');
+		 axis(1, seq(2000,2100,by=20)); axis(2, seq(0,2,by=.25), lab=c('0','','0.5','','1','','1.5','','2'));
+		 mtext(side=2, text='Total sea level [m]', line=2.2, cex=1);
+     mtext(side=1, text='Year', line=2.2, cex=1);
+  polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(slr.rcp85.95[iproj],rev(slr.rcp85.05[iproj])),
+          col=rgb(col85[1],col85[2],col85[3],.5), border=NA);
+# + UNIFORM RCP45
+	lines(t.proj[iproj],slr.rcp45.50[iproj],type='l',col=rgb(col45[1],col45[2],col45[3]),lwd=2);
+  polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(slr.rcp45.95[iproj],rev(slr.rcp45.05[iproj])),
+          col=rgb(col45[1],col45[2],col45[3],.5), border=NA);
+# + UNIFORM RCP26
+	lines(t.proj[iproj],slr.rcp26.50[iproj],type='l',col=rgb(col26[1],col26[2],col26[3]),lwd=2);
+  polygon(c(t.proj[iproj],rev(t.proj[iproj])), c(slr.rcp26.95[iproj],rev(slr.rcp26.05[iproj])),
+          col=rgb(col26[1],col26[2],col26[3],.5), border=NA);
+# + legend
+  legend(t.proj[iproj[1]]+5,1.7,c("5-95% range,",
+                                "RCP2.6",
+																"RCP4.5",
+																"RCP8.5"),
+         lty=c(NA,1,1,1), lwd=3, col=c(NA,rgb(col26[1],col26[2],col26[3]),rgb(col45[1],col45[2],col45[3]),rgb(col85[1],col85[2],col85[3])), bty='n', cex=1)
+
+# + "IPCC AR5" label
+#	text(2110, 1.8, "IPCC AR5", pos = 2, cex = 1, srt = 90)
+	 mtext(side = 4, text = "IPCC AR5", line = 0.5, cex=1.2)
+# + Shaded box around AR5
+	polygon(c(t.proj[i2100]+0.5,t.proj[i2100]+11,t.proj[i2100]+11,t.proj[i2100]+.5),
+					c(10,10,-10,-10), col=rgb(.5,.5,.5,.15), border=NA)
+
+# + AR5 RCP26
+  polygon(c(t.proj[i2100]+1,t.proj[i2100]+3.75,t.proj[i2100]+3.75,t.proj[i2100]+1),
+					c(slr.rcp26.ar5[3],slr.rcp26.ar5[3],slr.rcp26.ar5[1],slr.rcp26.ar5[1]),
+          col=rgb(col26[1],col26[2],col26[3],.5), border=NA)
+  lines(c(t.proj[i2100]+1,t.proj[i2100]+4),c(slr.rcp26.ar5[2],slr.rcp26.ar5[2]),type='l',lwd=2,col=rgb(col26[1],col26[2],col26[3]));
+# + AR5 RCP45
+  polygon(c(t.proj[i2100]+4,t.proj[i2100]+6.75,t.proj[i2100]+6.75,t.proj[i2100]+4),
+					c(slr.rcp45.ar5[3],slr.rcp45.ar5[3],slr.rcp45.ar5[1],slr.rcp45.ar5[1]),
+          col=rgb(col45[1],col45[2],col45[3],.5), border=NA)
+  lines(c(t.proj[i2100]+4,t.proj[i2100]+7),c(slr.rcp45.ar5[2],slr.rcp45.ar5[2]),type='l',lwd=2,col=rgb(col45[1],col45[2],col45[3]));
+# + AR5 RCP85
+  polygon(c(t.proj[i2100]+7,t.proj[i2100]+9.75,t.proj[i2100]+9.75,t.proj[i2100]+7),
+					c(slr.rcp85.ar5[3],slr.rcp85.ar5[3],slr.rcp85.ar5[1],slr.rcp85.ar5[1]),
+          col=rgb(col85[1],col85[2],col85[3],0.5), border=NA)
+  lines(c(t.proj[i2100]+7,t.proj[i2100]+10),c(slr.rcp85.ar5[2],slr.rcp85.ar5[2]),type='l',lwd=2,col=rgb(col85[1],col85[2],col85[3]));
+
+dev.off()
+
+##==============================================================================
+##==============================================================================
+
+
+
+
+
 ##==============================================================================
 ## End
 ##==============================================================================
