@@ -27,6 +27,19 @@ forcing_rcp85.csv   Radiative forcing file for projections, using RCP 8.5
                       http://www.pik-potsdam.de/~mmalte/rcps/
     (accessed on: 28 July-1 Aug 2016)
 
+forcing_hindcast.csv 
+    Radiative forcing file for hindcasts, through 2009. Taken from Urban and 
+      Keller (2010; section 3.1 summarizes), which extends forcings from Kriegler (2005).
+    Citations
+      Urban, N. M. and K. Keller (2010), Probabilistic hindcasts and projections of the coupled 
+      climate, carbon cycle and Atlantic meridional overturning circulation system: A 
+      Bayesian fusion of century-scale observations with a simple model. 
+      Tellus, Ser. A Dyn. Meteorol. Oceanogr. 62, 737–750.
+      
+      Kriegler, E. (2005), Imprecise Probability Analysis for Integrated Assessment of Climate 
+      Change. Ph.D. thesis, Universität Potsdam, Potsdam URL 
+      https://www.pik-potsdam.de/members/edenh/theses/PhDKriegler.pdf (2005).
+                     
 HadCRUT.4.4.0.0.annual_ns_avg.txt
     HadCRUT4 lobal mean temperature anomaly data. Available at
       http://www.metoffice.gov.uk/hadobs/hadcrut4/data/current/download.html
