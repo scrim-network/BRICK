@@ -169,12 +169,11 @@ lws.sd   <- 0.18           # mm/y
 # results not sensitive to use of this as opposed to exact AR1)
 ar1.sim = function(N,rho1,sigma) {
   x = rep(NA,N)
+  x[1] = rnorm(1,sd=sigma[1]/sqrt(1-rho1^2))
   for(i in 2:N)
     if(length(sigma)>1) {
-      x[1] = sigma[1]/sqrt(1-rho1^2)
       x[i] = rho1*x[i-1] + rnorm(1,sd=sigma[i])
     } else {
-      x[1] = sigma/sqrt(1-rho1^2)
       x[i] = rho1*x[i-1] + rnorm(1,sd=sigma)
     }
   return(x)
