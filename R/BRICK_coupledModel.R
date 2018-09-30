@@ -116,12 +116,12 @@ brick_model = function(parameters.in,
 
     if (luse.brick[,"luse.doeclim"]) {
 
-        ## Grab the DOECLIM parameters
-        S            =parameters.in[match("S"            ,parnames.in)]
-        kappa.doeclim=parameters.in[match("kappa.doeclim",parnames.in)]
-        alpha.doeclim=parameters.in[match("alpha.doeclim",parnames.in)]
-        T0           =parameters.in[match("T0"           ,parnames.in)]
-        H0           =parameters.in[match("H0"           ,parnames.in)]
+    ## Grab the DOECLIM parameters
+    S            =parameters.in[match("S"            ,parnames.in)]
+    kappa.doeclim=parameters.in[match("kappa.doeclim",parnames.in)]
+    alpha.doeclim=parameters.in[match("alpha.doeclim",parnames.in)]
+    T0           =parameters.in[match("T0"           ,parnames.in)]
+    H0           =parameters.in[match("H0"           ,parnames.in)]
 
     ## Set up the radiative forcing
     forcing.total = forcing_total(forcing=forcing.in,
@@ -309,8 +309,8 @@ brick_model = function(parameters.in,
       dSL.gsic= diff(gsic.out)
       dSL.te  = diff(te.out)
       for (i in 2:length(mod.time)) {
-        SL.couple[i] = SL.couple[i-1] + tstep*(1.0*dSL.gis[i-1] +
-                                               1.0*dSL.gsic[i-1]+
+        SL.couple[i] = SL.couple[i-1] + tstep*(1.1*dSL.gis[i-1] +
+                                               1.1*dSL.gsic[i-1]+
                                                1.0*dSL.te[i-1]   )
       }
     }

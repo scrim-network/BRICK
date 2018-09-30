@@ -33,13 +33,13 @@
 ##==============================================================================
 
 ## Historical global mean sea level contribution from Glacier and Small Ice Cap melt
-dat = read.csv("../data/GSICobservations_UPDATED.csv", skip = 1)
-obs.gsic.time = dat[1:43, 1] #1961-2003
-obs.gsic = dat[1:43, 5]/1000 # m of melt contribution to sea level rise (Note -- data are in mm)
-obs.gsic.err = dat[1:43,9]/1000 # m (standard error) (Note -- data are in mm)
+dat <- read.csv("../data/GSICobservations_UPDATED.csv", skip = 1)
+obs.gsic.time <- dat[1:43, 1] #1961-2003
+obs.gsic <- dat[1:43, 5]/1000 # m of melt contribution to sea level rise (Note -- data are in mm)
+obs.gsic.err <- dat[1:43,9]/1000 # m (standard error) (Note -- data are in mm)
 
-idx = compute_indices(obs.time=obs.gsic.time, mod.time=mod.time)
-oidx.gsic = idx$oidx; midx.gsic = idx$midx
+idx <- compute_indices(obs.time=obs.gsic.time, mod.time=mod.time)
+oidx.gsic <- idx$oidx; midx.gsic <- idx$midx
 
 ##==============================================================================
 ## End

@@ -7,7 +7,7 @@
 ## To modify which model components you use, edit the settings below under
 ## 'Which model(s) will you use?'
 ##
-##  Questions? -- Tony Wong <twong@psu.edu
+##  Questions? -- Tony Wong <anthony.e.wong@colorado.edu>
 ##==============================================================================
 ## Copyright 2016 Tony Wong, Alexander Bakker
 ## This file is part of BRICK (Building blocks for Relevant Ice and Climate
@@ -28,23 +28,31 @@
 rm(list=ls())                        # Clear all previous variables
 
 ## Switch to your BRICK calibration directory
-setwd('/home/scrim/axw322/codes/BRICK/calibration')
-#setwd('/Users/tony/codes/BRICK/calibration')
+setwd('~/codes/BRICK/calibration')
 
 ## Set up MCMC stuff here so that it can be automated for HPC
-nnode_mcmc000 <- 8
-niter_mcmc000 <- 2e6
+nnode_mcmc000 <- 3
+niter_mcmc000 <- 1e6
+gamma_mcmc000 <- 0.5     # rate of adaptation (between 0.5 and 1, lower is faster adaptation)
+accept_mcmc000 <- 0.234  # Optimal as # parameters->infinity (Gelman et al, 1996; Roberts et al, 1997)
 
 ## Show plots? (probably want FALSE on HPC, non-interactive)
 l.doplots <- FALSE
 
 ## Set up a filename for saving RData images along the way
-today=Sys.Date(); today=format(today,format="%d%b%Y")
+today <- Sys.Date(); today <- format(today,format="%d%b%Y")
 filename.saveprogress <- paste('BRICK_calib_MCMC_',today,'.RData',sep='')
 
 ## Set the seed (for reproducibility)
 set.seed(1234)
 #set.seed(as.double(Sys.time())) # should yield same distributions... (a good test!)
+
+## Needed libraries
+library(adaptMCMC)
+library(DEoptim)
+library(ncdf4)
+library(compiler)
+enableJIT(3)
 
 ## Do you want to use RCP8.5 to make projections? (l.project=TRUE)
 ## Or do you want to use historical data to make hindcasts? (l.project=FALSE)
@@ -128,6 +136,7 @@ i0$gis = which(mod.time==1961)
 ## Which model(s) will you use?
 ## If you want to plug in your own model, insert the relevant "luse.XXX" line
 ## below, as well as into the "luse.brick = ..." command.
+## Exactly one of te or tee must be TRUE.
 luse.sneasy   = FALSE    # Simple Nonlinear EArth SYstem model (DOECLIM+CCM)
 luse.doeclim  = TRUE    # diffusion-ocean-energy balance climate model
 luse.gsic     = TRUE    # glaciers and small ice caps contribution to SLR
@@ -140,17 +149,24 @@ luse.brick = cbind(luse.sneasy, luse.doeclim, luse.gsic, luse.te, luse.tee,
 		   luse.simple, luse.dais, luse.lws)
 
 ## If you are using DAIS, include the fast dynamics emulator?
-l.aisfastdy = FALSE
-if(!luse.dais) {l.aisfastdy = FALSE} # force FALSE if not using DAIS
+if (luse.dais) {
+  l.aisfastdy <- TRUE
+} else {
+  l.aisfastdy <- FALSE  # force FALSE if not using DAIS
+  slope.Ta2Tg <- NULL
+  intercept.Ta2Tg <- NULL
+}
 
 if(luse.te & luse.tee) {
-  luse.tee = FALSE
+  luse.tee <- FALSE
   print('Only use 1 thermosteric expansion model; switching off explicit model.')
 }
+
 ##==============================================================================
 ## Define parameters and their prior ranges
 ## -> Note: 'parnames' is defined here, which establishes how the parameters
 ##    are passed around into DEoptim, MCMC, likelihood functions, and the models
+
 source('../calibration/BRICK_parameterSetup.R')
 
 ##==============================================================================
@@ -200,6 +216,7 @@ if(luse.sneasy) {
 ##==============================================================================
 ## Define the coupled model
 ## -> need it defined before DEoptim, so we can calculate the objective function
+
 source('../R/BRICK_coupledModel.R')
 
 ##==============================================================================
@@ -212,17 +229,16 @@ source('../R/BRICK_coupledModel.R')
 ##TODO -- causes problems in optimization.
 ##TODO
 
-library(DEoptim)
 source('../calibration/BRICK_DEoptim.R')
 p0.deoptim=p0                          # initialize optimized initial parameters
-niter.deoptim=200                      # number of iterations for DE optimization
+niter.deoptim=100                      # number of iterations for DE optimization
 NP.deoptim=11*length(index.model)      # population size for DEoptim (do at least 10*[N parameters])
 F.deoptim=0.8                          # as suggested by Storn et al (2006)
 CR.deoptim=0.9                        # as suggested by Storn et al (2006)
 outDEoptim <- DEoptim(minimize_residuals_brick, bound.lower[index.model], bound.upper[index.model],
         DEoptim.control(NP=NP.deoptim,itermax=niter.deoptim,F=F.deoptim,CR=CR.deoptim,trace=FALSE),
         parnames.in=parnames[index.model], forcing.in=forcing        , l.project=l.project      ,
-        #slope.Ta2Tg.in=slope.Ta2Tg       , intercept.Ta2Tg.in=intercept.Ta2Tg,
+        slope.Ta2Tg.in=slope.Ta2Tg       , intercept.Ta2Tg.in=intercept.Ta2Tg,
         ind.norm.data=ind.norm.data      , ind.norm.sl=ind.norm      , mod.time=mod.time        ,
         tstep=tstep                      , oidx = oidx.all           , midx = midx.all          ,
         obs=obs.all                      , obs.err = obs.err.all     , trends.te = trends.te    ,
@@ -273,53 +289,12 @@ lines(brick.out$doeclim.out$time[midx.sl], brick.out$slr.out[midx.sl], col="purp
 ## previous testing with uniform priors on 1/tau confirm) that the gamma is an
 ## excellent approximation of the distribution of 1/tau (or tau)
 
-shape.invtau = NULL    # initialize
-scale.invtau = NULL    # initialize
-
 if(luse.te) {
-
-  invtau.hat = 1/200     # preliminary guess at what the expected value of 1/tau should be
-                         # (The timescale and extent of thermal expansion of the oceans due to climate change, Marcelja, 2009)
-  q05 = 1/1290           # 82-1290 y are bounds given by Mengel et al (2015) for tau
-  q95 = 1/82             # use them as the 5-95% bounds for our 1/tau
-
-  ## Gamma distribution has only 2 degrees of freedom. So can only fit 2 of these
-  ## 3 requirements.
-
-  ## Fit the quantiles -- it naturally arises that the mean/median of the resulting
-  ## gamma distribution for 1/tau is around tau=200 y anyhow
-  rmse.quantiles <- function(parameters,q05.in,q95.in){
-    shape.in=parameters[1]
-    scale.in=parameters[2]
-    q05.hat = qgamma(0.05, shape=shape.in, scale=scale.in, lower.tail=TRUE)
-    q95.hat = qgamma(0.95, shape=shape.in, scale=scale.in, lower.tail=TRUE)
-    rmse = sqrt(0.5*((q05.hat-q05.in)^2 + (q95.hat-q95.in)^2))
-    return(rmse)
-  }
-
-  niter.deoptim=1000        # number of iterations for DE optimization
-  NP.deoptim=50             # population size for DEoptim (do at least 10*[N parameters])
-  F.deoptim=0.8             # as suggested by Storn et al (2006)
-  CR.deoptim=0.9            # as suggested by Storn et al (2006)
-  outDEoptim <- DEoptim(rmse.quantiles, c(0,0), c(100,100),
-                        DEoptim.control(NP=NP.deoptim,itermax=niter.deoptim,F=F.deoptim,
-            CR=CR.deoptim,trace=FALSE),  q05.in=q05, q95.in=q95)
-  shape.invtau = outDEoptim$optim$bestmem[1]
-  scale.invtau = outDEoptim$optim$bestmem[2]
-  print(paste('shape.invtau=',shape.invtau,' (1.81?)'))
-  print(paste('scale.invtau=',scale.invtau,' (0.00275?)'))
-
-  ## This should yield results somewhere in the ballpark of
-  ##
-  ##     shape.invtau = 1.81    and     scale.invtau = 0.00275
-  ##
-  ## If yours does not, check whether the gamma distribution defined by your
-  ## shape and scale fit the invtau.hat=1/200, q05=1/1290 and q95=1/82
-  ## requirements above. If not, try re-running, possibly with more population
-  ## members (NP.deoptim) or more iterations (niter.deoptim).
-
+  # Original code did optimization to determine these parameters.
+  # This, and future versions, will hand-pick.
+  shape.invtau <- 1.81
+  scale.invtau <- 0.00275
 }
-##==============================================================================
 
 ##==============================================================================
 ## Now set up the coupled model calibration
@@ -338,63 +313,42 @@ if(luse.te) {
 source('../calibration/BRICK_assimLikelihood.R')
 
 ## MCMC calibration
-require('adaptMCMC')
-library(adaptMCMC)                # use robust adaptive Metropolis
-accept.mcmc = 0.234               # Optimal as # parameters->infinity
-                                  # (Gelman et al, 1996; Roberts et al, 1997)
-niter.mcmc = niter_mcmc000        # number of iterations for MCMC
-nnode.mcmc = nnode_mcmc000        # number of nodes for parallel MCMC
-gamma.mcmc = 0.5                  # rate of adaptation (between 0.5 and 1, lower is faster adaptation)
-burnin = round(niter.mcmc*0.5)    # remove first ?? of chains for burn-in (not used)
-stopadapt.mcmc = round(niter.mcmc*1.0)# stop adapting after ?? iterations? (niter*1 => don't stop)
+niter.mcmc <- niter_mcmc000       # number of iterations for MCMC
+nnode.mcmc <- nnode_mcmc000        # number of nodes for parallel MCMC
+accept.mcmc <- accept_mcmc000
+gamma.mcmc <- gamma_mcmc000
+stopadapt.mcmc <- round(niter.mcmc*1.0)# stop adapting after ?? iterations? (niter*1 => don't stop)
 
 ##==============================================================================
 ## Actually run the calibration
-if(FALSE){
-t.beg=proc.time()                      # save timing (running millions of iterations so best to have SOME idea...)
-amcmc.out1 = MCMC(log.post, niter.mcmc, p0.deoptim, scale=step.mcmc, adapt=TRUE, acc.rate=accept.mcmc,
-                  gamma=gamma.mcmc               , list=TRUE                  , n.start=round(0.01*niter.mcmc),
-                  parnames.in=parnames           , forcing.in=forcing         , l.project=l.project           ,
-                  #slope.Ta2Tg.in=slope.Ta2Tg    , intercept.Ta2Tg.in=intercept.Ta2Tg,
-                  ind.norm.data=ind.norm.data    , ind.norm.sl=ind.norm       , mod.time=mod.time             ,
-                  oidx = oidx.all                , midx = midx.all            , obs=obs.all                   ,
-                  obs.err = obs.err.all          , trends.te = trends.te      , bound.lower.in=bound.lower    ,
-                  bound.upper.in=bound.upper     , shape.in=shape.invtau      , scale.in=scale.invtau         ,
-                  luse.brick=luse.brick          , i0=i0                      , l.aisfastdy=l.aisfastdy       )
-t.end=proc.time()                      # save timing
-chain1 = amcmc.out1$samples
-}
 
-## Extend and run more MCMC samples?
-if(FALSE){
-t.beg=proc.time()
-amcmc.extend1 = MCMC.add.samples(amcmc.out1, niter.mcmc,
-                    parnames.in=parnames           , forcing.in=forcing         , l.project=l.project            ,
-                    #slope.Ta2Tg.in=slope.Ta2Tg    , intercept.Ta2Tg.in=intercept.Ta2Tg,
-                    ind.norm.data=ind.norm.data    , ind.norm.sl=ind.norm       , mod.time=mod.time              ,
-                    oidx = oidx.all                , midx = midx.all            , obs=obs.all                    ,
-                    obs.err = obs.err.all          , trends.te = trends.te      , bound.lower.in=bound.lower     ,
-                    bound.upper.in=bound.upper     , shape.in=shape.invtau      , scale.in=scale.invtau          ,
-                    luse.brick=luse.brick          , i0=i0                      , l.aisfastdy=l.aisfastdy        )
-t.end=proc.time()
-chain1 = amcmc.extend1$samples
-}
-
-## If you want to run 2 (or more) chains in parallel (save time, more sampling)
-if(TRUE){
-t.beg=proc.time()                    # save timing (running millions of iterations so best to have SOME idea...)
-amcmc.par1 = MCMC.parallel(log.post, niter.mcmc, p0.deoptim, n.chain=nnode.mcmc, n.cpu=nnode.mcmc,
-                  dyn.libs=c('../fortran/doeclim.so','../fortran/brick_te.so','../fortran/brick_tee.so','../fortran/gsic_magicc.so','../fortran/simple.so'),
-                  scale=step.mcmc, adapt=TRUE, acc.rate=accept.mcmc,
-                  gamma=gamma.mcmc, list=TRUE, n.start=round(0.01*niter.mcmc),
-                  parnames.in=parnames           , forcing.in=forcing         , l.project=l.project           ,
-                  #slope.Ta2Tg.in=slope.Ta2Tg    , intercept.Ta2Tg.in=intercept.Ta2Tg,
-                  ind.norm.data=ind.norm.data    , ind.norm.sl=ind.norm       , mod.time=mod.time             ,
-                  oidx = oidx.all                , midx = midx.all            , obs=obs.all                   ,
-                  obs.err = obs.err.all          , trends.te = trends.te      , bound.lower.in=bound.lower    ,
-                  bound.upper.in=bound.upper     , shape.in=shape.invtau      , scale.in=scale.invtau         ,
-                  luse.brick=luse.brick          , i0=i0                      , l.aisfastdy=l.aisfastdy       )
-t.end=proc.time()                      # save timing
+if(nnode.mcmc == 1) {
+  t.beg <- proc.time()
+  amcmc.out <- MCMC(log.post, niter.mcmc, p0.deoptim, scale=step.mcmc, adapt=TRUE, acc.rate=accept.mcmc,
+                    gamma=gamma.mcmc               , list=TRUE                  , n.start=round(0.01*niter.mcmc),
+                    parnames.in=parnames           , forcing.in=forcing         , l.project=l.project           ,
+                    slope.Ta2Tg.in=slope.Ta2Tg     , intercept.Ta2Tg.in=intercept.Ta2Tg,
+                    ind.norm.data=ind.norm.data    , ind.norm.sl=ind.norm       , mod.time=mod.time             ,
+                    oidx = oidx.all                , midx = midx.all            , obs=obs.all                   ,
+                    obs.err = obs.err.all          , trends.te = trends.te      , bound.lower.in=bound.lower    ,
+                    bound.upper.in=bound.upper     , shape.in=shape.invtau      , scale.in=scale.invtau         ,
+                    luse.brick=luse.brick          , i0=i0                      , l.aisfastdy=l.aisfastdy       )
+  t.end <- roc.time()
+  chain1 <- amcmc.out$samples
+} else if(nnode.mcmc > 1) {
+  t.beg <- proc.time()
+  amcmc.out <- MCMC.parallel(log.post, niter.mcmc, p0.deoptim, n.chain=nnode.mcmc, n.cpu=nnode.mcmc,
+                    dyn.libs=c('../fortran/doeclim.so','../fortran/brick_te.so','../fortran/brick_tee.so','../fortran/gsic_magicc.so','../fortran/simple.so'),
+                    scale=step.mcmc, adapt=TRUE, acc.rate=accept.mcmc,
+                    gamma=gamma.mcmc, list=TRUE, n.start=round(0.01*niter.mcmc),
+                    parnames.in=parnames           , forcing.in=forcing         , l.project=l.project           ,
+                    slope.Ta2Tg.in=slope.Ta2Tg     , intercept.Ta2Tg.in=intercept.Ta2Tg,
+                    ind.norm.data=ind.norm.data    , ind.norm.sl=ind.norm       , mod.time=mod.time             ,
+                    oidx = oidx.all                , midx = midx.all            , obs=obs.all                   ,
+                    obs.err = obs.err.all          , trends.te = trends.te      , bound.lower.in=bound.lower    ,
+                    bound.upper.in=bound.upper     , shape.in=shape.invtau      , scale.in=scale.invtau         ,
+                    luse.brick=luse.brick          , i0=i0                      , l.aisfastdy=l.aisfastdy       )
+  t.end <- proc.time()
 }
 
 if(luse.sneasy) {cleanup.sneasy()}  # deallocates memory after SNEASY is done
@@ -402,12 +356,30 @@ if(luse.sneasy) {cleanup.sneasy()}  # deallocates memory after SNEASY is done
 ## Save workspace image - you do not want to re-simulate all those!
 save.image(file=filename.saveprogress)
 
+
+## Extend and run more MCMC samples?
+if(FALSE){
+t.beg <- proc.time()
+amcmc.extend <- MCMC.add.samples(amcmc.out, niter.mcmc,
+                    parnames.in=parnames           , forcing.in=forcing         , l.project=l.project            ,
+                    #slope.Ta2Tg.in=slope.Ta2Tg    , intercept.Ta2Tg.in=intercept.Ta2Tg,
+                    ind.norm.data=ind.norm.data    , ind.norm.sl=ind.norm       , mod.time=mod.time              ,
+                    oidx = oidx.all                , midx = midx.all            , obs=obs.all                    ,
+                    obs.err = obs.err.all          , trends.te = trends.te      , bound.lower.in=bound.lower     ,
+                    bound.upper.in=bound.upper     , shape.in=shape.invtau      , scale.in=scale.invtau          ,
+                    luse.brick=luse.brick          , i0=i0                      , l.aisfastdy=l.aisfastdy        )
+t.end <- proc.time()
+chain1 <- amcmc.extend$samples
+}
+
+
+
 ##==============================================================================
 
 ## Diagnostic plots
 if(l.doplots) {
 ## Check #1: History plots
-par(mfrow=c(5,5))
+par(mfrow=c(5,6), mai=c(.3,.3,.1,.1))
 for (pp in 1:length(parnames)) {
   plot(chain1[,pp], type="l", ylab=parnames[pp], xlab="Number of Runs", main="")
 }
@@ -415,14 +387,14 @@ for (pp in 1:length(parnames)) {
 
 ##==============================================================================
 
-## Determine when (in increments of 50,000 iterations, using Gelman and Rubin
+## Determine when (in increments of 10,000 iterations, using Gelman and Rubin
 ## diagnostic) the two parallel chains, which are assumed to be
-## chain1=amcmc.par1[[1]]$samples and chain2=amcmc.par1[[2]]$samples
+## chain1=amcmc.out[[1]]$samples and chain2=amcmc.out[[2]]$samples
 ## as defined above in the MCMC.parallel(...) command.
 
 ## Initialize the testing of the Gelman and Rubin diagnostics
-niter.test = seq(from=50000, to=niter.mcmc, by=10000)
-gr.test = rep(NA,length(niter.test))
+niter.test <- seq(from=50000, to=niter.mcmc, by=10000)
+gr.test <- rep(NA,length(niter.test))
 
 ## Calculate the statistic at a few spots throughout the chain. Once it is
 ## close to 1 (people often use GR<1.1 or 1.05), the between-chain variability
@@ -442,7 +414,7 @@ if(nnode.mcmc == 1) {
   for (i in 1:length(niter.test)) {
     for (m in 1:nnode.mcmc) {
       # convert each of the chains into mcmc object
-      eval(parse(text=paste('mcmc',m,' <- as.mcmc(amcmc.par1[[m]]$samples[1:niter.test[i],])', sep='')))
+      eval(parse(text=paste('mcmc',m,' <- as.mcmc(amcmc.out[[m]]$samples[1:niter.test[i],])', sep='')))
     }
     eval(parse(text=paste('mcmc_chain_list = mcmc.list(list(', string.mcmc.list , '))', sep='')))
     gr.test[i] <- as.numeric(gelman.diag(mcmc_chain_list)[2])
@@ -461,7 +433,6 @@ plot(niter.test,gr.test)
 #===============================================================================
 # Chop off burn-in
 #===============================================================================
-#
 
 # Note: here, we are only using the Gelman and Rubin diagnostic. But this is
 # only after looking at the quantile stability as iterations increase, as well
@@ -484,10 +455,10 @@ if(nnode.mcmc==1) {
 if(nnode.mcmc > 1) {
   chains_burned <- vector('list', nnode.mcmc)
   for (m in 1:nnode.mcmc) {
-   chains_burned[[m]] <- amcmc.par1[[m]]$samples[(ifirst+1):niter.mcmc,]
+   chains_burned[[m]] <- amcmc.out[[m]]$samples[(ifirst+1):niter.mcmc,]
   }
 } else {
-  chains_burned <- amcmc.out1$samples[(ifirst+1):niter.mcmc,]
+  chains_burned <- amcmc.out$samples[(ifirst+1):niter.mcmc,]
 }
 
 # Combine all of the chains from 'ifirst' to 'niter_mcmc' into a potpourri of
@@ -495,22 +466,22 @@ if(nnode.mcmc > 1) {
 # matrix for one of the chains (if in parallel).
 if(nnode.mcmc==1) {
   parameters.posterior <- chains_burned
-  covjump.posterior <- amcmc.out1$cov.jump
+  covjump.posterior <- amcmc.out$cov.jump
 } else {
   parameters.posterior <- chains_burned[[1]]
-  covjump.posterior <- amcmc.par1[[1]]$cov.jump
+  covjump.posterior <- amcmc.out[[1]]$cov.jump
   for (m in 2:nnode.mcmc) {
     parameters.posterior <- rbind(parameters.posterior, chains_burned[[m]])
   }
 }
-n.parameters = ncol(parameters.posterior)
+n.parameters <- ncol(parameters.posterior)
 
 # save results in case you need to revisit later
 save.image(file=filename.saveprogress)
 
 ## Histograms
 if(FALSE) {
-par(mfrow=c(5,5))
+par(mfrow=c(5,6))
 for (pp in 1:length(parnames)) {
   hist(parameters.posterior[,pp], xlab=parnames[pp], main='')
 }
@@ -522,13 +493,12 @@ for (pp in 1:length(parnames)) {
 ## this code will write an n.parameters (rows) x n.ensemble (columns) netcdf file
 ## to get back into the shape BRICK expects, just transpose it
 lmax=0
-for (i in 1:length(parnames)){lmax=max(lmax,nchar(parnames[i]))}
+for (i in 1:length(parnames)){lmax <- max(lmax,nchar(parnames[i]))}
 
 ## Name the output file
-today=Sys.Date(); today=format(today,format="%d%b%Y")
-filename.parameters = paste('../output_calibration/BRICK-model_calibratedParameters_',today,'.nc',sep="")
+today <- Sys.Date(); today <- format(today,format="%d%b%Y")
+filename.parameters <- paste('../output_calibration/BRICK_calibratedParameters_',today,'.nc',sep="")
 
-library(ncdf4)
 dim.parameters <- ncdim_def('n.parameters', '', 1:ncol(parameters.posterior), unlim=FALSE)
 dim.name <- ncdim_def('name.len', '', 1:lmax, unlim=FALSE)
 dim.ensemble <- ncdim_def('n.ensemble', 'ensemble member', 1:nrow(parameters.posterior), unlim=TRUE)
