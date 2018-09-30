@@ -50,16 +50,13 @@ in /R/
                               correspond to the same times, for comparison
   BRICK_coupledModel.R        the coupled BRICK model, running each sub-model
                               subsequently
-  brick_te.R                  model for sea-level rise due to thermal expansion
-  GSIC_magicc.R               model for sea-level rise due to glaciers and small ice caps
-  simple.R                    model for sea-level rise due to the Greenland ice
-                              sheet surface mass (im)balance
 
 in /fortran/                  (see /fortran/README for more information)
   doeclim.so                  dynamic library required to run the Fortran version
                               of the DOECLIM physical model
   gsic_magicc.so              dynamic library for GSIC-MAGICC physical model
   brick_te.so                 dynamic library for the thermal expansion model
+  brick_tee.so                dynamic library for the explicit TE model
   simple.so                   dynamic library for the Greenland ice sheet model
   /R/doeclimF.R               R wrapper function for the Fortran DOECLIM model
   /R/GSIC_magiccF.R           R wrapper function for the Fortran GSIC-MAGICC model
@@ -133,19 +130,19 @@ A couple notes about the calibration:
 
 ================================================================================
 Additional observational datasets for calibration may be introduced by making
-the following modifications. 
+the following modifications.
 
 In the calibration directory:
 1. [submodel]_readData.R – read the dataset, match the model and observational
                            data indices (using “compute_indices” function)
 2. BRICK_calib_driver.R  – add to the obs.all, obs.err.all, midx.all, oidx.all,
-                           ind.norm.data lists (these tell the 
+                           ind.norm.data lists (these tell the
                            BRICK_assimLikelihood.R routines how to compare the
                            model and data)
-3. BRICK_assimLikelihood.R – calculate a likelihood function value for these 
+3. BRICK_assimLikelihood.R – calculate a likelihood function value for these
                              data and add to “log.lik” routine. Note that simply
-                             adding the log-likelihood from the new dataset 
-                             assumes independence between residuals from one 
+                             adding the log-likelihood from the new dataset
+                             assumes independence between residuals from one
                              dataset to the next.
 In the data directory:
 1. Add the dataset, and make sure to point to this in [submodel]_readData.R.

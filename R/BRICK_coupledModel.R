@@ -309,8 +309,8 @@ brick_model = function(parameters.in,
       dSL.gsic= diff(gsic.out)
       dSL.te  = diff(te.out)
       for (i in 2:length(mod.time)) {
-        SL.couple[i] = SL.couple[i-1] + tstep*(1.1*dSL.gis[i-1] +
-                                               1.1*dSL.gsic[i-1]+
+        SL.couple[i] = SL.couple[i-1] + tstep*(1.0*dSL.gis[i-1] +
+                                               1.0*dSL.gsic[i-1]+
                                                1.0*dSL.te[i-1]   )
       }
     }

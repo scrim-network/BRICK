@@ -26,7 +26,6 @@
 ## 6. If running the control experiment, local NOLA sea level is used in a
 ##
 ##  Required input: (set below)
-##    filename.rho_simple_fixed  csv file with the fixed value for rho.simple
 ##    filename.DAIScalibration  DAIS calibration parameter posterior draws
 ##    filename.BRICKcalibration BRICK (non-DAIS) calibration parameter posterior draws
 ##    filename.parameters       [output] file name for post-calibrated parameters
@@ -34,22 +33,13 @@
 ##    filename.vdout            [output] file name for the Van Dantzig model results
 ##
 ##  Output:
-##    BRICK-model_postcalibratedParameters_[datestamp].nc
+##    BRICK_postcalibratedParameters_[datestamp].nc
 ##                            post-calibrated parameters file
-##    BRICK-model_postcalibratedParameters_SIMPLE-GSIC_[datestamp].nc
-##                            post-calibrated parameters file for SIMPLE-GSIC experiment
-##    BRICK-model_drawcalibratedParameters_R07_[datestamp].nc
-##                            calibrated parameter draws file for GMSL experiment
-##                            (no post-calibration, but output the ensemble members)
-##    BRICK-model_physical_[datestamp].nc
+##    BRICK_physical_[datestamp].nc
 ##                            netCDF4 file with the BRICK physical model output
 ##                            (should be as many runs as post-calibrated parameters).
 ##                            Includes SIMPLE-GSIC experimental results.
 ##                            Includes GMSL-R07 experimental results.
-##    BRICK-model_VanDantzig_[datestamp].nc
-##                            netCDF4 file with the BRICK physical model output
-##                            (should be as many runs as post-calibrated parameters
-##                            on the postcalibrated parameters file)
 ##
 ## Questions? Tony Wong (twong@psu.edu)
 ##
@@ -169,14 +159,17 @@ lws.sd   <- 0.18           # mm/y
 # results not sensitive to use of this as opposed to exact AR1)
 ar1.sim = function(N,rho1,sigma) {
   x = rep(NA,N)
-  for(i in 2:N)
-    if(length(sigma)>1) {
-      x[1] = sigma[1]/sqrt(1-rho1^2)
+  if(length(sigma) > 1) {
+    x[1] = rnorm(n=1,sd=sigma[1]/sqrt(1-rho1^2)}
+    for (i in 2:N) {
       x[i] = rho1*x[i-1] + rnorm(1,sd=sigma[i])
-    } else {
-      x[1] = sigma/sqrt(1-rho1^2)
+    }
+  } else {
+    x[1] = rnorm(n=1,sd=sigma/sqrt(1-rho1^2)}
+    for (i in 2:N) {
       x[i] = rho1*x[i-1] + rnorm(1,sd=sigma)
     }
+  }
   return(x)
 }
 ##==============================================================================

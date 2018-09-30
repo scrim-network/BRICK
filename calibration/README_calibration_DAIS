@@ -33,9 +33,13 @@ in /R/ (if using the R model)
 
 in /fortran/              (see /fortran/README for more information)
   dais.so                 dynamic library for the DAIS model Fortran version
+  dais_fastdyn.so         dynamic library for the DAIS model with fast dynamics
   /R/daisantoF.R          R wrapper function around the Fortran model, including
                           anto for the ocean subsurface temperature
   /R/daisF.R              DAIS physical model, no anto
+  /R/daisanto_fastdynF.R  R wrapper function around the model version including
+                          fast dynamics (used by default)
+  /R/dais_fastdynF.R      DAIS physical model including fast dynamics, no anto
 
 Following the commands in DAIS_calib_driver.R will result in calibrated DAIS
 and anto model parameters, written by default into a file
