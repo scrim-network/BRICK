@@ -160,12 +160,12 @@ lws.sd   <- 0.18           # mm/y
 ar1.sim = function(N,rho1,sigma) {
   x = rep(NA,N)
   if(length(sigma) > 1) {
-    x[1] = rnorm(n=1,sd=sigma[1]/sqrt(1-rho1^2)}
+    x[1] = rnorm(n=1,sd=sigma[1]/sqrt(1-rho1^2)
     for (i in 2:N) {
       x[i] = rho1*x[i-1] + rnorm(1,sd=sigma[i])
     }
   } else {
-    x[1] = rnorm(n=1,sd=sigma/sqrt(1-rho1^2)}
+    x[1] = rnorm(n=1,sd=sigma/sqrt(1-rho1^2)
     for (i in 2:N) {
       x[i] = rho1*x[i-1] + rnorm(1,sd=sigma)
     }
