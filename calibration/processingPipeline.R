@@ -61,7 +61,7 @@ rm(list=ls())
 ## Initial set-up
 library(ncdf4)
 
-t.beg = proc.time()
+t.beg <- proc.time()
 
 ##==============================================================================
 ##==============================================================================
@@ -70,9 +70,6 @@ t.beg = proc.time()
 
 # BRICK working directory (the calibration one)
 setwd('~/codes/BRICK/calibration')
-
-# Do the Van Dantzig with RCP8.5?
-l.dovandantzig <- FALSE
 
 # How many DAIS paleo simulations in your sample? (If you do a huge BRICK ensemble,
 # it may be infeasible to do that number of 240,000 time step long simulations for
@@ -248,7 +245,6 @@ source('../fortran/R/GSIC_magiccF.R')   # the GSIC model
 source('../fortran/R/brick_te_F.R')     # TE (thermal expansion) model
 source('../fortran/R/brick_tee_F.R')    # TEE (explicit thermal expansion) model
 source('../fortran/R/simpleF.R')        # GIS (Greenland Ice Sheet) model
-source('../R/gmsl_r07.R')        # the GMSL model
 
 ## Read the data sets for hindcast comparisons
 source('../calibration/DOECLIM_readData.R')
@@ -387,10 +383,10 @@ for (i in 1:n.ensemble) {
   ocheat.out.norm[i,] <- ocheat.out[i,]#-mean(ocheat.out[i,ind.norm.data[which(ind.norm.data[,1]=='ocheat'),2]:ind.norm.data[which(ind.norm.data[,1]=='ocheat'),3]])
 
   # Add the statistcal model for AR1 (or otherwise) noise
-  sigma.T    <- parameters[i,match("sigma.T"     ,parnames)]
-  rho.T      <- parameters[i,match("rho.T"       ,parnames)]
-  sigma.H    <- parameters[i,match("sigma.H"     ,parnames)]
-  rho.H      <- parameters[i,match("rho.H"       ,parnames)]
+  sigma.T    <- parameters[i,match("sigma.T",parnames)]
+  rho.T      <- parameters[i,match("rho.T",parnames)]
+  sigma.H    <- parameters[i,match("sigma.H",parnames)]
+  rho.H      <- parameters[i,match("rho.H",parnames)]
   err.temp   <- rep(sigma.T,n.time); if(l.ar1.hetero) {err.temp[midx.temp]=sqrt(sigma.T^2 + obs.temp.err[oidx.temp]^2)}
   err.ocheat <- rep(sigma.H,n.time); if(l.ar1.hetero) {err.ocheat[midx.ocheat]=sqrt(sigma.H^2+obs.ocheat.err[oidx.ocheat]^2)}
   temp.norm.stat[i,]   <- temp.out.norm[i,]   + ar1.sim(n.time, rho.T, err.temp)
@@ -787,31 +783,36 @@ ocheat.hind <- ocheat.hind[,ind.good]
 
 brick.rcp26 <- proj.out[[1]][ind.good]
 brick.rcp45 <- proj.out[[2]][ind.good]
-brick.rcp85 <- proj.out[[3]][ind.good]
+brick.rcp60 <- proj.out[[3]][ind.good]
+brick.rcp85 <- proj.out[[4]][ind.good]
 
 ## Gather the fields for each simulation (easy referencing for plotting and
 ## analysis)
 proj.rcp26 <- vector("list", n.scen)
 proj.rcp45 <- vector("list", n.scen)
+proj.rcp60 <- vector("list", n.scen)
 proj.rcp85 <- vector("list", n.scen)
 
 ## Make each projections list a list of the SLR contributions and other fields
 ## Get the 90% CI at each time step, of all model output fields
 
-names.output <- c('slr','gsic','gis','ais','disint','te','lws','temp','ocheat','slr.nola')
+names.output <- c('slr','gsic','gis','ais','disint','te','lws','temp','ocheat','slr.local')
 n.output <- length(names.output)
 
 proj.rcp26 <- vector("list", n.output)
 proj.rcp45 <- vector("list", n.output)
+proj.rcp60 <- vector("list", n.output)
 proj.rcp85 <- vector("list", n.output)
 
 names(proj.rcp26) <- names.output
 names(proj.rcp45) <- names.output
+names(proj.rcp60) <- names.output
 names(proj.rcp85) <- names.output
 
 for (j in 1:n.output) {
   proj.rcp26[[j]] <- mat.or.vec(n.ensemble, n.time)
   proj.rcp45[[j]] <- mat.or.vec(n.ensemble, n.time)
+  proj.rcp60[[j]] <- mat.or.vec(n.ensemble, n.time)
   proj.rcp85[[j]] <- mat.or.vec(n.ensemble, n.time)
 }
 
@@ -832,6 +833,9 @@ for (i in 1:n.ensemble) {
   proj.rcp45$temp[i,] <- brick.rcp45[[i]]$doeclim.out$temp + T0
   proj.rcp45$ocheat[i,] <- brick.rcp45[[i]]$doeclim.out$ocheat + H0
 
+  proj.rcp60$temp[i,] <- brick.rcp60[[i]]$doeclim.out$temp + T0
+  proj.rcp60$ocheat[i,] <- brick.rcp60[[i]]$doeclim.out$ocheat + H0
+
   proj.rcp85$temp[i,] <- brick.rcp85[[i]]$doeclim.out$temp + T0
   proj.rcp85$ocheat[i,] <- brick.rcp85[[i]]$doeclim.out$ocheat + H0
 
@@ -843,6 +847,9 @@ for (i in 1:n.ensemble) {
 
   proj.rcp45$temp[i,] <- proj.rcp45$temp[i,] - mean( proj.rcp45$temp[i,ind.norm])
   proj.rcp45$ocheat[i,] <- proj.rcp45$ocheat[i,] - mean( proj.rcp45$ocheat[i,ind.norm])
+
+  proj.rcp60$temp[i,] <- proj.rcp60$temp[i,] - mean( proj.rcp60$temp[i,ind.norm])
+  proj.rcp60$ocheat[i,] <- proj.rcp60$ocheat[i,] - mean( proj.rcp60$ocheat[i,ind.norm])
 
   proj.rcp85$temp[i,] <- proj.rcp85$temp[i,] - mean( proj.rcp85$temp[i,ind.norm])
   proj.rcp85$ocheat[i,] <- proj.rcp85$ocheat[i,] - mean( proj.rcp85$ocheat[i,ind.norm])
@@ -861,6 +868,9 @@ for (i in 1:n.ensemble) {
   proj.rcp45$temp[i,] <- proj.rcp45$temp[i,] + ar1.sim(n.time, rho.T, sigma.T)
   proj.rcp45$ocheat[i,] <- proj.rcp45$ocheat[i,] + ar1.sim(n.time, rho.H, sigma.H)
 
+  proj.rcp60$temp[i,] <- proj.rcp60$temp[i,] + ar1.sim(n.time, rho.T, sigma.T)
+  proj.rcp60$ocheat[i,] <- proj.rcp60$ocheat[i,] + ar1.sim(n.time, rho.H, sigma.H)
+
   proj.rcp85$temp[i,] <- proj.rcp85$temp[i,] + ar1.sim(n.time, rho.T, sigma.T)
   proj.rcp85$ocheat[i,] <- proj.rcp85$ocheat[i,] + ar1.sim(n.time, rho.H, sigma.H)
 
@@ -876,6 +886,12 @@ for (i in 1:n.ensemble) {
   proj.rcp45$ais[i,] <- brick.rcp45[[i]]$dais.out$Vais
   proj.rcp45$disint[i,] <- brick.rcp45[[i]]$dais.out$Vdisint
   proj.rcp45$te[i,] <- brick.rcp45[[i]]$te.out
+
+  proj.rcp60$gsic[i,] <- brick.rcp60[[i]]$gsic.out
+  proj.rcp60$gis[i,] <- brick.rcp60[[i]]$simple.out$sle.gis
+  proj.rcp60$ais[i,] <- brick.rcp60[[i]]$dais.out$Vais
+  proj.rcp60$disint[i,] <- brick.rcp60[[i]]$dais.out$Vdisint
+  proj.rcp60$te[i,] <- brick.rcp60[[i]]$te.out
 
   proj.rcp85$gsic[i,] <- brick.rcp85[[i]]$gsic.out
   proj.rcp85$gis[i,] <- brick.rcp85[[i]]$simple.out$sle.gis
@@ -895,6 +911,11 @@ for (i in 1:n.ensemble) {
   proj.rcp45$gis[i,] <- proj.rcp45$gis[i,] - mean( proj.rcp45$gis[i,ind.norm])
   proj.rcp45$ais[i,] <- proj.rcp45$ais[i,] - mean( proj.rcp45$ais[i,ind.norm])
   proj.rcp45$te[i,] <- proj.rcp45$te[i,] - mean( proj.rcp45$te[i,ind.norm])
+
+  proj.rcp60$gsic[i,] <- proj.rcp60$gsic[i,] - mean( proj.rcp60$gsic[i,ind.norm])
+  proj.rcp60$gis[i,] <- proj.rcp60$gis[i,] - mean( proj.rcp60$gis[i,ind.norm])
+  proj.rcp60$ais[i,] <- proj.rcp60$ais[i,] - mean( proj.rcp60$ais[i,ind.norm])
+  proj.rcp60$te[i,] <- proj.rcp60$te[i,] - mean( proj.rcp60$te[i,ind.norm])
 
   proj.rcp85$gsic[i,] <-proj.rcp85$gsic[i,] - mean( proj.rcp85$gsic[i,ind.norm])
   proj.rcp85$gis[i,] <- proj.rcp85$gis[i,] - mean( proj.rcp85$gis[i,ind.norm])
@@ -916,6 +937,9 @@ for (i in 1:n.ensemble) {
   proj.rcp45$gsic[i,] <- proj.rcp45$gsic[i,] + ar1.sim(n.time, rho.gsic, sigma.gsic)
   proj.rcp45$gis[i,] <- proj.rcp45$gis[i,] + ar1.sim(n.time, rho.simple, sigma.simple)
 
+  proj.rcp60$gsic[i,] <- proj.rcp60$gsic[i,] + ar1.sim(n.time, rho.gsic, sigma.gsic)
+  proj.rcp60$gis[i,] <- proj.rcp60$gis[i,] + ar1.sim(n.time, rho.simple, sigma.simple)
+
   proj.rcp85$gsic[i,] <- proj.rcp85$gsic[i,] + ar1.sim(n.time, rho.gsic, sigma.gsic)
   proj.rcp85$gis[i,] <- proj.rcp85$gis[i,] + ar1.sim(n.time, rho.simple, sigma.simple)
 
@@ -933,32 +957,43 @@ for (i in 1:n.ensemble) {
   proj.rcp45$lws[i,] <- cumsum(rnorm(n=n.time, mean=lws.mean, sd=lws.sd)) /1000
   proj.rcp45$lws[i,] <- proj.rcp45$lws[i,] - mean(proj.rcp45$lws[i,ind.norm])
 
+  # RCP6.0
+  proj.rcp60$lws[i,] <- cumsum(rnorm(n=n.time, mean=lws.mean, sd=lws.sd)) /1000
+  proj.rcp60$lws[i,] <- proj.rcp60$lws[i,] - mean(proj.rcp60$lws[i,ind.norm])
+
   # RCP8.5
   proj.rcp85$lws[i,] <- cumsum(rnorm(n=n.time, mean=lws.mean, sd=lws.sd)) /1000
   proj.rcp85$lws[i,] <- proj.rcp85$lws[i,] - mean(proj.rcp85$lws[i,ind.norm])
 
   # Add up to total sea-level rise
   proj.rcp26$slr[i,] <- proj.rcp26$gsic[i,] +
-                       proj.rcp26$gis[i,] +
-                       proj.rcp26$ais[i,] +
-                       proj.rcp26$te[i,] +
-                       proj.rcp26$lws[i,]
+                        proj.rcp26$gis[i,]  +
+                        proj.rcp26$ais[i,]  +
+                        proj.rcp26$te[i,]   +
+                        proj.rcp26$lws[i,]
 
   proj.rcp45$slr[i,] <- proj.rcp45$gsic[i,] +
-                       proj.rcp45$gis[i,] +
-                       proj.rcp45$ais[i,] +
-                       proj.rcp45$te[i,]
-                       proj.rcp26$lws[i,]
+                        proj.rcp45$gis[i,]  +
+                        proj.rcp45$ais[i,]  +
+                        proj.rcp45$te[i,]   +
+                        proj.rcp45$lws[i,]
+
+  proj.rcp60$slr[i,] <- proj.rcp60$gsic[i,] +
+                        proj.rcp60$gis[i,]  +
+                        proj.rcp60$ais[i,]  +
+                        proj.rcp60$te[i,]   +
+                        proj.rcp60$lws[i,]
 
   proj.rcp85$slr[i,] <- proj.rcp85$gsic[i,] +
-                       proj.rcp85$gis[i,] +
-                       proj.rcp85$ais[i,] +
-                       proj.rcp85$te[i,]
-                       proj.rcp26$lws[i,]
+                        proj.rcp85$gis[i,]  +
+                        proj.rcp85$ais[i,]  +
+                        proj.rcp85$te[i,]   +
+                        proj.rcp85$lws[i,]
 
   # And normalize sea-level rise
   proj.rcp26$slr[i,] <- proj.rcp26$slr[i,] - mean(proj.rcp26$slr[i,ind.norm])
   proj.rcp45$slr[i,] <- proj.rcp45$slr[i,] - mean(proj.rcp45$slr[i,ind.norm])
+  proj.rcp60$slr[i,] <- proj.rcp60$slr[i,] - mean(proj.rcp60$slr[i,ind.norm])
   proj.rcp85$slr[i,] <- proj.rcp85$slr[i,] - mean(proj.rcp85$slr[i,ind.norm])
 
   setTxtProgressBar(pb, i)
@@ -987,32 +1022,43 @@ print(paste('Beginning fingerprinting to local sea level rise...',sep=''))
 
 source('../R/BRICK_LSL.R')
 
-proj.rcp26$slr.local = brick_lsl(lat.in=lat.fp,
-                                lon.in=lon.fp,
-                n.time=length(t.proj),
-                slr_gis = proj.rcp26$gis,
-                slr_gsic = proj.rcp26$gsic,
-                slr_ais = proj.rcp26$ais,
-                slr_te = proj.rcp26$te)
-proj.rcp45$slr.local = brick_lsl(lat.in=lat.fp,
-                                lon.in=lon.fp,
-                n.time=length(t.proj),
-                slr_gis = proj.rcp45$gis,
-                slr_gsic = proj.rcp45$gsic,
-                slr_ais = proj.rcp45$ais,
-                slr_te = proj.rcp45$te)
-proj.rcp85$slr.local = brick_lsl(lat.in=lat.fp,
-                                lon.in=lon.fp,
-                n.time=length(t.proj),
-                slr_gis = proj.rcp85$gis,
-                slr_gsic = proj.rcp85$gsic,
-                slr_ais = proj.rcp85$ais,
-                slr_te = proj.rcp85$te)
+proj.rcp26$slr.local <- brick_lsl(lat.in = lat.fp,
+                                  lon.in = lon.fp,
+                                  n.time = length(t.proj),
+                                  slr_gis = proj.rcp26$gis,
+                                  slr_gsic = proj.rcp26$gsic,
+                                  slr_ais = proj.rcp26$ais,
+                                  slr_te = proj.rcp26$te)
+
+proj.rcp45$slr.local <- brick_lsl(lat.in = lat.fp,
+                                  lon.in = lon.fp,
+                                  n.time = length(t.proj),
+                                  slr_gis = proj.rcp45$gis,
+                                  slr_gsic = proj.rcp45$gsic,
+                                  slr_ais = proj.rcp45$ais,
+                                  slr_te = proj.rcp45$te)
+
+proj.rcp60$slr.local <- brick_lsl(lat.in = lat.fp,
+                                  lon.in = lon.fp,
+                                  n.time = length(t.proj),
+                                  slr_gis = proj.rcp60$gis,
+                                  slr_gsic = proj.rcp60$gsic,
+                                  slr_ais = proj.rcp60$ais,
+                                  slr_te = proj.rcp60$te)
+
+proj.rcp85$slr.local <- brick_lsl(lat.in = lat.fp,
+                                  lon.in = lon.fp,
+                                  n.time = length(t.proj),
+                                  slr_gis = proj.rcp85$gis,
+                                  slr_gsic = proj.rcp85$gsic,
+                                  slr_ais = proj.rcp85$ais,
+                                  slr_te = proj.rcp85$te)
 
 # And normalize sea-level rise
 for (i in 1:n.ensemble) {
   proj.rcp26$slr.local[i,] = proj.rcp26$slr.local[i,] - mean(proj.rcp26$slr.local[i,ind.norm])
   proj.rcp45$slr.local[i,] = proj.rcp45$slr.local[i,] - mean(proj.rcp45$slr.local[i,ind.norm])
+  proj.rcp60$slr.local[i,] = proj.rcp60$slr.local[i,] - mean(proj.rcp60$slr.local[i,ind.norm])
   proj.rcp85$slr.local[i,] = proj.rcp85$slr.local[i,] - mean(proj.rcp85$slr.local[i,ind.norm])
 }
 
@@ -1023,9 +1069,6 @@ print(paste('... finished local sea level rise',sep=''))
 
 ##==============================================================================
 ##==============================================================================
-}
-
-
 
 
 
@@ -1039,91 +1082,42 @@ print(paste('... finished local sea level rise',sep=''))
 library(ncdf4)
 
 dim.tproj <- ncdim_def('time_proj', 'years', as.double(t.proj))
-#dim.ensemble <- ncdim_def('ens', 'ensemble member', as.double(1:nrow(proj.rcp26$slr)))
 dim.ensemble <- ncdim_def('ens', 'ensemble member', as.double(1:nrow(proj.rcp26$slr)), unlim=TRUE)
 dim.thind <- ncdim_def('time_hind', 'years', as.double(t.hind))
 
-if(experiment!='g') {
-  dim.tpaleo <- ncdim_def('time_paleo', 'year paleo', as.double(t.paleo))
-  dim.tpaleo.avg <- ncdim_def('time_paleo_avg', 'year avg paleo', as.double(date.avg))
+dim.tpaleo <- ncdim_def('time_paleo', 'year paleo', as.double(t.paleo))
+dim.tpaleo.avg <- ncdim_def('time_paleo_avg', 'year avg paleo', as.double(date.avg))
 
-  ais.paleo.05 <- ncvar_def('AIS_paleo_q05', 'meters', list(dim.tpaleo), -999,
-                  longname = 'AIS paleo contribution to sea level (5th quantile)')
-  ais.paleo.50 <- ncvar_def('AIS_paleo_q50', 'meters', list(dim.tpaleo), -999,
-                  longname = 'AIS paleo contribution to sea level (median)')
-  ais.paleo.95 <- ncvar_def('AIS_paleo_q95', 'meters', list(dim.tpaleo), -999,
-                  longname = 'AIS paleo contribution to sea level (95th quantile)')
-  ais.paleo.max <- ncvar_def('AIS_paleo_max', 'meters', list(dim.tpaleo), -999,
-                  longname = 'AIS paleo contribution to sea level (maximum)')
-  ais.paleo.min <- ncvar_def('AIS_paleo_min', 'meters', list(dim.tpaleo), -999,
-                  longname = 'AIS paleo contribution to sea level (minimum)')
+ais.paleo.05 <- ncvar_def('AIS_paleo_q05', 'meters', list(dim.tpaleo), -999,
+                longname = 'AIS paleo contribution to sea level (5th quantile)')
+ais.paleo.50 <- ncvar_def('AIS_paleo_q50', 'meters', list(dim.tpaleo), -999,
+                longname = 'AIS paleo contribution to sea level (median)')
+ais.paleo.95 <- ncvar_def('AIS_paleo_q95', 'meters', list(dim.tpaleo), -999,
+                longname = 'AIS paleo contribution to sea level (95th quantile)')
+ais.paleo.max <- ncvar_def('AIS_paleo_max', 'meters', list(dim.tpaleo), -999,
+                longname = 'AIS paleo contribution to sea level (maximum)')
+ais.paleo.min <- ncvar_def('AIS_paleo_min', 'meters', list(dim.tpaleo), -999,
+                longname = 'AIS paleo contribution to sea level (minimum)')
 
-  ais.paleo.05.avg <- ncvar_def('AIS_paleo_avg_q05', 'meters', list(dim.tpaleo.avg), -999,
-                  longname = 'AIS paleo contribution to sea level (smoothed, 5th quantile)')
-  ais.paleo.50.avg <- ncvar_def('AIS_paleo_avg_q50', 'meters', list(dim.tpaleo.avg), -999,
-                  longname = 'AIS paleo contribution to sea level (smoothed, median)')
-  ais.paleo.95.avg <- ncvar_def('AIS_paleo_avg_q95', 'meters', list(dim.tpaleo.avg), -999,
-                  longname = 'AIS paleo contribution to sea level (smoothed, 95th quantile)')
-  ais.paleo.max.avg <- ncvar_def('AIS_paleo_avg_max', 'meters', list(dim.tpaleo.avg), -999,
-                  longname = 'AIS paleo contribution to sea level (smoothed, maximum)')
-  ais.paleo.min.avg <- ncvar_def('AIS_paleo_avg_min', 'meters', list(dim.tpaleo.avg), -999,
-                  longname = 'AIS paleo contribution to sea level (smoothed, minimum)')
+ais.paleo.05.avg <- ncvar_def('AIS_paleo_avg_q05', 'meters', list(dim.tpaleo.avg), -999,
+                longname = 'AIS paleo contribution to sea level (smoothed, 5th quantile)')
+ais.paleo.50.avg <- ncvar_def('AIS_paleo_avg_q50', 'meters', list(dim.tpaleo.avg), -999,
+                longname = 'AIS paleo contribution to sea level (smoothed, median)')
+ais.paleo.95.avg <- ncvar_def('AIS_paleo_avg_q95', 'meters', list(dim.tpaleo.avg), -999,
+                longname = 'AIS paleo contribution to sea level (smoothed, 95th quantile)')
+ais.paleo.max.avg <- ncvar_def('AIS_paleo_avg_max', 'meters', list(dim.tpaleo.avg), -999,
+                longname = 'AIS paleo contribution to sea level (smoothed, maximum)')
+ais.paleo.min.avg <- ncvar_def('AIS_paleo_avg_min', 'meters', list(dim.tpaleo.avg), -999,
+                longname = 'AIS paleo contribution to sea level (smoothed, minimum)')
 
-  gsic.hindcast <- ncvar_def('GSIC_hind', 'meters', list(dim.thind, dim.ensemble), -999,
-                      longname = 'Glaciers and small ice caps contribution to GSL (hindcast)')
-  te.hindcast <- ncvar_def('TE_hind', 'meters', list(dim.thind, dim.ensemble), -999,
-                      longname = 'Thermal expansion contribution to GSL (hindcast)')
-  gis.hindcast <- ncvar_def('GIS_hind', 'meters', list(dim.thind, dim.ensemble), -999,
-                      longname = 'Greenland ice sheet contribution to GSL (hindcast)')
-  ais.hindcast <- ncvar_def('AIS_hind', 'meters', list(dim.thind, dim.ensemble), -999,
-                      longname = 'Antarctic ice sheet contribution to GSL (hindcast)')
-
-  lsl.rcp26 <- ncvar_def('LocalSeaLevel_RCP26', 'meters', list(dim.tproj, dim.ensemble), -999,
-                  longname = 'Local sea level (RCP26)')
-  gsic.rcp26 <- ncvar_def('GSIC_RCP26', 'meters', list(dim.tproj, dim.ensemble), -999,
-                  longname = 'GSIC contribution to sea level (RCP26)')
-  te.rcp26 <- ncvar_def('TE_RCP26', 'meters', list(dim.tproj, dim.ensemble), -999,
-                  longname = 'TE contribution to sea level (RCP26)')
-  gis.rcp26 <- ncvar_def('GIS_RCP26', 'meters', list(dim.tproj, dim.ensemble), -999,
-                  longname = 'GIS contribution to sea level (RCP26)')
-  ais.rcp26 <- ncvar_def('AIS_RCP26', 'meters', list(dim.tproj, dim.ensemble), -999,
-                  longname = 'AIS contribution to sea level (RCP26)')
-  disint.rcp26 <- ncvar_def('AIS_DISINT_RCP26', 'meters', list(dim.tproj, dim.ensemble), -999,
-                  longname = 'AIS fast dynamics contribution to sea level (RCP26)')
-  lws.rcp26 <- ncvar_def('LWS_RCP26', 'meters', list(dim.tproj, dim.ensemble), -999,
-                  longname = 'estimated LWS contribution to sea level (RCP26)')
-
-  lsl.rcp45 <- ncvar_def('LocalSeaLevel_RCP45', 'meters', list(dim.tproj, dim.ensemble), -999,
-                  longname = 'Local sea level (RCP45)')
-  gsic.rcp45 <- ncvar_def('GSIC_RCP45', 'meters', list(dim.tproj, dim.ensemble), -999,
-                  longname = 'GSIC contribution to sea level (RCP45)')
-  te.rcp45 <- ncvar_def('TE_RCP45', 'meters', list(dim.tproj, dim.ensemble), -999,
-                  longname = 'TE contribution to sea level (RCP45)')
-  gis.rcp45 <- ncvar_def('GIS_RCP45', 'meters', list(dim.tproj, dim.ensemble), -999,
-                  longname = 'GIS contribution to sea level (RCP45)')
-  ais.rcp45 <- ncvar_def('AIS_RCP45', 'meters', list(dim.tproj, dim.ensemble), -999,
-                  longname = 'AIS contribution to sea level (RCP45)')
-  disint.rcp45 <- ncvar_def('AIS_DISINT_RCP45', 'meters', list(dim.tproj, dim.ensemble), -999,
-                  longname = 'AIS fast dynamics contribution to sea level (RCP45)')
-  lws.rcp45 <- ncvar_def('LWS_RCP45', 'meters', list(dim.tproj, dim.ensemble), -999,
-                  longname = 'estimated LWS contribution to sea level (RCP45)')
-
-  lsl.rcp85 <- ncvar_def('LocalSeaLevel_RCP85', 'meters', list(dim.tproj, dim.ensemble), -999,
-                  longname = 'Local sea level (RCP85)')
-  gsic.rcp85 <- ncvar_def('GSIC_RCP85', 'meters', list(dim.tproj, dim.ensemble), -999,
-                  longname = 'GSIC contribution to sea level (RCP85)')
-  te.rcp85 <- ncvar_def('TE_RCP85', 'meters', list(dim.tproj, dim.ensemble), -999,
-                  longname = 'TE contribution to sea level (RCP85)')
-  gis.rcp85 <- ncvar_def('GIS_RCP85', 'meters', list(dim.tproj, dim.ensemble), -999,
-                  longname = 'GIS contribution to sea level (RCP85)')
-  ais.rcp85 <- ncvar_def('AIS_RCP85', 'meters', list(dim.tproj, dim.ensemble), -999,
-                  longname = 'AIS contribution to sea level (RCP85)')
-  disint.rcp85 <- ncvar_def('AIS_DISINT_RCP85', 'meters', list(dim.tproj, dim.ensemble), -999,
-                  longname = 'AIS fast dynamics contribution to sea level (RCP85)')
-  lws.rcp85 <- ncvar_def('LWS_RCP85', 'meters', list(dim.tproj, dim.ensemble), -999,
-                  longname = 'estimated LWS contribution to sea level (RCP85)')
-}
-
+gsic.hindcast <- ncvar_def('GSIC_hind', 'meters', list(dim.thind, dim.ensemble), -999,
+                    longname = 'Glaciers and small ice caps contribution to GSL (hindcast)')
+te.hindcast <- ncvar_def('TE_hind', 'meters', list(dim.thind, dim.ensemble), -999,
+                    longname = 'Thermal expansion contribution to GSL (hindcast)')
+gis.hindcast <- ncvar_def('GIS_hind', 'meters', list(dim.thind, dim.ensemble), -999,
+                    longname = 'Greenland ice sheet contribution to GSL (hindcast)')
+ais.hindcast <- ncvar_def('AIS_hind', 'meters', list(dim.thind, dim.ensemble), -999,
+                    longname = 'Antarctic ice sheet contribution to GSL (hindcast)')
 gsl.hindcast <- ncvar_def('GlobalSeaLevel_hind', 'meters', list(dim.thind, dim.ensemble), -999,
                       longname = 'Global sea level (hindcast)')
 temp.hindcast <- ncvar_def('temp_hind', 'deg C', list(dim.thind, dim.ensemble), -999,
@@ -1131,6 +1125,20 @@ temp.hindcast <- ncvar_def('temp_hind', 'deg C', list(dim.thind, dim.ensemble), 
 ocheat.hindcast <- ncvar_def('ocheat_hind', '10^22 J', list(dim.thind, dim.ensemble), -999,
                       longname = 'Ocean heat uptake (hindcast)')
 
+lsl.rcp26 <- ncvar_def('LocalSeaLevel_RCP26', 'meters', list(dim.tproj, dim.ensemble), -999,
+                longname = 'Local sea level (RCP26)')
+gsic.rcp26 <- ncvar_def('GSIC_RCP26', 'meters', list(dim.tproj, dim.ensemble), -999,
+                longname = 'GSIC contribution to sea level (RCP26)')
+te.rcp26 <- ncvar_def('TE_RCP26', 'meters', list(dim.tproj, dim.ensemble), -999,
+                longname = 'TE contribution to sea level (RCP26)')
+gis.rcp26 <- ncvar_def('GIS_RCP26', 'meters', list(dim.tproj, dim.ensemble), -999,
+                longname = 'GIS contribution to sea level (RCP26)')
+ais.rcp26 <- ncvar_def('AIS_RCP26', 'meters', list(dim.tproj, dim.ensemble), -999,
+                longname = 'AIS contribution to sea level (RCP26)')
+disint.rcp26 <- ncvar_def('AIS_DISINT_RCP26', 'meters', list(dim.tproj, dim.ensemble), -999,
+                longname = 'AIS fast dynamics contribution to sea level (RCP26)')
+lws.rcp26 <- ncvar_def('LWS_RCP26', 'meters', list(dim.tproj, dim.ensemble), -999,
+                longname = 'estimated LWS contribution to sea level (RCP26)')
 gsl.rcp26 <- ncvar_def('GlobalSeaLevel_RCP26', 'meters', list(dim.tproj, dim.ensemble), -999,
                   longname = 'Global sea level (RCP26)')
 temp.rcp26 <- ncvar_def('temp_RCP26', 'deg C', list(dim.tproj, dim.ensemble), -999,
@@ -1138,6 +1146,20 @@ temp.rcp26 <- ncvar_def('temp_RCP26', 'deg C', list(dim.tproj, dim.ensemble), -9
 ocheat.rcp26 <- ncvar_def('ocheat_RCP26', '10^22 J', list(dim.tproj, dim.ensemble), -999,
                   longname = 'ocean heat uptake (RCP26)')
 
+lsl.rcp45 <- ncvar_def('LocalSeaLevel_RCP45', 'meters', list(dim.tproj, dim.ensemble), -999,
+                longname = 'Local sea level (RCP45)')
+gsic.rcp45 <- ncvar_def('GSIC_RCP45', 'meters', list(dim.tproj, dim.ensemble), -999,
+                longname = 'GSIC contribution to sea level (RCP45)')
+te.rcp45 <- ncvar_def('TE_RCP45', 'meters', list(dim.tproj, dim.ensemble), -999,
+                longname = 'TE contribution to sea level (RCP45)')
+gis.rcp45 <- ncvar_def('GIS_RCP45', 'meters', list(dim.tproj, dim.ensemble), -999,
+                longname = 'GIS contribution to sea level (RCP45)')
+ais.rcp45 <- ncvar_def('AIS_RCP45', 'meters', list(dim.tproj, dim.ensemble), -999,
+                longname = 'AIS contribution to sea level (RCP45)')
+disint.rcp45 <- ncvar_def('AIS_DISINT_RCP45', 'meters', list(dim.tproj, dim.ensemble), -999,
+                longname = 'AIS fast dynamics contribution to sea level (RCP45)')
+lws.rcp45 <- ncvar_def('LWS_RCP45', 'meters', list(dim.tproj, dim.ensemble), -999,
+                longname = 'estimated LWS contribution to sea level (RCP45)')
 gsl.rcp45 <- ncvar_def('GlobalSeaLevel_RCP45', 'meters', list(dim.tproj, dim.ensemble), -999,
                   longname = 'Global sea level (RCP45)')
 temp.rcp45 <- ncvar_def('temp_RCP45', 'deg C', list(dim.tproj, dim.ensemble), -999,
@@ -1145,6 +1167,41 @@ temp.rcp45 <- ncvar_def('temp_RCP45', 'deg C', list(dim.tproj, dim.ensemble), -9
 ocheat.rcp45 <- ncvar_def('ocheat_RCP45', '10^22 J', list(dim.tproj, dim.ensemble), -999,
                   longname = 'ocean heat uptake (RCP45)')
 
+lsl.rcp60 <- ncvar_def('LocalSeaLevel_RCP60', 'meters', list(dim.tproj, dim.ensemble), -999,
+                longname = 'Local sea level (RCP60)')
+gsic.rcp60 <- ncvar_def('GSIC_RCP60', 'meters', list(dim.tproj, dim.ensemble), -999,
+                longname = 'GSIC contribution to sea level (RCP60)')
+te.rcp60 <- ncvar_def('TE_RCP60', 'meters', list(dim.tproj, dim.ensemble), -999,
+                longname = 'TE contribution to sea level (RCP60)')
+gis.rcp60 <- ncvar_def('GIS_RCP60', 'meters', list(dim.tproj, dim.ensemble), -999,
+                longname = 'GIS contribution to sea level (RCP60)')
+ais.rcp60 <- ncvar_def('AIS_RCP60', 'meters', list(dim.tproj, dim.ensemble), -999,
+                longname = 'AIS contribution to sea level (RCP60)')
+disint.rcp60 <- ncvar_def('AIS_DISINT_RCP60', 'meters', list(dim.tproj, dim.ensemble), -999,
+                longname = 'AIS fast dynamics contribution to sea level (RCP60)')
+lws.rcp60 <- ncvar_def('LWS_RCP60', 'meters', list(dim.tproj, dim.ensemble), -999,
+                longname = 'estimated LWS contribution to sea level (RCP60)')
+gsl.rcp60 <- ncvar_def('GlobalSeaLevel_RCP60', 'meters', list(dim.tproj, dim.ensemble), -999,
+                  longname = 'Global sea level (RCP60)')
+temp.rcp60 <- ncvar_def('temp_RCP60', 'deg C', list(dim.tproj, dim.ensemble), -999,
+                  longname = 'global mean surface temperature anomaly (RCP60)')
+ocheat.rcp60 <- ncvar_def('ocheat_RCP60', '10^22 J', list(dim.tproj, dim.ensemble), -999,
+                  longname = 'ocean heat uptake (RCP60)')
+
+lsl.rcp85 <- ncvar_def('LocalSeaLevel_RCP85', 'meters', list(dim.tproj, dim.ensemble), -999,
+                longname = 'Local sea level (RCP85)')
+gsic.rcp85 <- ncvar_def('GSIC_RCP85', 'meters', list(dim.tproj, dim.ensemble), -999,
+                longname = 'GSIC contribution to sea level (RCP85)')
+te.rcp85 <- ncvar_def('TE_RCP85', 'meters', list(dim.tproj, dim.ensemble), -999,
+                longname = 'TE contribution to sea level (RCP85)')
+gis.rcp85 <- ncvar_def('GIS_RCP85', 'meters', list(dim.tproj, dim.ensemble), -999,
+                longname = 'GIS contribution to sea level (RCP85)')
+ais.rcp85 <- ncvar_def('AIS_RCP85', 'meters', list(dim.tproj, dim.ensemble), -999,
+                longname = 'AIS contribution to sea level (RCP85)')
+disint.rcp85 <- ncvar_def('AIS_DISINT_RCP85', 'meters', list(dim.tproj, dim.ensemble), -999,
+                longname = 'AIS fast dynamics contribution to sea level (RCP85)')
+lws.rcp85 <- ncvar_def('LWS_RCP85', 'meters', list(dim.tproj, dim.ensemble), -999,
+                longname = 'estimated LWS contribution to sea level (RCP85)')
 gsl.rcp85 <- ncvar_def('GlobalSeaLevel_RCP85', 'meters', list(dim.tproj, dim.ensemble), -999,
                   longname = 'Global sea level (RCP85)')
 temp.rcp85 <- ncvar_def('temp_RCP85', 'deg C', list(dim.tproj, dim.ensemble), -999,
@@ -1152,167 +1209,91 @@ temp.rcp85 <- ncvar_def('temp_RCP85', 'deg C', list(dim.tproj, dim.ensemble), -9
 ocheat.rcp85 <- ncvar_def('ocheat_RCP85', '10^22 J', list(dim.tproj, dim.ensemble), -999,
                   longname = 'ocean heat uptake (RCP85)')
 
-today=Sys.Date(); today=format(today,format="%d%b%Y")
+today <- Sys.Date(); today <- format(today,format="%d%b%Y")
 
-if(experiment=='g') {
-  outnc <- nc_create(filename.brickout,
-                    list( gsl.rcp26, gsl.rcp45, gsl.rcp85,
-                           temp.rcp26, ocheat.rcp26,
-                           temp.rcp45, ocheat.rcp45,
-                           temp.rcp85, ocheat.rcp85,
-                          gsl.hindcast, temp.hindcast, ocheat.hindcast),
-                    force_v4 = TRUE)
-} else {
-  outnc <- nc_create(filename.brickout,
-                    list( gsl.rcp26, gsl.rcp45, gsl.rcp85, lsl.rcp26, lsl.rcp45, lsl.rcp85,
+outnc <- nc_create(filename.brickout,
+                    list( gsl.rcp26, gsl.rcp45, gsl.rcp60, gsl.rcp85, lsl.rcp26, lsl.rcp45, lsl.rcp60, lsl.rcp85,
                           gsic.rcp26, te.rcp26, gis.rcp26, ais.rcp26, temp.rcp26, ocheat.rcp26, lws.rcp26, disint.rcp26,
                           gsic.rcp45, te.rcp45, gis.rcp45, ais.rcp45, temp.rcp45, ocheat.rcp45, lws.rcp45, disint.rcp45,
+                          gsic.rcp60, te.rcp60, gis.rcp60, ais.rcp60, temp.rcp60, ocheat.rcp60, lws.rcp60, disint.rcp60,
                           gsic.rcp85, te.rcp85, gis.rcp85, ais.rcp85, temp.rcp85, ocheat.rcp85, lws.rcp85, disint.rcp85,
                           gsl.hindcast, gsic.hindcast, te.hindcast, gis.hindcast, ais.hindcast, temp.hindcast, ocheat.hindcast,
                           ais.paleo.05, ais.paleo.50, ais.paleo.95, ais.paleo.max, ais.paleo.min,
                           ais.paleo.05.avg, ais.paleo.50.avg, ais.paleo.95.avg, ais.paleo.max.avg, ais.paleo.min.avg),
                     force_v4 = TRUE)
-}
 
-if(experiment!='g') {
-  ncvar_put(outnc, lsl.rcp26, t(proj.rcp26$slr.local))
-  ncvar_put(outnc, gsic.rcp26, t(proj.rcp26$gsic))
-  ncvar_put(outnc, te.rcp26, t(proj.rcp26$te))
-  ncvar_put(outnc, gis.rcp26, t(proj.rcp26$gis))
-  ncvar_put(outnc, ais.rcp26, t(proj.rcp26$ais))
-  ncvar_put(outnc, disint.rcp26, t(proj.rcp26$disint))
-  ncvar_put(outnc, lws.rcp26, t(proj.rcp26$lws))
-
-  ncvar_put(outnc, lsl.rcp45, t(proj.rcp45$slr.local))
-  ncvar_put(outnc, gsic.rcp45, t(proj.rcp45$gsic))
-  ncvar_put(outnc, te.rcp45, t(proj.rcp45$te))
-  ncvar_put(outnc, gis.rcp45, t(proj.rcp45$gis))
-  ncvar_put(outnc, ais.rcp45, t(proj.rcp45$ais))
-  ncvar_put(outnc, disint.rcp45, t(proj.rcp45$disint))
-  ncvar_put(outnc, lws.rcp45, t(proj.rcp45$lws))
-
-  ncvar_put(outnc, lsl.rcp85, t(proj.rcp85$slr.local))
-  ncvar_put(outnc, gsic.rcp85, t(proj.rcp85$gsic))
-  ncvar_put(outnc, te.rcp85, t(proj.rcp85$te))
-  ncvar_put(outnc, gis.rcp85, t(proj.rcp85$gis))
-  ncvar_put(outnc, ais.rcp85, t(proj.rcp85$ais))
-  ncvar_put(outnc, disint.rcp85, t(proj.rcp85$disint))
-  ncvar_put(outnc, lws.rcp85, t(proj.rcp85$lws))
-
-  ncvar_put(outnc, gsic.hindcast, gsic.hind)
-  ncvar_put(outnc, te.hindcast, te.hind)
-  ncvar_put(outnc, gis.hindcast, gis.hind)
-  ncvar_put(outnc, ais.hindcast, ais.hind)
-
-  ncvar_put(outnc, ais.paleo.05, dais.paleo.05)
-  ncvar_put(outnc, ais.paleo.50, dais.paleo.50)
-  ncvar_put(outnc, ais.paleo.95, dais.paleo.95)
-  ncvar_put(outnc, ais.paleo.max, dais.paleo.max)
-  ncvar_put(outnc, ais.paleo.min, dais.paleo.min)
-  ncvar_put(outnc, ais.paleo.05.avg, dais.paleo.05.avg)
-  ncvar_put(outnc, ais.paleo.50.avg, dais.paleo.50.avg)
-  ncvar_put(outnc, ais.paleo.95.avg, dais.paleo.95.avg)
-  ncvar_put(outnc, ais.paleo.max.avg, dais.paleo.max.avg)
-  ncvar_put(outnc, ais.paleo.min.avg, dais.paleo.min.avg)
-}
-
+ncvar_put(outnc, lsl.rcp26, t(proj.rcp26$slr.local))
+ncvar_put(outnc, gsic.rcp26, t(proj.rcp26$gsic))
+ncvar_put(outnc, te.rcp26, t(proj.rcp26$te))
+ncvar_put(outnc, gis.rcp26, t(proj.rcp26$gis))
+ncvar_put(outnc, ais.rcp26, t(proj.rcp26$ais))
+ncvar_put(outnc, disint.rcp26, t(proj.rcp26$disint))
+ncvar_put(outnc, lws.rcp26, t(proj.rcp26$lws))
 ncvar_put(outnc, gsl.rcp26, t(proj.rcp26$slr))
 ncvar_put(outnc, temp.rcp26, t(proj.rcp26$temp))
 ncvar_put(outnc, ocheat.rcp26, t(proj.rcp26$ocheat))
 
+ncvar_put(outnc, lsl.rcp45, t(proj.rcp45$slr.local))
+ncvar_put(outnc, gsic.rcp45, t(proj.rcp45$gsic))
+ncvar_put(outnc, te.rcp45, t(proj.rcp45$te))
+ncvar_put(outnc, gis.rcp45, t(proj.rcp45$gis))
+ncvar_put(outnc, ais.rcp45, t(proj.rcp45$ais))
+ncvar_put(outnc, disint.rcp45, t(proj.rcp45$disint))
+ncvar_put(outnc, lws.rcp45, t(proj.rcp45$lws))
 ncvar_put(outnc, gsl.rcp45, t(proj.rcp45$slr))
 ncvar_put(outnc, temp.rcp45, t(proj.rcp45$temp))
 ncvar_put(outnc, ocheat.rcp45, t(proj.rcp45$ocheat))
 
+ncvar_put(outnc, lsl.rcp60, t(proj.rcp60$slr.local))
+ncvar_put(outnc, gsic.rcp60, t(proj.rcp60$gsic))
+ncvar_put(outnc, te.rcp60, t(proj.rcp60$te))
+ncvar_put(outnc, gis.rcp60, t(proj.rcp60$gis))
+ncvar_put(outnc, ais.rcp60, t(proj.rcp60$ais))
+ncvar_put(outnc, disint.rcp60, t(proj.rcp60$disint))
+ncvar_put(outnc, lws.rcp60, t(proj.rcp60$lws))
+ncvar_put(outnc, gsl.rcp60, t(proj.rcp60$slr))
+ncvar_put(outnc, temp.rcp60, t(proj.rcp60$temp))
+ncvar_put(outnc, ocheat.rcp60, t(proj.rcp60$ocheat))
+
+ncvar_put(outnc, lsl.rcp85, t(proj.rcp85$slr.local))
+ncvar_put(outnc, gsic.rcp85, t(proj.rcp85$gsic))
+ncvar_put(outnc, te.rcp85, t(proj.rcp85$te))
+ncvar_put(outnc, gis.rcp85, t(proj.rcp85$gis))
+ncvar_put(outnc, ais.rcp85, t(proj.rcp85$ais))
+ncvar_put(outnc, disint.rcp85, t(proj.rcp85$disint))
+ncvar_put(outnc, lws.rcp85, t(proj.rcp85$lws))
 ncvar_put(outnc, gsl.rcp85, t(proj.rcp85$slr))
 ncvar_put(outnc, temp.rcp85, t(proj.rcp85$temp))
 ncvar_put(outnc, ocheat.rcp85, t(proj.rcp85$ocheat))
 
+ncvar_put(outnc, gsic.hindcast, gsic.hind)
+ncvar_put(outnc, te.hindcast, te.hind)
+ncvar_put(outnc, gis.hindcast, gis.hind)
+ncvar_put(outnc, ais.hindcast, ais.hind)
 ncvar_put(outnc, gsl.hindcast, gsl.hind)
 ncvar_put(outnc, temp.hindcast, temp.hind)
 ncvar_put(outnc, ocheat.hindcast, ocheat.hind)
 
-nc_close(outnc)
-
-##==============================================================================
-##==============================================================================
-
-
-
-
-
-
-if(l.dovandantzig) {
-if(experiment=='c') {  # only do Van Dantzig analysis if control experiment
-##==============================================================================
-##==============================================================================
-## Beginning here from a previous experiment?
-if(FALSE){
-  filename.in = "../output_model/BRICK-model_physical_control_01Nov2016.nc"
-  ncdata <- nc_open(filename.in)
-  sea_level = ncvar_get(ncdata, 'GlobalSeaLevel_RCP85')
-  mod.time =ncvar_get(ncdata, 'time_proj')
-  nc_close(ncdata)
-} else {
-  sea_level=t(proj.rcp85$slr.local)
-}
-
-## Evaluate flood risk analysis model for each of these realizations
-source('../R/BRICK_VanDantzig.R')
-
-vandantzig.ensemble = brick_vandantzig(sea_level = sea_level, time = mod.time)
-
-## Save progress so far via workspace image
-save.image(file=filename.saveprogress)
-
-##==============================================================================
-##==============================================================================
-
-
-
-
-
-
-##==============================================================================
-##==============================================================================
-## Output results of van Dantzig to netCDF file
-
-library(ncdf4)
-
-dim.heightening <- ncdim_def('H', 'meters', vandantzig.ensemble$Heightening[,1])
-dim.ensemble <- ncdim_def('ens', 'ensemble member', (1:ncol(vandantzig.ensemble$Heightening)))
-
-cost <- ncvar_def('ExpectedCost', 'US$', list(dim.heightening, dim.ensemble), -999,
-                  longname = 'Expected cost')
-loss <- ncvar_def('ExpectedLoss', 'US$', list(dim.heightening, dim.ensemble), -999,
-                  longname = 'Expected loss')
-investment <- ncvar_def('ExpectedInvestment', 'US$', list(dim.heightening, dim.ensemble), -999,
-                  longname = 'Expected investment')
-preturn <- ncvar_def('ExpectedPreturn', 'years', list(dim.heightening, dim.ensemble), -999,
-                  longname = 'Expected return period')
-
-outnc <- nc_create(filename.vdout,
-                    list(cost, loss, investment, preturn),
-                    force_v4 = TRUE)
-
-ncvar_put(outnc, cost, vandantzig.ensemble$Expected_costs)
-ncvar_put(outnc, loss, vandantzig.ensemble$Expected_loss)
-ncvar_put(outnc, investment, vandantzig.ensemble$Investment)
-ncvar_put(outnc, preturn, 1/vandantzig.ensemble$Average_p_fail)
+ncvar_put(outnc, ais.paleo.05, dais.paleo.05)
+ncvar_put(outnc, ais.paleo.50, dais.paleo.50)
+ncvar_put(outnc, ais.paleo.95, dais.paleo.95)
+ncvar_put(outnc, ais.paleo.max, dais.paleo.max)
+ncvar_put(outnc, ais.paleo.min, dais.paleo.min)
+ncvar_put(outnc, ais.paleo.05.avg, dais.paleo.05.avg)
+ncvar_put(outnc, ais.paleo.50.avg, dais.paleo.50.avg)
+ncvar_put(outnc, ais.paleo.95.avg, dais.paleo.95.avg)
+ncvar_put(outnc, ais.paleo.max.avg, dais.paleo.max.avg)
+ncvar_put(outnc, ais.paleo.min.avg, dais.paleo.min.avg)
 
 nc_close(outnc)
 
 ##==============================================================================
 ##==============================================================================
-}  # end check if experiment=='c'
-}  # end check if l.dovandantzig
 
-t.end = proc.time()
-time.minutes = (t.end-t.beg)[3]/60
+t.end <- proc.time()
+time.minutes <- (t.end-t.beg)[3]/60
 
-print(paste('it took',time.minutes,'minutes to process an initial ensemble of',n.ensemble.report,'simulations'))
-
-
+print(paste('That took',time.minutes,'minutes to process an initial ensemble of',n.ensemble.report,'simulations'))
 
 ##==============================================================================
 ## End
