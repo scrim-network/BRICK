@@ -33,7 +33,7 @@ setwd('~/codes/BRICK/calibration')
 ## Set up MCMC stuff here so that it can be automated for HPC
 nnode_mcmc000 <- 3
 niter_mcmc000 <- 1e6
-gamma_mcmc000 <- 0.5     # rate of adaptation (between 0.5 and 1, lower is faster adaptation)
+gamma_mcmc000 <- 0.51    # rate of adaptation (between 0.5 and 1, lower is faster adaptation)
 accept_mcmc000 <- 0.234  # Optimal as # parameters->infinity (Gelman et al, 1996; Roberts et al, 1997)
 
 ## Show plots? (probably want FALSE on HPC, non-interactive)

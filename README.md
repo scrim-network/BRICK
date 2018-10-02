@@ -13,14 +13,12 @@ It contains the sub-models
 * SIMPLE (Greenland ice sheet)
 * GSIC-MAGICC (Glaciers and small ice caps)
 * TE (thermal expansion)
-* GMSL (Rahmstorf 2007, global mean sea level emulator)
-* Van Dantzig flood risk assessment (Van Dantzig, 1956)
 
 ### An important note:
 
-The `master` branch contains the latest and greatest codes, including bug fixes and code enhancements relative to the model versions used in the [Wong et al 2017](http://www.geosci-model-dev-discuss.net/gmd-2016-303) and [Bakker et al 2017](https://www.nature.com/articles/s41598-017-04134-5) studies. Those codes may be found, respectively, in the branches `BRICKms` and `robustslr`. Thus, using codes from the `master` branch is advised.
+The `master` branch contains the latest and greatest codes, including bug fixes and code enhancements relative to the model versions used in the [Wong et al 2017](http://www.geosci-model-dev-discuss.net/gmd-2016-303) and [Bakker et al 2017](https://www.nature.com/articles/s41598-017-04134-5) studies.
 
-The `fastdy` branch contains codes including an emulator for the potential fast disintegration of the Antarctic ice sheet. This model enhancement will be brought into the `master` branch in due time.
+Codes for these other studies may be found in the branches (e.g., `BRICKms` and `robustslr` for the ones mentioned above), or external repositories when noted. Thus, using codes from the `master` branch is advised.
 
 ## Directory structure
 
@@ -28,10 +26,10 @@ The `fastdy` branch contains codes including an emulator for the potential fast 
    * BRICK "home" directory
 
 ./calibration/
-   * R scripts related to the (pre-/post-)calibration of the physical models, including reading data, likelihood functions, and sub-model stand-alone calibration drivers (some of these may be antiquated)
+   * R scripts related to the calibration of the physical models, including reading data and  likelihood functions
 
 ./data/
-   * data for radiative forcing (DOECLIM) and calibration
+   * data for radiative forcing and calibration
 
 ./fortran/
    * Fortran versions of all physical models are available, and are wrapped in R calling functions in ./fortran/R/
@@ -43,7 +41,7 @@ The `fastdy` branch contains codes including an emulator for the potential fast 
    * statistical model output (i.e., posterior parameter values)
 
 ./R/
-   * physical models in R
+   * physical models in R for quick testing. These are not generally used within the production calibration, with exceptions for small models like `anto` (mapping global <=> Antarctic temperatures)
 
 ## Motivation
 
@@ -52,12 +50,6 @@ The motivation for the BRICK model is detailed in the [model description paper](
 > Here we introduce BRICK v0.1 ("Building blocks for Relevant Ice and Climate Knowledge"), a new model framework that focuses on accessibility, transparency, and flexibility while maintaining, as much as possible, the computational efficiency that make simple models so appealing. There is a wide range of potential applications for such a model. A simple framework enables uncertainty quantification via statistical calibration approaches (Higdon et al., 2004; Kennedy and O’Hagan, 2001), which would be infeasible with more computationally expensive models. A transparent modeling framework enables communication between scientists as well as communication with stakeholders. This leads to potential application of the model framework in decision support and education (Weaver et al., 2013). The present work expands on previous studies by (1) providing a platform of simple, but mechanistically motivated sea-level process models that resolve more processes, (2) providing a model framework that can facilitate model comparisons (for example, between our models and those of Nauels et al. (2016)), (3) exploring combined effects of key structural and parametric uncertainties, (4) explicitly demonstrating the flexibility of our framework for interchanging model components, and (5) explicitly demonstrating the utility of our model framework for informing decision analyses.
 
 ## Installation
-
-### For the impatient
-
-Model codes forked from the main Github repository, consistent with the [model description paper](http://www.geosci-model-dev-discuss.net/gmd-2016-303/), are available as a simple tarball from [this download server](https://download.scrim.psu.edu/Wong_etal_BRICK/). This code tarball includes everything needed to reproduce that work, as well as netCDF files containing the projections of sea-level rise from that work.
-
-### Longer-term support
 
 To obtain the model codes:
 ~~~~

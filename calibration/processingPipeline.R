@@ -88,8 +88,8 @@ l.aisfastdy <- TRUE        # including AIS fast dynamics in the DAIS version use
 n.ensemble <- 1000      # total proposed ensemble before rejection sampling
 n.ensemble.report <- n.ensemble
 
-filename.BRICKcalibration <- "../output_calibration/BRICK_calibratedParameters_16Aug2017.nc"
-filename.DAIScalibration  <- "../output_calibration/DAIS_calibratedParameters_17Aug2017.nc"
+filename.BRICKcalibration <- "../output_calibration/BRICK_calibratedParameters_30Sep2018.nc"
+filename.DAIScalibration  <- "../output_calibration/DAIS_calibratedParameters_01Oct2018.nc"
 filename.parameters       <- paste('../output_calibration/BRICK_postcalibratedParameters_control_',today,appen,'.nc', sep="")
 filename.brickout         <- paste('../output_model/BRICK_physical_control_',today,appen,'.nc',sep="")
 
@@ -126,19 +126,19 @@ lws.sd   <- 0.18           # mm/y
 # simulate stationary AR(1) process (approximate - faster, better convergence, and
 # results not sensitive to use of this as opposed to exact AR1)
 ar1.sim <- function(N,rho1,sigma) {
-  x <- rep(NA,N)
-  if(length(sigma) > 1) {
-    x[1] = rnorm(n=1,sd=sigma[1]/sqrt(1-rho1^2)
-    for (i in 2:N) {
-      x[i] <- rho1*x[i-1] + rnorm(1,sd=sigma[i])
+    x <- rep(NA,N)
+    if(length(sigma) > 1) {
+        x[1] = rnorm(n=1,sd=sigma[1]/sqrt(1-rho1^2))
+        for (i in 2:N) {
+            x[i] <- rho1*x[i-1] + rnorm(1,sd=sigma[i])
+        }
+    } else {
+        x[1] = rnorm(n=1,sd=sigma/sqrt(1-rho1^2))
+        for (i in 2:N) {
+            x[i] <- rho1*x[i-1] + rnorm(1,sd=sigma)
+        }
     }
-  } else {
-    x[1] = rnorm(n=1,sd=sigma/sqrt(1-rho1^2)
-    for (i in 2:N) {
-      x[i] <- rho1*x[i-1] + rnorm(1,sd=sigma)
-    }
-  }
-  return(x)
+    return(x)
 }
 ##==============================================================================
 ##==============================================================================

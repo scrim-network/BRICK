@@ -14,6 +14,9 @@
 ## [9] c = 95            # Second value for runoff line calculation [m]
 ## [10] b0 = 775         # Height of bed at the center of the continent [m]
 ## [11] slope = 6e-4     # Slope of the bed
+## Others from Diaz and Keller (2016), Wong et al (2017):
+## [12] Tcrit = -15      # trigger temperature for fast dynamic ice loss (deg C)
+## [12] lambda = 0.01    # fast dynamics rate of ice loss (m/yr)
 ##
 ## Much of the original code is thanks to Kelsey Ruckert <klr324@psu.edu>
 ##
@@ -43,7 +46,7 @@ setwd('~/codes/BRICK/calibration')
 ## Set up MCMC stuff here so that it can be automated for HPC
 nnode_mcmc000 <- 3
 niter_mcmc000 <- 1e5
-gamma_mcmc000 <- 0.5     # rate of adaptation (between 0.5 and 1, lower is faster adaptation)
+gamma_mcmc000 <- 0.51    # rate of adaptation (between 0.5 and 1, lower is faster adaptation)
 accept_mcmc000 <- 0.234  # Optimal as # parameters->infinity (Gelman et al, 1996; Roberts et al, 1997)
 
 ## Set up a filename for saving RData images along the way
@@ -500,7 +503,6 @@ for (pp in 1:length(parnames)) {
 lmax=0
 for (i in 1:length(parnames)){lmax <- max(lmax,nchar(parnames[i]))}
 
-library(ncdf4)
 dim.parameters <- ncdim_def('n.parameters', '', 1:ncol(parameters.posterior), unlim=FALSE)
 dim.name <- ncdim_def('name.len', '', 1:lmax, unlim=FALSE)
 dim.ensemble <- ncdim_def('n.ensemble', 'ensemble member', 1:nrow(parameters.posterior), unlim=TRUE)
