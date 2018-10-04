@@ -84,7 +84,7 @@ install.packages('stats')
 
 ## Code Example: Projecting local sea level
 
-Suppose you are a researcher who wishes to use the sea level projections from the [BRICK model description paper](http://www.geosci-model-dev-discuss.net/gmd-2016-303/) in your own work. The following example will demonstrate how to use these projections and fingerprint the global sea level contributions to local mean sea level rise. This process is automated in the R function `BRICK_projectLocalSeaLevel.R`.
+Suppose you would like to use the sea level projections from the [BRICK model description paper](http://www.geosci-model-dev-discuss.net/gmd-2016-303/) in your own work. The following example will demonstrate how to use these projections and fingerprint the global sea level contributions to local mean sea level rise. This process is automated in the R function `BRICK_projectLocalSeaLevel.R`.
 
 1. Checkout the model codes and download the projections from the [BRICK model description paper](http://www.geosci-model-dev-discuss.net/gmd-2016-303/). If you do not have `curl`, you can either install it using `sudo apt-get install curl`, or use `wget`, or - if all else fails - navigate to the URL below to download the relevant results files.
 ~~~~
@@ -149,7 +149,7 @@ rc <- BRICK_projectLocalSeaLevel(lat.in=24.5551, lon.in=-81.7800,
 
 ### To reproduce the work of Wong, Bakker et al., 2017 (model description paper)
 
-1. Checkout the model codes. Specifically, the `BRICKms` branch reproduces the model description paper.
+1. Checkout the model codes. Specifically, the `BRICKms` branch reproduces the model description paper. (Note that the `master` branch does not include many of these experimental codes, and that the `BRICKms` branch will not be supported long-term here.)
 ~~~~
 git clone https://github.com/scrim-network/BRICK.git
 git checkout BRICKms
@@ -222,7 +222,7 @@ Note that in each of these scripts, some edits will be necessary. These will inc
 
 Please enjoy the code and offer us any suggestions. It is our aim to make the model accessible and usable by all. We are always interested to hear about potential improvements to the model, both in the statistical calibration framework as well as the physical sub-models for climate and contributions to sea-level rise.
 
-Questions? Tony Wong (twong@psu.edu)
+Questions? Tony Wong (anthony.e.wong [at] colorado.edu)
 
 ## License
 

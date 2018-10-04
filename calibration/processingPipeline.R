@@ -64,6 +64,10 @@ library(ncdf4)
 t.beg <- proc.time()
 
 ##==============================================================================
+## IMPORTANT SETTINGS FOR YOU TO MODIFY
+##              |
+##              |
+##              V
 ##==============================================================================
 
 ## Define some directories and settings
@@ -663,7 +667,6 @@ print(paste("Writing post-calibrated parameters to file ",filename.parameters,se
 lmax=0
 for (i in 1:length(parnames)){lmax=max(lmax,nchar(parnames[i]))}
 
-library(ncdf4)
 dim.parameters <- ncdim_def('n.parameters', '', 1:ncol(parameters.good), unlim=FALSE)
 dim.name <- ncdim_def('name.len', '', 1:lmax, unlim=FALSE)
 dim.ensemble <- ncdim_def('n.ensemble', 'ensemble member', 1:nrow(parameters.good), unlim=TRUE)
@@ -1078,8 +1081,6 @@ print(paste('... finished local sea level rise',sep=''))
 ## Write a netCDF ensemble output file including each of the RCP scenarios:
 ## (1) global total sea level, (2) local sea level. Also will want each
 ## contribution to global sea level rise, for the hindcast plots
-
-library(ncdf4)
 
 dim.tproj <- ncdim_def('time_proj', 'years', as.double(t.proj))
 dim.ensemble <- ncdim_def('ens', 'ensemble member', as.double(1:nrow(proj.rcp26$slr)), unlim=TRUE)
