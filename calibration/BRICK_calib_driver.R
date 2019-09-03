@@ -294,6 +294,9 @@ if(luse.te) {
   # This, and future versions, will hand-pick.
   shape.invtau <- 1.81
   scale.invtau <- 0.00275
+} else{
+  shape.invtau <- NULL
+  scale.invtau <- NULL
 }
 
 ##==============================================================================
