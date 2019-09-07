@@ -49,6 +49,9 @@ niter_mcmc000 <- 1e5
 gamma_mcmc000 <- 0.51    # rate of adaptation (between 0.5 and 1, lower is faster adaptation)
 accept_mcmc000 <- 0.234  # Optimal as # parameters->infinity (Gelman et al, 1996; Roberts et al, 1997)
 
+## Show plots? (probably want FALSE on HPC, non-interactive)
+l.doplots <- FALSE
+
 ## Set up a filename for saving RData images along the way
 today=Sys.Date(); today=format(today,format="%d%b%Y")
 filename.saveprogress <- paste('DAIS_calib_MCMC_',today,'.RData',sep='')
