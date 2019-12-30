@@ -12,8 +12,7 @@ To come!
 ### 2018
 
 * Vega-Westhoff, B., R. L. Sriver, C. A. Hartin, T. E. Wong, and K. Keller (2018), Impacts of Observational Constraints Related to Sea Level on Estimates of Climate Sensitivity, Earth’s Futur., 7(6), 677–690, doi:10.1029/2018EF001082.
-* Wong, T. E., A. Klufas, V. Srikrishnan, and K. Keller (2018), Neglecting model structural uncertainty
-* underestimates upper tails of flood hazard, Environ. Res. Lett., 13(7), 074019, doi:10.1088/1748-9326/aacb3d.
+* Wong, T. E., A. Klufas, V. Srikrishnan, and K. Keller (2018), Neglecting model structural uncertainty underestimates upper tails of flood hazard, Environ. Res. Lett., 13(7), 074019, doi:10.1088/1748-9326/aacb3d.
 * Wong, T. E. (2018), An integration and assessment of multiple covariates of nonstationary storm surge statistical behavior by Bayesian model averaging, Adv. Stat. Climatol. Meteorol. Oceanogr., doi:10.5194/ascmo-4-53-2018.
 
 ### 2017
