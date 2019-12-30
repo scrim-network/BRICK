@@ -31,8 +31,8 @@ rm(list=ls())                        # Clear all previous variables
 setwd('~/codes/BRICK/calibration')
 
 ## Set up MCMC stuff here so that it can be automated for HPC
-nnode_mcmc000 <- 3
-niter_mcmc000 <- 1e6
+nnode_mcmc000 <- 1
+niter_mcmc000 <- 1e5
 gamma_mcmc000 <- 0.51    # rate of adaptation (between 0.5 and 1, lower is faster adaptation)
 accept_mcmc000 <- 0.234  # Optimal as # parameters->infinity (Gelman et al, 1996; Roberts et al, 1997)
 
@@ -235,6 +235,9 @@ niter.deoptim=100                      # number of iterations for DE optimizatio
 NP.deoptim=11*length(index.model)      # population size for DEoptim (do at least 10*[N parameters])
 F.deoptim=0.8                          # as suggested by Storn et al (2006)
 CR.deoptim=0.9                        # as suggested by Storn et al (2006)
+
+# TW -- commented out for now because this won't work until SNEASY is part of the optimization process
+if(FALSE) {
 outDEoptim <- DEoptim(minimize_residuals_brick, bound.lower[index.model], bound.upper[index.model],
         DEoptim.control(NP=NP.deoptim,itermax=niter.deoptim,F=F.deoptim,CR=CR.deoptim,trace=FALSE),
         parnames.in=parnames[index.model], forcing.in=forcing        , l.project=l.project      ,
@@ -244,6 +247,7 @@ outDEoptim <- DEoptim(minimize_residuals_brick, bound.lower[index.model], bound.
         obs=obs.all                      , obs.err = obs.err.all     , trends.te = trends.te    ,
         luse.brick = luse.brick           , i0 = i0                   , l.aisfastdy = l.aisfastdy )
 p0.deoptim[index.model] = outDEoptim$optim$bestmem
+}
 
 ## Run the model and examine output at these parameter values
 brick.out = brick_model(parameters.in=p0.deoptim,
@@ -333,7 +337,7 @@ if(nnode.mcmc == 1) {
                     obs.err = obs.err.all          , trends.te = trends.te      , bound.lower.in=bound.lower    ,
                     bound.upper.in=bound.upper     , shape.in=shape.invtau      , scale.in=scale.invtau         ,
                     luse.brick=luse.brick          , i0=i0                      , l.aisfastdy=l.aisfastdy       )
-  t.end <- roc.time()
+  t.end <- proc.time()
   chain1 <- amcmc.out$samples
 } else if(nnode.mcmc > 1) {
   t.beg <- proc.time()
@@ -417,7 +421,7 @@ if(nnode.mcmc == 1) {
       eval(parse(text=paste('mcmc',m,' <- as.mcmc(amcmc.out[[m]]$samples[1:niter.test[i],])', sep='')))
     }
     eval(parse(text=paste('mcmc_chain_list = mcmc.list(list(', string.mcmc.list , '))', sep='')))
-    gr.test[i] <- as.numeric(gelman.diag(mcmc_chain_list)[2])
+    gr.test[i] <- as.numeric(gelman.diag(mcmc_chain_list, autoburnin=FALSE)[2])
   }
 } else {print('error - nnode.mcmc < 1 makes no sense')}
 
