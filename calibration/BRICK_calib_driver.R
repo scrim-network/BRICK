@@ -350,7 +350,7 @@ library(adaptMCMC)                # use robust adaptive Metropolis
 accept.mcmc = 0.234               # Optimal as # parameters->infinity
                                   # (Gelman et al, 1996; Roberts et al, 1997)
 niter.mcmc = 1e6                  # number of iterations for MCMC
-gamma.mcmc = 0.5                  # rate of adaptation (between 0.5 and 1, lower is faster adaptation)
+gamma.mcmc = 0.51                 # rate of adaptation (between 0.5 and 1, lower is faster adaptation)
 burnin = round(niter.mcmc*0.5)    # remove first ?? of chains for burn-in (not used)
 stopadapt.mcmc = round(niter.mcmc*1.0)# stop adapting after ?? iterations? (niter*1 => don't stop)
 
