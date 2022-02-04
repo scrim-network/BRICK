@@ -56,7 +56,7 @@ To obtain the model codes:
 git clone https://github.com/scrim-network/BRICK.git
 ~~~~
 
-The calibrated parameter files are larger than we prefer to move around with the Github repository codes. The parameter files that correspond to the [model description paper](http://www.geosci-model-dev-discuss.net/gmd-2016-303/) are available from [this download server](https://download.scrim.psu.edu/Wong_etal_BRICK/). Of course, the ambitious user is invited to run his/her own calibrations, as detailed in the workflow below.
+The calibrated parameter files are larger than we prefer to move around with the Github repository codes. The parameter files that correspond to the [model description paper](http://www.geosci-model-dev-discuss.net/gmd-2016-303/) are available from [this download server](https://download.clima.psu.edu/Wong_etal_BRICK/). Of course, the ambitious user is invited to run his/her own calibrations, as detailed in the workflow below.
 
 The following R packages are required. Within the workflow detailed below, there is a script to install all of these, so no need to copy-paste. Note that each command is issued separately so that if one throws an error, it is immediately obvious where the problem lies. Also note that if these packages are already installed and/or loaded in R, you will receive many error messages and requests to restart R before proceeding with package updates.
 ~~~~
