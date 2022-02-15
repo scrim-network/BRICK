@@ -96,7 +96,7 @@ $(OP)/CCM.o: $(OP)/global.o $(SP)/CCM.f90
 
 ## MOC box model ##
 $(OP)/moc_boxmodel.o: $(OP)/global.o $(OP)/rndseed.o $(OP)/moc_boxmodel.F90
-	$(F90) -c $(Flags) $(Incl) $(SP)/moc_boxmodel.f90 -o $@
+	$(F90) -c $(Flags) $(Incl) $(SP)/moc_boxmodel.F90 -o $@
 
 $(OP)/rndseed.o:  $(OP)/global.o $(OP)/mt19937ar.o $(SP)/rndseed.f90
 	$(F90) -c $(Flags) $(Incl) $(SP)/rndseed.f90 -o $@
