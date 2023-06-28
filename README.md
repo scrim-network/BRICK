@@ -14,9 +14,11 @@ It contains the sub-models
 * GSIC-MAGICC (Glaciers and small ice caps)
 * TE (thermal expansion)
 
-### An important note:
+### Two important notes:
 
-The `master` branch contains the latest and greatest codes, including bug fixes and code enhancements relative to the model versions used in the [Wong et al 2017](http://www.geosci-model-dev-discuss.net/gmd-2016-303) and [Bakker et al 2017](https://www.nature.com/articles/s41598-017-04134-5) studies.
+**(1)** This is an older version of BRICK. It corresponds to most of the papers citing BRICK sea-level projections from before 2022. For the most up-to-date model version and projections, the code is located [here](https://github.com/raddleverse/MimiBRICK.jl) and the model paper is located [here](https://joss.theoj.org/papers/10.21105/joss.04556).
+
+**(2)** The `master` branch contains the latest and greatest codes, including bug fixes and code enhancements relative to the model versions used in the [Wong et al 2017](http://www.geosci-model-dev-discuss.net/gmd-2016-303) and [Bakker et al 2017](https://www.nature.com/articles/s41598-017-04134-5) studies.
 
 Codes for these other studies may be found in the branches (e.g., `BRICKms` and `robustslr` for the ones mentioned above), or external repositories when noted. Thus, using codes from the `master` branch is advised.
 
@@ -222,7 +224,7 @@ Note that in each of these scripts, some edits will be necessary. These will inc
 
 Please enjoy the code and offer us any suggestions. It is our aim to make the model accessible and usable by all. We are always interested to hear about potential improvements to the model, both in the statistical calibration framework as well as the physical sub-models for climate and contributions to sea-level rise.
 
-Questions? Tony Wong (anthony.e.wong [at] colorado.edu)
+Questions? Tony Wong (tony.wong [at] rit.edu)
 
 ## License
 
